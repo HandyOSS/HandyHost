@@ -1,0 +1,69 @@
+<div id="marketplaceModal" class="modalWrap">
+	<div id="closeBidModal">
+		[close]
+	</div>
+	<div class="marketplaceBidModal walletModalContent">
+		<div class="logo">
+			<img src="./img/AkashAKTLogo.svg" />
+		</div>
+
+		<div class="bidForm">
+			<div class="bidElement bidDeposit">
+				<label for="deposit">
+					Deposit <small>(min 50,000,000 uAKT)</small>:
+				</label>
+				<input type="text" id="deposit" value="50000000" placeholder="min: 50000000" />
+			</div>
+			<div class="bidElement bidPrice">
+				<label for="price">
+					Price per Block <small>uAKT</small>:
+				</label>
+				<input type="text" id="price" placeholder="price in uAKT per block" />
+			</div>
+		</div>
+
+		<div class="pwWrap">
+			<input type="password" id="marketplacePW" class="styledInput" placeholder="Keyring Passphrase" />
+		</div>
+		
+		<div class="button save" id="marketplaceBidSave">
+			<div class="foreground">Place Bid</div>
+			<div class="background">Place Bid</div>
+		</div>
+		<div class="button cancel" id="cancelMarketplaceBid">
+			<div class="foreground">Cancel</div>
+			<div class="background">Cancel</div>
+		</div>
+	</div>
+
+	<div class="marketplaceMessage walletModalContent">
+		<div class="logo">
+			<img src="./img/AkashAKTLogo.svg" />
+		</div>
+		<div class="message success">
+			<div class="messageIcon">🥳</div>
+			<div class="messageText">Bid Successful!</div>
+		</div>
+		<div class="message error"></div>
+		<div class="button save" id="marketplaceMessageConf"><div class="foreground">Done</div><div class="background">Done</div></div>
+		
+	</div>
+</div>
+
+<div id="marketplace" class="mainPanel aktPanel">
+	<div class="title">Akash Marketplace</div>
+	<div class="ordersPanel">
+		<div class="subtitle">
+			<span class="mainOption selected" id="orders">Open Orders</span>
+			<span class="mainOption" id="bids">My Bids</span>
+			<span class="mainOption" id="leases">My Leases</span>
+			<div class="subOptions"></div>
+		</div>
+		<div class="data">
+			<div class="loadingPanel">
+				<div class="lds-roller"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
+				<div class="loadingMessage">Querying Orders...</div>
+			</div>
+		</div>
+	</div>
+</div>

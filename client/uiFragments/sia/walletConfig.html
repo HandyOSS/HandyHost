@@ -1,0 +1,49 @@
+<div id="walletInitModal">
+	<div id="closeModal">
+		[close]
+	</div>
+	<div class="walletUtil">
+		<div class="logo">
+			<img src="./img/SiacoinSCLogo.svg" />
+		</div>
+		<div class="pwWrap">
+			<input type="password" id="encryptionPW" placeholder="Encryption Password" />
+			<div class="confirmBadge">&#10003;</div>
+			<div class="noConfirmBadge">❌</div>
+		</div>
+		<div class="pwWrap">
+			<input type="password" id="confirmPW" placeholder="Confirm Password" />
+			<div class="confirmBadge">&#10003;</div>
+			<div class="noConfirmBadge">❌</div>
+		</div>
+		<div class="pwErrorMessage">
+			Password does not match
+		</div>
+		
+		<div class="button save" id="createNewWallet"><div class="foreground">Create New Wallet</div><div class="background">Create New Wallet</div></div>
+		<div id="mnemonicWrap">
+			<textarea id="mnemonic"></textarea>
+		</div>
+		<div class="button save" id="importWallet"><div class="foreground">Import Wallet</div><div class="background">Import Wallet</div></div>
+
+	</div>
+	<div class="newWalletInfo">
+		<div class="logo">
+			<img src="./img/SiacoinSCLogo.svg" />
+		</div>
+		<div id="mnemonicOut"></div>
+		<div class="button save" id="mnemonicConfirmation0"><div class="foreground">I have written this down somewhere safe</div><div class="background">I have written this down somewhere safe</div></div>
+		<div class="button save" id="mnemonicConfirmation1"><div class="foreground">I&#039;m serious. This is the only time you see this recovery phrase.</div><div class="background">I&#039;m serious. This is the only time you see this recovery phrase.</div></div>
+	</div>
+	<div class="seedImportMessage">
+		<div class="logo">
+			<img src="./img/SiacoinSCLogo.svg" />
+		</div>
+		<div class="message success">
+			Seed Import was successful. Sia is now scanning the entire chain for transactions which can take hours. Thanks for being patient, if there were a faster way to import from seed, we would be doing it.
+		</div>
+		<div class="message error"></div>
+		<div class="button save" id="importSeedMessageConf"><div class="foreground">Done</div><div class="background">Done</div></div>
+		
+	</div>
+</div>

@@ -1,0 +1,9 @@
+docker run -d --init \
+--ulimit nofile=64000:64000 \
+--env REGION_OVERRIDE=US915 \
+--restart always \
+--publish 1680:1680/udp \
+--publish 44158:44158/tcp \
+--name miner \
+--mount type=bind,source=/home/pi/miner_data,target=/var/data \
+quay.io/team-helium/miner:miner-arm64_2021.05.20.0_GA

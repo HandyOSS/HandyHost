@@ -1,0 +1,43 @@
+.radarChart{
+	float:left;
+	height: 100%;
+	width: auto;
+}
+
+.earningsMeta ul{
+	float: left;
+    width: calc(50% - 20px);
+    list-style-type: none;
+    clear: none;
+    display: inline;
+    padding: 0 10px;
+    margin: 5px 0px;
+    font-weight:400;
+}
+.earningsMeta ul li span.label, .contractsMeta span.label{
+	font-weight:200;
+}
+.earningsChart, .storageChart{
+	height:auto !important;
+}
+.earningsChart .title{
+	font-size: 18px;
+	font-weight:700;
+}
+
+/*
+beeswarm colors
+const defaultColor = 'rgba(35,219,117,0.6)';
+const grey = 'rgba(161,161,161,0.4)';
+const highlightColor = 'rgba(35,219,117,1.0)';
+*/
+
+circle.node{
+	fill: rgba(35,219,117,0.6);
+}
+circle.node.grey{
+	fill: rgba(161,161,161,0.4);
+}
+circle.node.highlighted{
+	fill: rgba(35,219,117,1.0);
+}

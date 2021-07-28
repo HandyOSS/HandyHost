@@ -1,0 +1,27 @@
+<html>
+<head>
+	<meta charset="UTF-8">
+	<link rel="stylesheet" type="text/css" href="./css/common.css" />
+	<link rel="stylesheet" type="text/css" href="./css/sia/main.css" />
+	<link rel="stylesheet" type="text/css" href="./css/sia/sia.css" />
+	<link rel="stylesheet" type="text/css" href="./css/sia/siaConfiguration.css" />
+	<link rel="stylesheet" type="text/css" href="./css/sia/siaWalletConfiguration.css" />
+	<link rel="stylesheet" type="text/css" href="./css/sia/siaWalletInfo.css" />
+	<link rel="stylesheet" type="text/css" href="./css/sia/siaCharts.css" />
+	<link rel="stylesheet" type="text/css" href="./css/sia/siaDashboard.css" />
+	<link rel="stylesheet" type="text/css" href="./css/themeDark.css" />
+	<link rel="stylesheet" type="text/css" href="./css/mobile.css" />
+	<script src="/socket.io/socket.io.js"></script>
+	<script src="external/jquery.min.js"></script>
+	<script src="external/numeral.js"></script>
+	<script src="external/moment.js"></script>
+	<script src="bower_components/d3/d3.min.js"></script>
+</head>
+<body>
+	<script type="module">
+		import {SiaDashboard} from './js/sia/SiaDashboard.js';
+		const app = new SiaDashboard();
+		window.app = app;
+	</script>
+</body>
+</html>

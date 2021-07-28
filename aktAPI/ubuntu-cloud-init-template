@@ -1,0 +1,20 @@
+#cloud-config
+
+## Set hostname
+hostname: __HOSTNAME__
+
+## set default user and ssh access
+system_info:
+  default_user:
+    name: ansible
+    ssh_authorized_keys:
+      - __SSH_PUB_KEY__
+    sudo: ALL=(ALL) NOPASSWD:ALL
+
+## install avahi-utils so we broadcast our hostname to the local network
+packages:
+- avahi-utils
+
+## and restart
+power_state:
+ mode: reboot

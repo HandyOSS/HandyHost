@@ -1,0 +1,23 @@
+.serviceMain .options ul li:hover{
+	border-left: 5px solid #17a0ec !important;
+	margin-left: -5px;
+	/* Permalink - use to edit and share this gradient: https://colorzilla.com/gradient-editor/#e2e2e2+0,adadad+99,adadad+99,7c7c7c+100 */
+	background: #e2e2e2; /* Old browsers */
+	background: -moz-linear-gradient(left,  #e2e2e2 0%, #adadad 99%, #adadad 99%, #7c7c7c 100%); /* FF3.6-15 */
+	background: -webkit-linear-gradient(left,  #e2e2e2 0%,#adadad 99%,#adadad 99%,#7c7c7c 100%); /* Chrome10-25,Safari5.1-6 */
+	background: linear-gradient(to right,  #e2e2e2 0%,#adadad 99%,#adadad 99%,#7c7c7c 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#e2e2e2', endColorstr='#7c7c7c',GradientType=1 ); /* IE6-9 */
+	width: calc(100% - 15px);
+	color:#111;
+}
+
+#dvpnMain .dashboard{
+	height: auto !important;
+}
+
+.darkTheme .serviceMain .options ul li:hover{
+	border-left-color: #E85F13 !important;
+}
+.darkTheme .lds-ripple{
+	filter:invert(1.0);
+}

@@ -1,0 +1,96 @@
+.failModal .message{
+	float: left;
+    text-align: center;
+    font-size: 24px;
+}
+.panelTitle{
+	float:left;
+	width: 100%;
+	font-size: 24px;
+}
+.showLaunchModal{
+	text-decoration:underline;
+}
+.logs{
+	float:left;
+	width: calc(100% - 20px);
+	height: 80%;
+	background:#222;
+	color:#0c0;
+	font-family: 'Courier New', monospace;
+	line-height: 16px;
+	vertical-align:middle;
+	font-size: 14px;
+	padding: 10px;
+    border-radius: 5px;
+    overflow-y:scroll;
+}
+.logs pre{
+	float:left;
+	width: 100%;
+	height:auto;
+	padding:0;
+	margin:0;
+	white-space: pre-wrap;       /* css-3 */
+	white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
+	white-space: -pre-wrap;      /* Opera 4-6 */
+	white-space: -o-pre-wrap;    /* Opera 7 */
+	word-wrap: break-word;       /* Internet Explorer 5.5+ */
+
+}
+#showLaunchModal, #haltDVPN{
+	width:200px;
+	margin-top: 10px;
+}
+
+.seedImportMessage .message{
+	float:left;
+	width: calc(100% - 20px) !important;
+	padding: 10px !important;
+}
+.seedImportMessage .messageIcon{
+	float:left;
+	width: 30%;
+	text-align:center;
+	font-size: 100px;
+}
+.seedImportMessage .messageText{
+	float:left;
+	width: calc(70% - 20px);
+	padding: 10px;
+	word-wrap: break-word;
+}
+.panelTitle .statusBubble{
+	float:right;
+}
+.statusBubble .label, .statusBubble .bubble{
+	float:right;
+	font-size: 14px;
+	color:#555;
+}
+.statusBubble .bubble{
+	margin: 0px 5px;
+	border-radius: 20px;
+	width: 14px;
+	height: 14px;
+	border: 1px solid #666;
+}
+.bubble.inactive{
+	background: #999;
+}
+.bubble.active{
+	background: #00cc00;
+}
+
+#updateDVPNModal .updateInfo .updateTitle{
+	font-size: 36px;
+    text-align: center;
+    margin: 20px 0;
+    float: left;
+    width: 100%;
+}
+#updateDVPNModal .updateInfo ul{
+	list-style-type: none;
+	font-size: 18px;
+	margin: 5px;
+}

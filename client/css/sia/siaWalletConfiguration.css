@@ -1,0 +1,120 @@
+#walletInitModal{
+	position:fixed;
+	z-index:10;
+	top:0;
+	left:0;
+	background:rgba(0,0,0,0.8);
+	width:100%;
+	height:100%;
+	display:none;
+	z-index:2;
+}
+.walletUtil, .newWalletInfo, .seedImportMessage{
+	width:calc(50% - 20px);
+	padding: 10px;
+	margin-left:25%;
+	background:#eee;
+	float:left;
+	margin-top: -100%;
+	transition: margin-top 0.4s linear;
+}
+.walletUtil.showing, .newWalletInfo.showing, .seedImportMessage.showing{
+	margin-top:0px;
+}
+.walletUtil #encryptionPW, .walletUtil #confirmPW, .balanceBox{
+	float:left;
+	width: 100%;
+	font-size: 36px;
+	padding: 10px;
+	border-radius: 10px;
+	margin: 10px 0;
+	padding-right:48px;
+}
+#walletInitModal .button{
+	float: left;
+    width: calc(100% - 40px);
+    margin: 10px 10px;
+    font-size: 32px;
+    /* padding: 20px 0; */
+    line-height: 40px;
+    height: 40px;
+    vertical-align: middle;
+}
+#walletInitModal .button .foreground,#walletInitModal .button .background{
+	line-height: 60px;
+	vertical-align: middle;
+}
+.pwWrap{
+	position:relative;
+	float:left;
+	width: 100%;
+}
+.confirmBadge, .noConfirmBadge{
+    float: right;
+    position: absolute;
+    color: #0c0;
+    top: 23px;
+    right: 7px;
+    font-size: 32px;
+    display:none;
+}
+.noConfirmBadge{
+	color:#c00;
+}
+.pwErrorMessage{
+	float:left;
+	color:#c00;
+	display:none;
+}
+#mnemonicWrap{
+	float:left;
+	width:100%;
+	height: 0px;
+	opacity:0;
+	transition: height 0.3s linear;
+}
+#mnemonic{
+	float:left;
+	width: 100%;
+	height: 100%;
+	font-size: 24px;
+}
+#walletInitModal .logo{
+	float:left;
+	width: 100%;
+	text-align:center;
+	margin-bottom: 4px;
+}
+#walletInitModal .logo img{
+	height: 100px;
+}
+
+/*new wallet mnemonic modal*/
+.newWalletInfo #mnemonicOut{
+	width: calc(100% - 10px);
+	margin: 5px 0;
+	height: auto;
+	font-size: 36px;
+	background:#ddd;
+}
+.newWalletInfo #mnemonicConfirmation1{
+	display:none;
+	font-size: 24px !important;
+}
+#closeModal{
+	float:right;
+	position:absolute;
+	top: 5px;
+	right:5px;
+	color:#eee;
+	font-size:14px;
+	cursor:pointer;
+}
+.seedImportMessage .message{
+	font-size: 30px;
+    padding: 20px;
+    float: left;
+}
+.seedImportMessage .message.error{
+	display:none;
+}

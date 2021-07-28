@@ -1,0 +1,103 @@
+/* 1792x828px at 326ppi */
+@media only screen 
+    and (max-width: 1080px) {
+    .dashboard, .options, .options .logo, .mainPanel{
+    	transition: all 0.2s linear;
+    }
+ 	body:not(.menuShowing) .dashboard, body:not(.menuShowing) .mainPanel{
+ 		left:10px !important;
+ 		width:calc(100% - 20px) !important;
+ 		top:50px !important;
+ 	}
+ 	body:not(.menuShowing) .options{
+ 		left:-20% !important;
+ 	}
+ 	.options .logo{
+ 		position:relative;
+ 		left: 10px;
+ 		transition: all 0.1s linear;
+ 	}
+ 	body:not(.menuShowing) .options .logo{
+ 		
+ 		left:calc(100% + 14px);
+ 	}
+
+ 	.modalContent, .walletModalContent{
+ 		width: calc(80% - 20px) !important;
+ 		margin-left:10% !important;
+ 		margin-top:-200%;
+ 	}
+
+ 	.settingsButton{
+ 		display:block !important;
+ 	}
+ 	.hostTitle{
+ 		font-size:36px !important;
+ 	}
+ 	.contractsMeta{
+ 		width: 100% !important;
+ 	}
+ 	.contractsMeta li{
+ 		width: 50% !important;
+ 	}
+ 	.contractsBeeswarm{
+ 		width: 100% !important;
+ 	}
+ 	.contractsBeeswarm svg{
+ 		margin-top: 0px !important;
+ 	}
+ 	.dashboardPanel{
+ 		font-size: 24px;
+ 	}
+ 	.dashboardPanel .valueLabel{
+ 		font-size: 36px;
+ 	}
+ 	.dashboardPanel .title{
+ 		font-size: 30px;
+ 	}
+ 	.options li{
+ 		font-size: 24px;
+    	font-weight: 200;
+ 	}
+}
+.settingsButton{
+	display:none;
+	float: right;
+    width: 30px;
+    height: 30px;
+    padding: 5px;
+    position: fixed;
+    top: 6px;
+    left: calc(100% - 50px);
+    cursor: pointer;
+    background: rgba(51,51,51,0.2);
+}
+.settingsButton.clicked{
+    top: 0px;
+    left: calc(20% - 40px);
+    height: 23px;
+}
+.settingsButton .stripe{
+	width: 100%;
+	height: 7px;
+	border-bottom: 2px solid #666;
+	margin-top:-1px;
+}
+.settingsButton.clicked .stripe{
+	margin-top: 0px;
+}
+.settingsButton .last, .settingsButton .first{
+	transition: all 0.2s linear;
+}
+.settingsButton.clicked .last{
+	transform: rotate(-45deg) translate(2px, -5px);
+	transform-origin: center center;
+}
+
+.settingsButton.clicked .first{
+	transform: rotate(45deg) translate(5px, 1px);
+	transform-origin: center center;
+}
+.settingsButton.clicked .middle{
+	display:none;
+}

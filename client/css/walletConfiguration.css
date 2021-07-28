@@ -1,0 +1,190 @@
+#walletInitModal, .modalWrap{
+	position:fixed;
+	z-index:10;
+	top:0;
+	left:0;
+	background:rgba(0,0,0,0.8);
+	width:100%;
+	height:100%;
+	display:none;
+	z-index:2;
+}
+.walletUtil, .newWalletInfo, .seedImportMessage, .walletModalContent, .modalContent{
+	width:calc(50% - 20px);
+	padding: 10px;
+	margin-left:25%;
+	background:#eee;
+	float:left;
+	margin-top: -100%;
+	transition: margin-top 0.4s linear;
+}
+.walletUtil.showing, .newWalletInfo.showing, .seedImportMessage.showing, .walletModalContent.showing, .modalContent.showing{
+	margin-top:0px;
+}
+.walletUtil #encryptionPW, .walletUtil #confirmPW, .walletUtil .walletName, #unlockPW, .allKeys select, .modalInput, .balanceBox, #scSendPass, .addDiskSelect select, .styledSelect, .styledInput{
+	float:left;
+	width: 100%;
+	font-size: 36px;
+	padding: 10px;
+	border-radius: 10px;
+	margin: 10px 0;
+	padding-right:48px;
+}
+.allKeys select,.styledSelect{
+	font-size: 20px !important;
+}
+.allKeys{
+	display:none;
+}
+#walletInitModal .button, .walletModalContent .button, .modalContent .button{
+	float: left;
+    width: calc(100% - 40px);
+    margin: 10px 10px;
+    font-size: 32px;
+    /* padding: 20px 0; */
+    line-height: 40px;
+    height: 40px;
+    vertical-align: middle;
+}
+#walletInitModal .button .foreground,#walletInitModal .button .background, .walletModalContent .button .foreground, .walletModalContent .button .background, .modalContent .button .foreground, .modalContent .button .background{
+	line-height: 60px;
+	vertical-align: middle;
+}
+.pwWrap{
+	position:relative;
+	float:left;
+	width: 100%;
+}
+.confirmBadge, .noConfirmBadge{
+    float: right;
+    position: absolute;
+    color: #0c0;
+    top: 23px;
+    right: 7px;
+    font-size: 32px;
+    display:none;
+}
+.noConfirmBadge{
+	color:#c00;
+}
+.pwErrorMessage{
+	float:left;
+	color:#c00;
+	display:none;
+}
+#mnemonicWrap{
+	float:left;
+	width:100%;
+	height: 0px;
+	opacity:0;
+	transition: height 0.3s linear;
+}
+#mnemonic{
+	float:left;
+	width: 100%;
+	height: 100%;
+	font-size: 24px;
+}
+#walletInitModal .logo, .walletModalContent .logo, .modalContent .logo{
+	float:left;
+	width: 100%;
+	text-align:center;
+	margin-bottom: 4px;
+}
+#walletInitModal .logo img, .walletModalContent .logo img, .modalContent .logo img{
+	height: 100px;
+}
+
+/*new wallet mnemonic modal*/
+.newWalletInfo #mnemonicOut, .newWalletInfo #addressOut{
+	width: calc(100% - 10px);
+	margin: 5px 0;
+	height: auto;
+	font-size: 36px;
+	background:#ddd;
+}
+.newWalletInfo #addressOut{
+	float:left;
+}
+.newWalletInfo #addressOut .label{
+	font-size: 16px;
+}
+.newWalletInfo #addressOut .address{
+	font-size: 24px;
+	word-break:break-word;
+}
+.newWalletInfo #mnemonicConfirmation1{
+	display:none;
+	font-size: 24px !important;
+}
+#closeModal, .closeModal{
+	float:right;
+	position:absolute;
+	top: 5px;
+	right:5px;
+	color:#eee;
+	font-size:14px;
+	cursor:pointer;
+}
+.seedImportMessage .message{
+	font-size: 30px;
+    padding: 20px;
+    float: left;
+}
+.seedImportMessage .message.error{
+	display:none;
+}
+
+#siaHostInfo li input, #siaHostInfo li select, #pathShortcut, #encryptionPW, #confirmPW, #mnemonic, #mnemonicOut, .balanceBox, #walletName, .newWalletInfo #addressOut, #nodeConfigInfo li input, #unlockPW, .getKeysModal select, .modalInput, #scSendPass, .balanceBox, .styledSelect, .styledInput{
+	font-size: 16px;
+    outline: none;
+    border-radius: 5px;
+    padding: 5px;
+    clear: both;
+    box-shadow: inset 1px 1px 5px #ccc;
+    border-top: #aaa;
+    border-left: #aaa;
+    border-right: #eee;
+    border-bottom: #eee;
+    border-width: 1px;
+    border-style: solid;
+    color:#333;
+    font-weight:100;
+    font-family: 'Roboto',Sans-serif;
+}
+.walletUtil #encryptionPW, .walletUtil #confirmPW, .walletUtil #walletName, #unlockPW, .allKeys select, .modalInput, .balanceBox,.styledSelect, .styledInput{
+	float:left;
+	width: 100%;
+	font-size: 36px;
+	padding: 10px;
+	border-radius: 10px;
+	margin: 10px 0;
+	padding-right:48px;
+}
+#mnemonicConfirmation0, #mnemonicConfirmation1{
+	overflow:hidden;
+	text-overflow: ellipsis;
+}
+#mnemonicConfirmation0{
+	font-size:2vw !important;
+}
+
+.seedImportMessage .message{
+	float:left;
+	width: calc(100% - 20px) !important;
+	padding: 10px !important;
+}
+.seedImportMessage .messageIcon{
+	float:left;
+	width: 30%;
+	text-align:center;
+	font-size: 100px;
+}
+.seedImportMessage .messageText{
+	float:left;
+	width: calc(70% - 20px);
+	padding: 10px;
+	word-wrap: break-word;
+}
+
+

@@ -1,0 +1,102 @@
+<div id="walletInitModal">
+	<div id="closeModal">
+		[close]
+	</div>
+	<div class="walletUtil walletModalContent">
+		<div class="logo">
+			<img src="./img/SentinelDVPNShieldLogo.svg" />
+		</div>
+		<div class="pwWrap">
+			<input type="password" id="encryptionPW" placeholder="Keyring Passphrase" />
+			<div class="confirmBadge">&#10003;</div>
+			<div class="noConfirmBadge">❌</div>
+		</div>
+		<div class="pwWrap">
+			<input type="password" id="confirmPW" placeholder="Confirm Passphrase" />
+			<div class="confirmBadge">&#10003;</div>
+			<div class="noConfirmBadge">❌</div>
+		</div>
+		<div class="pwErrorMessage">
+			Password does not match
+		</div>
+		<div class="pwWrap">
+			<input type="text" id="walletName" placeholder="Wallet Name" />
+		</div>
+		
+		<div class="button save" id="createNewWallet"><div class="foreground">Create New Wallet</div><div class="background">Create New Wallet</div></div>
+		<div id="mnemonicWrap">
+			<textarea id="mnemonic"></textarea>
+		</div>
+		<div class="button save" id="importWallet">
+			<div class="foreground">Import Wallet</div>
+			<div class="background">Import Wallet</div>
+		</div> 
+		
+
+	</div>
+	<div class="newWalletInfo walletModalContent">
+		<div class="logo">
+			<img src="./img/SentinelDVPNShieldLogo.svg" />
+		</div>
+		<div id="addressOut"></div>
+		<div id="mnemonicOut"></div>
+		<div class="button save" id="mnemonicConfirmation0"><div class="foreground">I have written this down somewhere safe</div><div class="background">I have written this down somewhere safe</div></div>
+		<div class="button save" id="mnemonicConfirmation1"><div class="foreground">I wrote it down and will not see it here again.</div><div class="background">I wrote it down and will not see it here again.</div></div>
+	</div>
+	<div class="seedImportMessage">
+		<div class="logo">
+			<img src="./img/SentinelDVPNShieldLogo.svg" />
+		</div>
+		<div class="message success">
+			<div class="messageIcon">🥳</div>
+			<div class="messageText">Seed Import Successful!</div>
+		</div>
+		<div class="message error"></div>
+		<div class="button save" id="importSeedMessageConf"><div class="foreground">Done</div><div class="background">Done</div></div>
+		
+	</div>
+	<div class="getKeysModal walletModalContent">
+		<div class="logo">
+			<img src="./img/SentinelDVPNShieldLogo.svg" />
+		</div>
+		<div class="pwWrap">
+			<input type="password" id="unlockPW" placeholder="Keyring Passphrase" />
+		</div>
+		<div class="allKeys">
+			<select></select>
+		</div>
+		<div class="button save" id="getKeys">
+			<div class="foreground">Get Wallets</div>
+			<div class="background">Get Wallets</div>
+		</div>
+		<div class="button cancel" id="cancelGetKeys">
+			<div class="foreground">Cancel</div>
+			<div class="background">Cancel</div>
+		</div>
+	</div>
+</div>
+<div id="nodeConfigInfo" class="mainPanel">
+	<div id="nodeConfiguration" class="configPanel">
+		<div class="configTitle">Node Configuration</div>
+		<ul class="topLevel" />
+	</div>
+	<div id="wireguardConfiguration" class="configPanel">
+		<div class="configTitle">Wireguard Configuration</div>
+		<ul class="topLevel" />
+	</div>
+	<div class="buttons">
+		<div class="button save" id="saveNodeConfigs">
+			<div class="foreground">
+				Save
+			</div>
+			<div class="background">
+				Save
+			</div>
+		</div>
+		<div class="button cancel" id="cancel">
+			<div class="foreground">Cancel</div>
+			<div class="background">Cancel</div>
+		</div>
+	
+	</div>
+</div>

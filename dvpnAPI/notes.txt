@@ -1,0 +1,2 @@
+Make sure to add ip6tables_filter to modprobe:
+sudo modprobe ip6table_filter

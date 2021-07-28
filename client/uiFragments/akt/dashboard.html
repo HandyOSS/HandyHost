@@ -1,0 +1,67 @@
+<div id="runProviderModal" class="modalWrap">
+	<div class="closeModal" id="closeRunProviderModal">
+		[close]
+	</div>
+	<div class="runProviderModal walletModalContent">
+		<div class="logo">
+			<img src="./img/AkashAKTLogo.svg" />
+		</div>
+		<div class="pwWrap">
+			<input type="password" id="unlockRunPW" class="styledInput" placeholder="Keyring Passphrase" />
+		</div>
+		
+		<div class="button save" id="runSave">
+			<div class="foreground">Register</div>
+			<div class="background">Register</div>
+		</div>
+		<div class="button cancel" id="cancelRun">
+			<div class="foreground">Cancel</div>
+			<div class="background">Cancel</div>
+		</div>
+	</div>
+
+	<div class="runMessage walletModalContent">
+		<div class="logo">
+			<img src="./img/AkashAKTLogo.svg" />
+		</div>
+		<div class="message success">
+			<div class="messageIcon">🥳</div>
+			<div class="messageText">Started Provider Successful!</div>
+		</div>
+		<div class="message error"></div>
+		<div class="button save" id="runMessageConf"><div class="foreground">Done</div><div class="background">Done</div></div>
+		
+	</div>
+</div>
+<div id="aktMain" class="serviceMain">
+	<div class="options">
+		<div class="logo">
+			<img src="./img/AkashAKTLogo.svg" />
+			<span class="logoText">Akash</span>
+		</div>
+		<ul>
+			<li id="dashboard">Dashboard</li>
+			<li id="config">Configuration</li>
+			<li id="status">Cluster Status</li>
+			<li id="market">Marketplace</li>
+			<li id="newwallet">New Wallet</li>
+			<li id="toggleTheme">
+				<div class="toggle isFalse">
+					<div class="toggleSlider"></div>
+					<div class="foreground"></div>
+					<div class="background"></div>
+				</div>
+				<div class="toggleLabel">Dark Mode</div>
+			</li>
+			<li id="providerStatus"><span class="emoji">⚠️</span> Start Provider</li>
+		</ul>
+	</div>
+	<div class="settingsButton">
+		<div class="stripe first"></div>
+		<div class="stripe middle"></div>
+		<div class="stripe last"></div>
+	</div>
+	<div class="dashboard">
+		Akash Dashboard
+	</div>
+</div>

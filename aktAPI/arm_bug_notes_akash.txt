@@ -1,0 +1,53 @@
+Without --cluster-node-port-quantity set, I get capacity errors::
+
+Running like this:
+#$1=walletName, $2 serverHost
+./bin/akash provider run \
+--home $HOME/.akash \
+--chain-id $AKASH_CHAIN_ID \
+--node $AKASH_NODE \
+--keyring-backend file \
+--from $1 \
+--fees 10000uakt \
+--kubeconfig $HOME/akt/aktData/admin.conf \
+--cluster-k8s true \
+--deployment-ingress-domain $2 \
+--deployment-ingress-static-hosts true \
+--deployment-runtime-class none \
+--bid-price-strategy scale \
+--bid-price-cpu-scale 10 \
+--deployment-runtime-class none 
+#--cluster-node-port-quantity 10
+
+################# LOGS #######################
+D[2021-07-22|23:36:38.593] reservation requested                        module=provider-cluster cmp=service cmp=inventory-service order=akash15w5au2rx35jdwspreclf8jgz06l42yez9xjgxu/1876656/1/1 resources="group_id:<owner:\"akash15w5au2rx35jdwspreclf8jgz06l42yez9xjgxu\" dseq:1876656 gseq:1 > state:open group_spec:<name:\"dcloud\" requirements:<signed_by:<> > resources:<resources:<cpu:<units:<val:\"500\" > > memory:<quantity:<val:\"536870912\" > > storage:<quantity:<val:\"536870912\" > > endpoints:<> > count:1 price:<denom:\"uakt\" amount:\"1\" > > > created_at:1876657 "
+I[2021-07-22|23:36:38.593] insufficient capacity for reservation        module=provider-cluster cmp=service cmp=inventory-service order=akash15w5au2rx35jdwspreclf8jgz06l42yez9xjgxu/1876656/1/1
+E[2021-07-22|23:36:38.593] reserving resources                          module=bidengine-order order=akash15w5au2rx35jdwspreclf8jgz06l42yez9xjgxu/1876656/1/1 err="insufficient capacity"
+################# ENDLOGS #######################
+
+Note: I have plenty of free resources (0 deployments running) :
+
+################# LOGS #######################
+D[2021-07-22|23:37:23.209] node resources                               module=provider-cluster cmp=service cmp=inventory-service node-id=akashnode1 available-cpu="units:<val:\"2880\" > attributes:<key:\"arch\" value:\"arm64\" > " available-memory="quantity:<val:\"7325159424\" > " available-storage="quantity:<val:\"453351307333\" > "
+D[2021-07-22|23:37:23.209] node resources                               module=provider-cluster cmp=service cmp=inventory-service node-id=akashnode2 available-cpu="units:<val:\"3525\" > attributes:<key:\"arch\" value:\"arm64\" > " available-memory="quantity:<val:\"7572080640\" > " available-storage="quantity:<val:\"453351307333\" > "
+D[2021-07-22|23:37:23.209] node resources                               module=provider-cluster cmp=service cmp=inventory-service node-id=akashnode3 available-cpu="units:<val:\"3595\" > attributes:<key:\"arch\" value:\"arm64\" > " available-memory="quantity:<val:\"7581480960\" > " available-storage="quantity:<val:\"453351307333\" > "
+################# ENDLOGS #######################
+
+and then if I set --cluster-node-port-quantity I get other errors::
+
+The manifest successfully deploys::
+
+################# LOGS #######################
+I[2021-07-22|23:43:32.680] manifest received                            module=provider-cluster cmp=service
+D[2021-07-22|23:43:32.844] provider/cluster/kube/builder: created service module=kube-builder service="&Service{ObjectMeta:{web      0 0001-01-01 00:00:00 +0000 UTC <nil> <nil> map[akash.network:true akash.network/manifest-service:web akash.network/namespace:kqfebqcg844ke5aa6ar1upq96f0i32udgqelo6e62f2ag] map[] [] []  []},Spec:ServiceSpec{Ports:[]ServicePort{ServicePort{Name:0-80,Protocol:TCP,Port:80,TargetPort:{0 80 },NodePort:0,AppProtocol:nil,},},Selector:map[string]string{akash.network: true,akash.network/manifest-service: web,akash.network/namespace: kqfebqcg844ke5aa6ar1upq96f0i32udgqelo6e62f2ag,},ClusterIP:,Type:ClusterIP,ExternalIPs:[],SessionAffinity:,LoadBalancerIP:,LoadBalancerSourceRanges:[],ExternalName:,ExternalTrafficPolicy:,HealthCheckNodePort:0,PublishNotReadyAddresses:false,SessionAffinityConfig:nil,IPFamily:nil,TopologyKeys:[],},Status:ServiceStatus{LoadBalancer:LoadBalancerStatus{Ingress:[]LoadBalancerIngress{},},},}"
+D[2021-07-22|23:43:32.886] provider/cluster/kube/builder: created rules module=kube-builder rules="[{Host:7ksrr8cpi1fl370r7d2ae8jj1o.akash.pogchia.world IngressRuleValue:{HTTP:&HTTPIngressRuleValue{Paths:[]HTTPIngressPath{HTTPIngressPath{Path:/,Backend:IngressBackend{Resource:nil,Service:&IngressServiceBackend{Name:web,Port:ServiceBackendPort{Name:,Number:80,},},},PathType:*Prefix,},},}}}]"
+D[2021-07-22|23:43:32.911] deploy complete
+################# ENDLOGS #######################
+
+However my deployment never successfully launches, complains about replicas for many attempts until the lease is closed.
+
+################# LOGS #######################
+D[2021-07-22|23:44:23.641] service available replicas below target      module=provider-cluster cmp=service cmp=deployment-manager lease=akash1fnc04mjln6y0y7qgkkz9nwkjane50nnjxq32yf/1910692/1/1/akash1mqnj2euks0aq82q0f2tknz6kua6zdfn97kmvhj manifest-group=earth-lab0 cmp=deployment-monitor service=web available=0 target=1
+I[2021-07-22|23:44:23.641] check result                                 module=provider-cluster cmp=service cmp=deployment-manager lease=akash1fnc04mjln6y0y7qgkkz9nwkjane50nnjxq32yf/1910692/1/1/akash1mqnj2euks0aq82q0f2tknz6kua6zdfn97kmvhj manifest-group=earth-lab0 cmp=deployment-monitor ok=false attempt=6
+################# ENDLOGS #######################
+

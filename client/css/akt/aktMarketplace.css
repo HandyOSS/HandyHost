@@ -1,0 +1,221 @@
+#marketplace.aktPanel{
+	height: auto !important;
+	min-height: calc(100% - 20px);
+}
+
+.ordersPanel table{
+    width: 100%;
+    padding: 10px;
+    background: #ddd;
+    margin: 10px 0;
+    float: left;
+}
+.ordersPanel .orderID{
+	background:#ccc;
+}
+
+.ordersPanel tr.highlighted{
+	background:rgba(237,54,36,0.25);
+
+}
+.darkTheme .ordersPanel tr.highlighted{
+	color:#eee;
+}
+.ordersPanel tr.orderID.highlighted{
+	background:#ed3624;
+}
+
+.ordersPanel tr.orderID.highlighted .placeBid{
+	color:#ffffff;
+}
+
+.ordersPanel td{
+	border-right: 1px solid #aaa;
+    border-left: none;
+    border-top: none;
+    border-bottom: none;
+    padding: 5px 4px;
+}
+.ordersPanel .placeBid, a.akashLink{
+	float:right;
+	cursor:pointer;
+	text-decoration: underline;
+	color:#ed3624;
+}
+.ordersPanel a.seeAllBids, .ordersPanel a.cancelBid{
+	float:none;
+}
+
+.ordersPanel .prevNextTri{
+	margin-top: 2px;
+	cursor:pointer;
+}
+.ordersPanel .nextPage{
+	width: 0;
+	height: 0;
+	border-style: solid;
+	border-width: 7px 0 7px 12.1px;
+	border-color: transparent transparent transparent #ed3624;
+	float:right;
+	margin-left: 3px;
+}
+.ordersPanel .pagination{
+	float:right;
+	margin-right: 20px;
+}
+.ordersPanel .prevPage{
+	width: 0;
+	height: 0;
+	border-style: solid;
+	border-width: 7px 12.1px 7px 0;
+	border-color: transparent #ed3624 transparent transparent;
+	float:left;
+	margin-right: 3px;
+}
+.ordersPanel .loadingMessage{
+	text-align: center;
+	margin-top: 10px;
+	font-size: 24px;
+	font-weight: 200;
+	width: 100%;
+	color:#333;
+}
+
+.ordersPanel .mainOption{
+	padding: 0px 10px;
+	cursor:pointer;
+}
+.ordersPanel .mainOption.selected, .ordersPanel .subOption.selected{
+	color:#ed3624;
+}
+.ordersPanel .mainOption#orders{
+	padding-left:0;
+}
+.ordersPanel .mainOption:not(#leases){
+	border-right: 1px solid #666;
+}
+
+.ordersPanel .subOptions{
+	float:left;
+	width: calc(100% - 20px);
+	padding: 5px 10px;
+}
+.ordersPanel .subOptions .subOption{
+	border-right: 1px solid #666;
+	padding: 0 10px;
+	font-size: 18px;
+	cursor:pointer;
+}
+.ordersPanel .subOption:first-child{
+	padding-left:0;
+}
+.ordersPanel .subOption:last-child{
+	border-right:none;
+}
+
+.ordersPanel .data .message{
+	font-size: 24px;
+	text-align:center;
+	width: 100%;
+	margin-top: 50px;
+}
+
+.ordersPanel .loadingPanel{
+	width: 100%;
+	text-align: center;
+	float:left;
+	margin-top: 200px;
+}
+.ordersPanel .lds-roller{
+	margin: 0 auto;
+}
+.bidOpts{
+	float:right;
+}
+
+
+/*loading spinner*/
+.lds-roller {
+  display: inline-block;
+  position: relative;
+  width: 80px;
+  height: 80px;
+}
+.lds-roller div {
+  animation: lds-roller 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+  transform-origin: 40px 40px;
+}
+.lds-roller div:after {
+  content: " ";
+  display: block;
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #fff;
+  margin: -4px 0 0 -4px;
+}
+.lds-roller div:nth-child(1) {
+  animation-delay: -0.036s;
+}
+.lds-roller div:nth-child(1):after {
+  top: 63px;
+  left: 63px;
+}
+.lds-roller div:nth-child(2) {
+  animation-delay: -0.072s;
+}
+.lds-roller div:nth-child(2):after {
+  top: 68px;
+  left: 56px;
+}
+.lds-roller div:nth-child(3) {
+  animation-delay: -0.108s;
+}
+.lds-roller div:nth-child(3):after {
+  top: 71px;
+  left: 48px;
+}
+.lds-roller div:nth-child(4) {
+  animation-delay: -0.144s;
+}
+.lds-roller div:nth-child(4):after {
+  top: 72px;
+  left: 40px;
+}
+.lds-roller div:nth-child(5) {
+  animation-delay: -0.18s;
+}
+.lds-roller div:nth-child(5):after {
+  top: 71px;
+  left: 32px;
+}
+.lds-roller div:nth-child(6) {
+  animation-delay: -0.216s;
+}
+.lds-roller div:nth-child(6):after {
+  top: 68px;
+  left: 24px;
+}
+.lds-roller div:nth-child(7) {
+  animation-delay: -0.252s;
+}
+.lds-roller div:nth-child(7):after {
+  top: 63px;
+  left: 17px;
+}
+.lds-roller div:nth-child(8) {
+  animation-delay: -0.288s;
+}
+.lds-roller div:nth-child(8):after {
+  top: 56px;
+  left: 12px;
+}
+@keyframes lds-roller {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}

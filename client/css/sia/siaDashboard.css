@@ -1,0 +1,231 @@
+#siaMain{
+	float:left;
+	width: 100%;
+	position:absolute;
+	top:0;
+	left:0;
+	width: 100%;
+	height: 100%;
+	z-index:0;
+}
+#siaMain .options{
+	float:left;
+	width: calc(20% - 10px);
+	padding: 5px;
+	height: calc(100% - 10px);
+
+	/* Permalink - use to edit and share this gradient: https://colorzilla.com/gradient-editor/#fcfcfc+0,dddddd+99,dddddd+99,7c7c7c+100 */
+	background: #fcfcfc; /* Old browsers */
+	background: -moz-linear-gradient(left,  #fcfcfc 0%, #dddddd 99%, #dddddd 99%, #7c7c7c 100%); /* FF3.6-15 */
+	background: -webkit-linear-gradient(left,  #fcfcfc 0%,#dddddd 99%,#dddddd 99%,#7c7c7c 100%); /* Chrome10-25,Safari5.1-6 */
+	background: linear-gradient(to right,  #fcfcfc 0%,#dddddd 99%,#dddddd 99%,#7c7c7c 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fcfcfc', endColorstr='#7c7c7c',GradientType=1 ); /* IE6-9 */
+	position:fixed;
+	top:0;
+	left:0;
+}
+#siaMain .options ul{
+	list-style-type:none;
+	width: 100%;
+	margin: 0;
+	padding:0;
+	float:left;
+	margin-top:10px;
+
+}
+#siaMain .options ul li{
+	width: calc(100% - 20px);
+	margin: 0;
+	padding:5px 10px;
+	float:left;
+	border-bottom: 1px solid #ddd;
+	
+	color:#777;
+	cursor:pointer;
+}
+#siaMain .options ul li:hover{
+	border-left: 5px solid #24ed82;
+	border-left-color:#24ed82;
+	margin-left: -5px;
+	/* Permalink - use to edit and share this gradient: https://colorzilla.com/gradient-editor/#e2e2e2+0,adadad+99,adadad+99,7c7c7c+100 */
+	background: #e2e2e2; /* Old browsers */
+	background: -moz-linear-gradient(left,  #e2e2e2 0%, #adadad 99%, #adadad 99%, #7c7c7c 100%); /* FF3.6-15 */
+	background: -webkit-linear-gradient(left,  #e2e2e2 0%,#adadad 99%,#adadad 99%,#7c7c7c 100%); /* Chrome10-25,Safari5.1-6 */
+	background: linear-gradient(to right,  #e2e2e2 0%,#adadad 99%,#adadad 99%,#7c7c7c 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#e2e2e2', endColorstr='#7c7c7c',GradientType=1 ); /* IE6-9 */
+	width: calc(100% - 15px);
+	color:#111;
+}
+#siaMain .dashboard{
+	float: left;
+    position: absolute;
+    top: 10px;
+    left: calc(20% + 10px);
+    width: calc(80% - 40px);
+    height: auto;
+    z-index: 1;
+    background: #eee;
+    border-radius: 10px;
+    padding: 10px;
+    margin-bottom: 10px;
+}
+
+#siaMain .options .logo{
+	float:left;
+	width: 100%;
+	font-size: 36px;
+	font-weight: 100;
+}
+#siaMain .logoText{
+	line-height: 40px;
+	vertical-align:middle;
+	float:left;
+	margin-left: 5px;
+}
+#siaMain .options .logo img{
+	height: 40px;
+	display:inline;
+	float:left;
+}
+.hostScore{
+	float:left;
+	width: 100%;
+	height: 400px;
+}
+.hostRadars, .scoreInfo{
+	float:left;
+	width: 50%;
+	height: 100%;
+}
+.scoreInfo{
+	width: calc(50% - 20px);
+	padding: 10px;
+}
+.scoreInfo ul{
+	float:left;
+	width:100%;
+	height: 100%;
+	list-style-type: none;
+	margin:0;
+	padding: 0;
+}
+.scoreInfo li{
+	float:left;
+	padding:0 0 0 5px;
+	width: 100%;
+	margin: 3px 0;
+}
+.scoreInfo .regionTitle{
+	font-weight: 700;
+	font-size: 18px;
+}
+.hostScoreValue, .contractsChart .contractsValue, .dashboardPanel .valueLabel{
+	font-size: 24px;
+	font-weight: 200;
+	float:left;
+	height: auto;
+	margin-left:5px;
+	width: 100%;
+}
+.scoreInfo ul:hover li.scoreParam:not(.hovered){
+	border-left:5px solid #999 !important;
+	color:#999;
+}
+.radarChart.hovered .radarWrapper:not(.active) .radarArea{
+	fill:#999 !important;
+	fill-opacity:0.25 !important;
+}
+.radarChart.hovered .radarWrapper:not(.active) .radarStroke{
+	stroke:#666 !important;
+	stroke-opacity:0.25 !important;
+}
+.contractsChart, .dashboardPanel{
+	float:left;
+	width:100%;
+	height: auto;
+	position:relative;
+	border-top: 1px solid #ccc;
+	padding-top:20px;
+}
+.contractsMeta{
+	float:left;
+	width: 30%;
+}
+.contractsBeeswarm{
+	float:left;
+	width: 70%;
+}
+.contractsBeeswarm svg{
+	width:100%;
+	height:100%;
+	float:left;
+	margin-top:-38px;
+}
+.contractsBeeswarm circle.node{
+	/*fill:rgba(0,160,254,0.6);*/
+	stroke:rgba(0,0,0,0.8);
+}
+.contractsBeeswarm line, .contractsBeeswarm .axes path{
+	stroke:#999;
+}
+.contractsBeeswarm text{
+	fill:#666;
+}
+.contractsMeta ul{
+	float:left;
+	width: 100%;
+	list-style-type: none;
+	padding:0 10px;
+	margin:0;
+}
+.contractsMeta li{
+	float:left;
+	width: 100%;
+	padding:0;
+	margin: 0;
+}
+#beeswarmTooltip{
+	float:left;
+	background:rgba(255,255,255,0.8);
+	border: 1px solid #aaa;
+	padding: 10px;
+	border-radius: 5px;
+	box-shadow: 1px 1px 5px rgba(0,0,0,0.25);
+	position:absolute;
+	z-index:1;
+
+	display:none;
+}
+.storageMeta, .contractsMeta{
+	margin-top: 5px;
+}
+.storageMeta .donutChart{
+    float: left;
+    width: calc(50% - 11px);
+    height: 100%;
+    position: relative;
+    margin-right: 10px;
+}
+.storageUsed.donutChart{
+	border-right: 1px solid #ccc;
+}
+.storageMeta .donutTitle{
+	font-weight: 700;
+	padding: 2px 10px;
+}
+.storageMeta .donutChart svg{
+	float:left;
+	width: 100%;
+}
+
+.donutChart .labels{
+	position:absolute;
+}
+.donutChart .swatch{
+	width: 14px;
+	height: 14px;
+	float:left;
+	display:inline;
+	margin: 0px 5px;
+	margin-top:3px;
+}

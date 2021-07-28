@@ -1,0 +1,25 @@
+{
+  "name": "HandyHost",
+  "authors": [
+    "Alex Smith <alexsmith_540@yahoo.com>"
+  ],
+  "description": "",
+  "main": "",
+  "license": "MIT",
+  "homepage": "",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "ansi_up": "^5.0.1",
+    "jquery": "^3.6.0",
+    "bignumber.js": "^9.0.1",
+    "numeral": "^2.0.6",
+    "d3": "^5.16.0"
+  }
+}

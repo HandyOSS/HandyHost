@@ -1,0 +1,82 @@
+<div id="siaWalletInfo" class="mainPanel">
+	<div class="logo">
+		<!-- <img src="./img/SiacoinSCLogo.svg" /> -->
+		Wallet
+	</div>
+	<div class="walletBody">
+		<div class="walletOptions"></div>
+		<div class="walletData">
+			<div class="walletDataTitle">
+				Recent Transactions
+			</div>
+			<div class="walletDataPanel">
+				
+			</div>
+		</div>
+	</div>
+</div>
+
+<div id="qrModal" class="modal">
+	<div class="qrBody">
+		<div class="logo">
+			<img src="./img/SiacoinSCLogo.svg" />
+		</div>
+		<img class="qrImg" />
+		<textarea class="balanceBox" readonly></textarea>
+		<div class="buttons">
+			<div class="button save" id="qrdone"><div class="foreground">Done</div><div class="background">Done</div></div>
+			<div class="button save" id="refreshAddress"><div class="foreground">Get New Address</div><div class="background">Get New Address</div></div>
+		</div>
+	</div>
+</div>
+
+<div id="sendModal" class="modal">
+	<div class="sendBody">
+		<div class="logo">
+			<img src="./img/SiacoinSCLogo.svg" />
+		</div>
+		<ul class="sendInfo">
+			<li class="toAddress">
+				<textarea class="balanceBox" placeholder="Send To Address" id="toAddress"></textarea>
+			</li>
+			<li class="scValue">
+				<input id="scValue" class="balanceBox" placeholder="Amount SC" type="number" />
+				<span class="sendMax">MAX</span>
+			</li>
+			<li class="scPass">
+				<input id="scSendPass" class="balanceBox" placeholder="Encryption Key" type="password" />
+			</li>
+		</ul>
+		<div class="buttons">
+			<div class="button cancel" id="cancel">
+				<div class="foreground">Cancel</div>
+				<div class="background">Cancel</div>
+			</div>
+			<div class="button save" id="confirm">
+				<div class="foreground">CONFIRM</div>
+				<div class="background">CONFIRM</div>
+			</div>
+			<div class="button save" id="send">
+				<div class="foreground">Send</div>
+				<div class="background">Send</div>
+			</div>
+		</div>
+	</div>
+	<div class="sendConfirm">
+		<div class="logo">
+			<img src="./img/SiacoinSCLogo.svg" />
+		</div>
+		<div class="message">
+			<div class="messageIcon">🥳</div>
+			<div class="messageText">
+				<ul class="sentInfo">
+
+				</ul>
+			</div>
+		</div>
+		
+		<div class="buttons">
+			<div class="button save" id="doneConfirm"><div class="foreground">done</div><div class="background">done</div></div>
+		</div>
+	</div>
+</div>

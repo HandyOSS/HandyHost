@@ -1,0 +1,20 @@
+{
+  "name": "handyhost",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "parse-duration": "^1.0.0",
+    "project-name-generator": "^2.1.9",
+    "qrcode": "^1.4.4",
+    "socket.io": "^4.1.2",
+    "sqlite": "^4.0.23",
+    "sqlite3": "^5.0.2"
+  }
+}

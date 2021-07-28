@@ -1,0 +1,33 @@
+<html>
+<head>
+	<meta charset="UTF-8">
+	<link rel="stylesheet" type="text/css" href="./css/akt/aktNodeConfiguration.css" />
+	<link rel="stylesheet" type="text/css" href="./css/akt/aktClusterStatus.css" />
+	<link rel="stylesheet" type="text/css" href="./css/akt/aktMarketplace.css" />
+	
+	<link rel="stylesheet" type="text/css" href="./css/akt/main.css" />
+	<link rel="stylesheet" type="text/css" href="./css/common.css" />
+	<link rel="stylesheet" type="text/css" href="./css/walletConfiguration.css" />
+	<link rel="stylesheet" type="text/css" href="./css/themeDark.css" />
+	<link rel="stylesheet" type="text/css" href="./css/mobile.css" />
+	<!-- <link rel="stylesheet" type="text/css" href="./css/dvpn/main.css" />
+	<link rel="stylesheet" type="text/css" href="./css/walletConfiguration.css" />
+	<link rel="stylesheet" type="text/css" href="./css/dvpn/dvpnNodeConfiguration.css" />
+	<link rel="stylesheet" type="text/css" href="./css/dvpn/dvpnNodeStatus.css" /> -->
+	
+	<script src="/socket.io/socket.io.js"></script>
+	<script src="external/jquery.min.js"></script>
+	<script src="external/numeral.js"></script>
+	<script src="external/moment.js"></script>
+	<script src="bower_components/d3/d3.min.js"></script>
+	<script src="bower_components/ansi_up/ansi_up.js"></script>
+</head>
+<body>
+	
+	<script type="module">
+		import {AKTDashboard} from './js/akt/AKTDashboard.js';
+		const app = new AKTDashboard();
+		window.app = app;
+	</script>
+</body>
+</html>

@@ -1,0 +1,260 @@
+#clusterStatus.aktPanel{
+	height: auto !important;
+}
+#nodeConfigInfo{
+	height: auto;
+}
+.topLevel td, #clusterInventory td{
+	padding: 8px;
+	border-bottom: 1px solid #ccc;
+}
+.topLevel input[type="checkbox"], #clusterInventory input[type="checkbox"]{
+	height:20px;
+	width:20px;
+}
+.topLevel{
+	list-style-type:none;
+}
+.configTitle{
+	font-size: 24px;
+}
+.topLevel li a, .topLevel td a, .advancedOptions a, a.getGlobalIP, a.getWallet{
+	text-decoration: underline;
+	cursor:pointer;
+	color:#ed3624;
+}
+.advancedOptions a{
+	line-height: 50px;
+    vertical-align: middle;
+    margin-left: 10px;
+}
+
+.addDiskModal .message{
+	font-size: 24px;
+}
+
+#clusterInventory{
+	display:none;
+	float:left;
+	width: 100%;
+	margin-top: 10px;
+	display: none;
+}
+#answerPopup{
+	position:absolute;
+	background:rgba(255,255,255,0.8);
+	padding: 5px;
+	display:none;
+	width: 200px;
+}
+#answerPopup .title{
+	font-size: 20px;
+}
+#clusterInventory .question{
+	background:rgba(51,51,51,1.0);
+	color:#fff;
+	width: 15px;
+	height: 15px;
+	text-align: center;
+	border-radius: 15px;
+	line-height: 15px;
+	vertical-align:middle;
+	float: right;
+    margin-left: 5px;
+    font-size: 12px;
+}
+
+#buildABoxModal{
+	max-height: 100%;
+	overflow-y:scroll;
+}
+#buildABoxModal .title{
+	font-size: 36px;
+}
+#buildABoxModal .subtitle{
+	font-size: 24px;
+}
+#buildABoxModal .info{
+	font-size: 18px;
+	padding: 10px 20px;
+	float:left;
+	width: calc(100% - 40px);
+}
+#buildABoxModal .panel{
+	padding: 10px;
+	background: rgba(121,121,121,0.1);
+	float:left;
+	width: calc(100% - 20px);
+	margin-top: 10px;
+}
+
+.stepInfo{
+	display:none;
+}
+
+#buildABoxModal a, #buildABoxModal a:visited, #nodeConfigInfo #buildLink{
+	color:#ed3624;
+}
+#buildABoxModal .step, #buildABoxModal #chooseDevice, #buildABoxModal #finishHost, #buildABox #buildLink{
+	/* Permalink - use to edit and share this gradient: https://colorzilla.com/gradient-editor/#af1d22+0,af1d22+40,f03423+100 */
+	background: rgb(175,29,34); /* Old browsers */
+	background: -moz-linear-gradient(45deg,  rgba(175,29,34,1) 0%, rgba(175,29,34,1) 40%, rgba(240,52,35,1) 100%); /* FF3.6-15 */
+	background: -webkit-linear-gradient(45deg,  rgba(175,29,34,1) 0%,rgba(175,29,34,1) 40%,rgba(240,52,35,1) 100%); /* Chrome10-25,Safari5.1-6 */
+	background: linear-gradient(45deg,  rgba(175,29,34,1) 0%,rgba(175,29,34,1) 40%,rgba(240,52,35,1) 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#af1d22', endColorstr='#f03423',GradientType=1 ); /* IE6-9 fallback on horizontal gradient */
+
+	color:#fff;
+	padding: 3px 5px;
+	border-radius: 5px;
+	float:left;
+	clear:both;
+	margin: 5px;
+	cursor:pointer;
+}
+#buildABoxModal #chooseDevice, #buildABoxModal #finishHost{
+	margin: 5px 0;
+}
+
+.step span.expand, #buildLink .expand{
+	background: #fff;
+    color: #ed3624;
+    padding: 0px 5px;
+    border-radius: 5px;
+    box-shadow: inset 1px 1px 1px #333;
+}
+
+#buildABoxModal .bigger{
+	margin: 5px 0;
+}
+#buildABoxModal #chooseDevice, #buildABoxModal #finishHost{
+	float:none;
+	color:#fff;
+}
+
+#buildABoxModal .stepInfo{
+	float:left;
+	width: 100%;
+	background: rgba(0,0,0,0.1);
+}
+#setHostname{
+	font-size: 14px;
+    padding: 5px;
+    border-radius: 6px;
+    float:none;
+    clear:both;
+    width:auto;
+}
+.chooseDeviceResult{
+	float:left;
+	width: 100%;
+}
+.chooseDeviceResult .usbError{
+	margin-top: 5px;
+}
+#usbDevice.styledSelect{
+	width: auto !important;
+	font-size: 14px !important;
+	padding: 2px;
+	border-radius: 3px;
+}
+#autoConfig ul{
+	list-style-type:none;
+	padding: 0 5px;
+}
+#autoConfig .confirmation, #autoConfig .error{
+	display:none;
+}
+#finishHost.nonActive{
+	background:#aaa !important;
+	cursor:none !important;
+}
+#buildABox{
+	width: 100%;
+	float:left;
+}
+#buildLink{
+	float:right !important;
+}
+#initCluster{
+	width: 220px;
+}
+#logs{
+	float:left;
+	width: 100%;
+	height: 500px;
+	display:none;
+	margin-top: 5px;
+}
+.logsPanel{
+	float:left;
+	height: 450px;
+	float:left;
+	width: calc(100% - 20px);
+	height: 80%;
+	background:#222;
+	color:#0c0;
+	font-family: 'Courier New', monospace;
+	line-height: 16px;
+	vertical-align:middle;
+	font-size: 14px;
+	padding: 10px;
+    border-radius: 5px;
+    overflow-y:scroll;
+    margin-top: 5px;
+}
+
+.logsPanel pre{
+	float:left;
+	width: 100%;
+	padding: 0;
+	height:auto;
+	margin:0;
+	white-space: pre-wrap;       /* css-3 */
+	white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
+	white-space: -pre-wrap;      /* Opera 4-6 */
+	white-space: -o-pre-wrap;    /* Opera 7 */
+	word-wrap: break-word;       /* Internet Explorer 5.5+ */
+
+}
+#logs.showing{
+	display:block;
+}
+.providerList{
+	list-style-type: none;
+}
+.providerList tr{
+	border-bottom: 1px solid #ccc;
+}
+.providerList .styledSelect{
+	font-size: 14px !important;
+    padding: 5px;
+    border-radius: 6px;
+    width: auto;
+}
+.providerList a{
+	line-height: 50px;
+	float:left;
+	margin-left: 10px;
+}
+.providerList .hasError input{
+	color:#cc0000;
+	border: 1px solid #cc0000;
+}
+.hasError input::placeholder{
+	color:#cc0000;
+	opacity:1;
+}
+.providerList .errorMessage{
+	color:#ffffff;
+	background:#cc0000;
+	padding: 2px 5px;
+	display:none;
+	text-align: center;
+}
+.providerList .hasError .errorMessage{
+	display:block !important;
+}
+
+
+
+

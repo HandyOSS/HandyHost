@@ -1,0 +1,72 @@
+<div id="registrationModal" class="modalWrap">
+	<div id="closeModal">
+		[close]
+	</div>
+	<div class="registerProviderModal walletModalContent">
+		<div class="logo">
+			<img src="./img/AkashAKTLogo.svg" />
+		</div>
+		<div class="pwWrap">
+			<input type="password" id="unlockRegPW" class="styledInput" placeholder="Keyring Passphrase" />
+		</div>
+		<div class="checkboxWrap">
+			<input type="checkbox" value="" id="generateCert" />
+			<label for="generateCert">Generate or Update Akash Server Certificate</label>
+			<small>(note: separate ~0.01AKT transaction fee applies)</small>
+		</div>
+		<div class="button save" id="registerSave">
+			<div class="foreground">Register</div>
+			<div class="background">Register</div>
+		</div>
+		<div class="button cancel" id="cancelRegister">
+			<div class="foreground">Cancel</div>
+			<div class="background">Cancel</div>
+		</div>
+	</div>
+
+	<div class="registrationMessage walletModalContent">
+		<div class="logo">
+			<img src="./img/AkashAKTLogo.svg" />
+		</div>
+		<div class="message success">
+			<div class="messageIcon">🥳</div>
+			<div class="messageText">Registration Successful!</div>
+		</div>
+		<div class="message error"></div>
+		<div class="button save" id="registrationMessageConf"><div class="foreground">Done</div><div class="background">Done</div></div>
+		
+	</div>
+</div>
+
+<div id="clusterStatus" class="mainPanel aktPanel">
+	<div class="title">Akash Cluster Status</div>
+	<div class="accountBalance panel">
+		acct balance
+	</div>
+	<div class="runClusterInfo panel">
+		run cluster info
+	</div>
+	<div class="clusterResourceStats panel">
+		<div class="subtitle">Cluster Utilization</div>
+		<div class="donuts">
+			<div class="cpu donutChart aktDonut">
+				<div class="donutTitle">CPU</div>
+				<svg />
+			</div>
+			<div class="memory donutChart aktDonut">
+				<div class="donutTitle">Memory</div>
+				<svg />
+			</div>
+			<div class="ephemeral donutChart aktDonut">
+				<div class="donutTitle">Storage</div>
+				<svg />
+			</div>
+			<div class="pods donutChart aktDonut">
+				<div class="donutTitle">Kubernetes Pods</div>
+				<svg />
+			</div>
+		</div>
+	</div>
+	<div class="nodesResourceUsage panel">
+	</div>
+</div>

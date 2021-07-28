@@ -1,0 +1,22 @@
+1. use Raspberry Pi Imager on a Mac/PC/Linux machine to burn a 64-bit OS image onto the microsd. Some parameters:
+1a. ctrl+shift+x to show advanced options for imager. You want to set:
+- a custom hostname for the pi (ie: akash0, akash1, etc)
+- the password or public key you'd use for ssh
+1b. 64-bit raspbian: https://downloads.raspberrypi.org/raspios_arm64/images/
+- after writing, make sure to create a blank file called 'ssh' in the /boot volume. this enables ssh.
+
+Adding your nvme disk:
+1. Get the drive’s path using $ sudo fdisk -l
+2. Enter fdisk to edit the disk’s partition table: $ sudo fdisk /dev/sda (it may not be /dev/sda, its whatever volume is the one you are targeting)
+Enter the following options when prompted: n, p, 1, <enter>, <enter>, w
+(n = new partition, p = primary, 1 = partition #1, and w = write)
+3. Format the partition: $ sudo mkfs -t ext4 /dev/sda1
+
+Configure the disk to auto-mount:
+1. sudo mkdir /mnt/mydiskname (critical you put this in /mnt else it will fail and you will reformat your microsd)
+2. sudo vi /etc/fstab
+Add the line like:
+/dev/sda1 /mnt/mydiskname ext4 defaults,noatime 0 0
+3. To test that your fstab modifications worked::
+sudo mount -fav 
+4. sudo reboot to verify

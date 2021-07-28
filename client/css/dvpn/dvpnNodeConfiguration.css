@@ -1,0 +1,61 @@
+#nodeConfigInfo{
+	height: auto !important;
+	padding-bottom: 10px;
+	display: none;
+}
+#nodeConfigInfo .configPanel{
+	float:left;
+	width: 100%;
+}
+.configPanel .configTitle{
+	font-size: 30px;
+	font-weight: 700;
+}
+.configPanel ul{
+	list-style-type:none;
+	margin:0;
+	padding:0;
+}
+.configPanel li{
+	float:left;
+	width: 100%;
+	margin:0;
+	padding:0;
+}
+.configPanel li.title{
+	font-weight: 700;
+	font-size: 20px;
+}
+li.hasInput{
+	background:#ddd;
+	padding: 5px;
+	width:calc(100% - 20px);
+	margin: 5px;
+}
+li.hasInput label{
+	margin: 10px;
+    line-height: 34px;
+    vertical-align: middle;
+}
+
+.showAllKeys{
+	color:#142d50;
+	cursor:pointer;
+	display:inline;
+	margin: 5px 10px;
+	font-size: 16px;
+	text-decoration:underline;
+}
+.hasInput .notes, .hasInput a{
+	font-size: 14px;
+	margin: 5px 10px;
+	display:inline;
+	color:#555;
+}
+.hasInput a{
+	text-decoration: underline;
+}
+#dvpnUpdatesWarning{
+	display:none;
+	font-weight: 600;
+}

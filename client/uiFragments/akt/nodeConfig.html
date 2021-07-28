@@ -1,0 +1,346 @@
+<div id="walletInitModal">
+	<div id="closeModal">
+		[close]
+	</div>
+	<div class="walletUtil walletModalContent">
+		<div class="logo">
+			<img src="./img/AkashAKTLogo.svg" />
+		</div>
+		<div class="pwWrap">
+			<input type="password" id="encryptionPW" placeholder="Keyring Passphrase" />
+			<div class="confirmBadge">&#10003;</div>
+			<div class="noConfirmBadge">❌</div>
+		</div>
+		<div class="pwWrap">
+			<input type="password" id="confirmPW" placeholder="Confirm Passphrase" />
+			<div class="confirmBadge">&#10003;</div>
+			<div class="noConfirmBadge">❌</div>
+		</div>
+		<div class="pwErrorMessage">
+			Password does not match
+		</div>
+		<div class="pwWrap">
+			<input type="text" id="walletName" placeholder="Wallet Name" />
+		</div>
+		
+		<div class="button save" id="createNewWallet"><div class="foreground">Create New Wallet</div><div class="background">Create New Wallet</div></div>
+		<div id="mnemonicWrap">
+			<textarea id="mnemonic"></textarea>
+		</div>
+		<div class="button save" id="importWallet">
+			<div class="foreground">Import Wallet</div>
+			<div class="background">Import Wallet</div>
+		</div> 
+		
+
+	</div>
+	<div class="newWalletInfo walletModalContent">
+		<div class="logo">
+			<img src="./img/AkashAKTLogo.svg" />
+		</div>
+		<div id="addressOut"></div>
+		<div id="mnemonicOut"></div>
+		<div class="button save" id="mnemonicConfirmation0"><div class="foreground">I have written this down somewhere safe</div><div class="background">I have written this down somewhere safe</div></div>
+		<div class="button save" id="mnemonicConfirmation1"><div class="foreground">I wrote it down and will not see it here again.</div><div class="background">I wrote it down and will not see it here again.</div></div>
+	</div>
+	<div class="seedImportMessage">
+		<div class="logo">
+			<img src="./img/AkashAKTLogo.svg" />
+		</div>
+		<div class="message success">
+			<div class="messageIcon">🥳</div>
+			<div class="messageText">Seed Import Successful!</div>
+		</div>
+		<div class="message error"></div>
+		<div class="button save" id="importSeedMessageConf"><div class="foreground">Done</div><div class="background">Done</div></div>
+		
+	</div>
+	<div class="getKeysModal walletModalContent">
+		<div class="logo">
+			<img src="./img/AkashAKTLogo.svg" />
+		</div>
+		<div class="pwWrap">
+			<input type="password" id="unlockPW" placeholder="Keyring Passphrase" />
+		</div>
+		<div class="allKeys">
+			<select></select>
+		</div>
+		<div class="button save" id="getKeys">
+			<div class="foreground">Get Wallets</div>
+			<div class="background">Get Wallets</div>
+		</div>
+		<div class="button cancel" id="cancelGetKeys">
+			<div class="foreground">Cancel</div>
+			<div class="background">Cancel</div>
+		</div>
+	</div>
+	<div class="setupSSHModal walletModalContent">
+		<div class="logo">
+			<img src="./img/AkashAKTLogo.svg" />
+		</div>
+		<div class="userWrap">
+			<input type="text" id="sshUser" class="modalInput" placeholder="User. ie: Ubuntu is ubuntu, Raspi is pi" />
+		</div>
+		<div class="pwWrap">
+			<input type="password" id="sshPW" class="modalInput" placeholder="Machine Password" />
+		</div>
+		
+		<div class="button save" id="setupSSH">
+			<div class="foreground">Setup SSH Access</div>
+			<div class="background">Setup SSH Access</div>
+		</div>
+		<div class="button cancel" id="cancelSSH">
+			<div class="foreground">Cancel</div>
+			<div class="background">Cancel</div>
+		</div>
+	</div>
+	<div class="addDiskModal walletModalContent">
+		<div class="logo">
+			<img src="./img/AkashAKTLogo.svg" />
+		</div>
+		<div class="addDiskSelect">
+			<select>
+				<option>Loading...</option>
+			</select>
+		</div>
+		<div class="message">
+			NOTE: THIS WILL ERASE &AMP; FORMAT THE SELECTED DISK. PLEASE PROCEED WITH CAUTION.
+		</div>
+		<div class="button save" id="addDisk">
+			<div class="foreground">Format &amp; Mount Disk</div>
+			<div class="background">Format &amp; Mount Disk</div>
+		</div>
+		<div class="button cancel" id="cancelAddDisk">
+			<div class="foreground">Cancel</div>
+			<div class="background">Cancel</div>
+		</div>
+	</div>
+	<div id="buildABoxModal" class="walletModalContent">
+		<div class="title">Build &amp; Setup a Raspberry Pi Cluster</div>
+		<div class="info">
+			For non-programmers/non-builders we make it as simple as possible to build a Raspberry Pi cluster to host Akash. 
+		</div>
+		<div class="instructions panel">
+			<div class="subtitle">
+				Instructions/Tutorial:
+			</div>
+			<div class="step" data-id="step1">
+				Step 1: Go Shopping <span class="expand">+</span>
+			</div>
+			<div class="stepInfo" id="step1">
+				<ul>
+					<li>
+						Buy 3 or 4 Raspberry Pi 4b, 8GB <a>[link]</a>
+					</li>
+					<li>
+						Want less wires/adapters? Buy PoE (power-over-ethernet) hats per each Pi to get power over the hard-line internet cables <a>[link]</a>
+					</li>
+					<li>
+						Active Cooling is essential. Buy a Raspberry Pi Cluster case with a fan <a>[link]</a>
+					</li>
+					<li>
+						DO NOT USE MICROSD STORAGE. It is extremely slow and prone to fail. Instead buy fast/reliable NVMe Solid State Drives, we recommend a 512GB per Pi <a>[link]</a>
+					</li>
+					<li>
+						Since the Pi NVMe plugs in via USB3, you&#039;ll need an enclosure. This one is sleek and has a built in heat-sync (they get hot FYI) <a>[link]</a>
+					</li>
+					<li>
+						Dont forget some short (6-inch) ethernet cables for internet+power <a>[link]</a>
+					</li>
+					<li>
+						You need a Powered Ethernet hub for power + fast internet connectivity (do not use wifi) <a>[link]</a>
+					</li>
+					<li>
+						Buy a single MicroSD card and reader. The storage can be miniscule (8GB) because we only use it one time to instruct the Raspberry Pi to boot from the NVMe disk. <a>[link]</a>
+					</li>
+					<li>
+						Buy some standoffs to securely mount &amp; stack our Raspberry Pi&#039;s <a>[link]</a>
+					</li>
+
+				</ul>
+			</div>
+			<div class="step" data-id="step2">
+				Step 2: Configure Storage Drives <span class="expand">+</span>
+			</div>
+			<div class="stepInfo" id="step2">
+				<ol>
+					<li>
+						<a href="https://www.raspberrypi.org/software/" target="_blank">Download Raspberry Pi Imager</a>. We use it to flash the Operating System onto the NVMe drives. 
+					</li>
+					<li>
+						Before we do anything fun, we need to tell each Raspberry Pi to boot from USB disk (NVMe). 
+						<ul>
+							<li>Plug in your single MicroSD card/reader and Open Raspberry Pi Imager</li>
+							<li>Click OS and choose &quot;Misc Utility Images&quot; &gt;&gt; Bootloader &gt;&gt; USB Boot</li>
+							<li>Click &quot;Choose Storage&quot; and choose your MicroSD card</li>
+							<li>Click Write to burn the USB Boot loader onto the SD card</li>
+							<li>Once finished, one Raspberry Pi at a time, insert the SD card into the Raspberry Pi card slot.</li>
+							<li>Plug in the Raspberry Pi to power and notice the green LED is solid for about 5 seconds. After it starts to blink steadily it means we finished adding USB Boot. You can now unplug the Raspberry Pi, remove the SD card and move onto the next Raspberry Pi, repeating this step until finished.</li>
+						</ul>
+					</li>
+					<li>
+						Now we burn Ubuntu onto our NVMe drives.
+						<ul>
+							<li>Assemble the NVMe drive, plug in the USB and open Raspberry Pi Imager.</li>
+							<li>Click OS and choose &quot;Other General Purpose OS&quot; &gt;&gt; Ubuntu &gt;&gt; Ubuntu <strong>Server</strong> 21.04 <strong>64-bit</strong>. It is crucial you choose the 64-bit Server Ubuntu</li>
+							<li>Click &quot;Choose Storage&quot; and locate your NVMe drive from the list of attached devices. It should be labeled NVMe and have a similar capacity (ie: 512GB)</li>
+							<li>Click Write and confirm you erase the disk.</li>
+						</ul>
+					</li>
+					<li>
+						After Ubuntu is on the NVMe drive, the OS will un-mount the USB. For the next step we want to unplug it, then plug it back into the machine running HandyHost.
+						<div><strong>Use the form below to detect and auto-configure your NVMe drive.</strong></div>
+					</li>
+				</ol>
+			</div>
+			<div class="step" data-id="step3">
+				Step 3: Assemble <span class="expand">+</span>
+			</div>
+			<div class="stepInfo" id="step3">
+				Step 3 detail :: youtube video.
+			</div>
+			<div class="step" data-id="step4">
+				Step 4: Boot Raspberry Pi&#039;s <span class="expand">+</span>
+			</div>
+			<div class="stepInfo" id="step4">
+				[Insert youtube video]
+				<ol>
+					<li>
+						Plug the NVMe drives (1 each) into each Raspberry Pi USB3 (blue USB port), make sure you ran an ethernet cable from your internet router to the powered ethernet switch, and plug in all the Raspberry Pi&#039;s.
+						<li>It will likely take a few minutes to finish the automated setup.</li>
+						<li>
+							After a few minutes, exit this view and under step &quot;1. Kubernetes Nodes Configuration&quot;, click &quot;Fetch Local Node List&quot; where you will find your Akash Nodes listed by hostnames like &quot;myHostname.local&quot;!
+						</li>
+					</li>
+				</ol>
+			</div>
+		</div>
+		
+		<div id="autoConfig" class="panel">
+			<div class="subtitle">
+				Auto-Configure Ubuntu NVMe Disk Utility
+			</div>
+			<div>
+				<ul>
+					<li class="bigger">
+						<a id="chooseDevice">Detect USB Devices</a>
+						<div class="chooseDeviceResult">
+						</div>
+					</li>
+					<li class="bigger">
+						<input class="modalInput" id="setHostname" placeholder="Host Name (a-z,0-9 only)" size="32" />
+					</li>
+					<li class="bigger">
+						<a class="nonActive" id="finishHost">Configure NVMe</a>
+					</li>
+					<li class="confirmation bigger">Success! Now repeat this for each NVMe, setting a unique host-name per each.<br />After finished, build and startup your cluster!</li>
+					<li class="error bigger">ERROR</li>
+				</ul>
+			</div>
+		</div>
+	</div>
+</div>
+<div id="nodeConfigInfo" class="mainPanel aktPanel">
+	<div id="buildABox" class="configPanel">
+		<a id="buildLink">Setup a Raspberry Pi Cluster without the CLI <span class="expand">+</span></a>
+	</div>
+	<div id="nodeConfiguration" class="configPanel">
+		<div class="configTitle">Kubernetes Cluster Configuration</div>
+		<ul class="topLevel" />
+	</div>
+	<div id="providerConfiguration" class="configPanel">
+		<div class="configTitle">Akash Provider Details</div>
+		<table class="providerList">
+			<tr class="provider_providerIP">
+				<td>
+					<div class="errorMessage">Required Value</div>
+					<label for="providerIP">Global Provider IP: </label>
+				</td>
+				<td>
+					<input class="styledSelect" type="text" id="providerIP" value="" placeholder="global IP address of the provider" size=32 />
+					<a class="getGlobalIP">Get My Global IP Address</a>
+				</td>
+			</tr>
+			<tr class="provider_clusterIP">
+				<td>
+					<div class="errorMessage">Required Value</div>
+					<label for="clusterIP">Global Cluster IP: </label>
+				</td>
+				<td>
+					<input class="styledSelect" type="text" id="clusterIP" value="" placeholder="(probably same as global IP)" size=32 /> <a class="getGlobalIP">Get My Global IP Address</a>
+				</td>
+			</tr>
+			<tr class="provider_regionName">
+				<td>
+					<div class="errorMessage">Required Value</div>
+					<label for="regionName">Region Name: </label>
+				</td>
+				<td>
+					<input class="styledSelect" type="text" id="regionName" value="" placeholder="ie: us-west, or us-east" size=32 />
+				</td>
+			</tr>
+			<tr class="provider_clusterName">
+				<td>
+					<div class="errorMessage">Required Value</div>
+					<label for="clusterName">Cluster Name: </label>
+				</td>
+				<td>
+					<input class="styledSelect" type="text" id="clusterName" value="" placeholder="Akash Cluster Name" size=32 />
+				</td>
+			</tr>
+			<tr class="provider_walletName">
+				<td>
+					<div class="errorMessage">Required Value</div>
+					<label for="providerWalletName">Akash Wallet: </label>
+				</td>
+				<td>
+					<input class="styledSelect" type="text" readonly id="providerWalletName" value="" placeholder="Akash Wallet Name" size=32 />
+					<input type="hidden" value="" id="providerWalletAddress" />
+					<a class="getWallet">Choose Akash Wallet</a>
+				</td>
+			</tr>
+		</table>
+		
+	</div>
+	<div id="clusterInventory" class="configPanel">
+		<div class="configTitle">Advanced Kubernetes Configuration</div>
+		<div class="configData"></div>
+		
+	</div>
+	<div class="buttons">
+		<div class="button save" id="saveNodeConfigs">
+			<div class="foreground">
+				Save Nodes
+			</div>
+			<div class="background">
+				Save Nodes
+			</div>
+		</div>
+		<div class="button cancel" id="cancel">
+			<div class="foreground">Cancel</div>
+			<div class="background">Cancel</div>
+		</div>
+		<div class="button cancel" id="initCluster">
+			<div class="foreground">
+				Build Kubernetes Cluster
+			</div>
+			<div class="background">
+				Build Kubernetes Cluster
+			</div>
+		</div>
+		<div class="advancedOptions">
+			<a>View Advanced Cluster Options</a>
+		</div>
+	
+	</div>
+	<div id="logs">
+		<div class="logsMessage"></div>
+		<div class="logsPanel logs">
+			<pre />
+		</div>
+	</div>
+	<div id="answerPopup">
+		<div class="title">Answer Title</div>
+		<div class="answer">some text about the things.</div>
+	</div>
+</div>
