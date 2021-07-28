@@ -3,7 +3,8 @@ pwd=${PWD}
 echo "Installing HandyHost Dependencies..."
 curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash - && \
 sudo apt-get install -y nodejs && \
-npm install && \
+sudo apt-get install -y build-essential && \
+npm install --build-from-source && \
 mkdir -p $HOME/.HandyHost && \
 echo "Installing Sia" && \
 cd $pwd/siaAPI && ./install.sh && \
