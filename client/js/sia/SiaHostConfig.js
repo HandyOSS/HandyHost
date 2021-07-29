@@ -14,27 +14,30 @@ export class SiaHostConfig {
 	getData(){
 		return new Promise((resolve,reject)=>{
 			this.getConfig().then(configData=>{
-				this.getAveragePricing().then(pricingData=>{
-					this.initHostForm(configData,pricingData);
-					/*if(typeof configData.internalsettings['netaddress'] != "undefined"){
-						//check config netaddress for blank
-						if(configData.internalsettings['netaddress'] == ''){
-							//get global ip
-							fetch('https://www.myexternalip.com/json').then(d=>d.json()).then(data=>{
-								configData.internalsettings['netaddress'] = data.ip;
+				this.getPorts().then(portsData=>{
+					this.getAveragePricing().then(pricingData=>{
+						this.initHostForm(configData,pricingData,portsData);
+						/*if(typeof configData.internalsettings['netaddress'] != "undefined"){
+							//check config netaddress for blank
+							if(configData.internalsettings['netaddress'] == ''){
+								//get global ip
+								fetch('https://www.myexternalip.com/json').then(d=>d.json()).then(data=>{
+									configData.internalsettings['netaddress'] = data.ip;
+									resolve();
+								})
+							}
+							else{
 								resolve();
-							})
+							}
 						}
 						else{
 							resolve();
-						}
-					}
-					else{
+						}*/
 						resolve();
-					}*/
-					resolve();
-					
-				});
+						
+					});
+				})
+				
 			});
 		})
 		
@@ -48,8 +51,8 @@ export class SiaHostConfig {
 		$('#siaHostInfo').hide();
 	}
 	
-	initHostForm(configData,averagePriceData){
-		console.log('config data',configData,averagePriceData);
+	initHostForm(configData,averagePriceData,portsData){
+		console.log('config data',configData,averagePriceData,portsData);
 		const fields = {
 			acceptingcontracts:{type: 'boolean',label:'Accepting Contracts', 'info':'When set to true, the host will accept new file contracts if the terms are reasonable. When set to false, the host will not accept new file contracts at all.'},
 			maxdownloadbatchsize:{type:'bytes',label:'Max Download Batch Size (MB)', 'info':'The maximum size of a single download request from a renter. Each download request has multiple round trips of communication that exchange money. Larger batch sizes mean fewer round trips, but more financial risk for the host - the renter can get a free batch when downloading by refusing to provide a signature.'},
@@ -200,18 +203,33 @@ export class SiaHostConfig {
 			}
 			$ul.append($li);
 		});
-		const $submit = $('<li class="buttons" />');
+		const $ports = $('<ul class="hostPorts"><div class="portsTitle">Sia Host Ports</div></ul>');
+		if(portsData.portsSet){
+			
+			const $rpcAddr = $('<li><label for="rpcPort">RPC Port (default 9981)</label><input id="rpcPort" data-key="rpc" type="number" placeholder="default: 9981" value="'+portsData.rpc+'" /></li>')
+			const $hostAddr = $('<li><label for="hostPort">Host Port (default 9982)</label><input id="hostPort" data-key="host" type="number" placeholder="default: 9982" value="'+portsData.host+'" /></li>')
+			const $muxAddr = $('<li><label for="muxPort">Multiplexer Port (default 9983)</label><input id="muxPort" data-key="mux" type="number" placeholder="default: 9983" value="'+portsData.mux+'" /></li>')
+			const $muxWSAddr = $('<li><label for="muxWSPort">Multiplexer WS Port (default 9984)</label><input id="muxWSPort" data-key="muxWS" type="number" placeholder="default: 9984" value="'+portsData.muxWS+'" /></li>')
+			$ports.append($rpcAddr);
+			$ports.append($hostAddr);
+			$ports.append($muxAddr);
+			$ports.append($muxWSAddr);
+		}
+
+		const $submit = $('<div class="buttons" />');
 		const $cancel = $('<div class="button cancel"><div class="foreground">cancel</div><div class="background">cancel</div></div>');
 		const $save = $('<div class="button save"><div class="foreground">save</div><div class="background">save</div></div>')
 		$submit.append($save);
 		$submit.append($cancel);
 		
-		$ul.append($submit);
+		//$ul.append($submit);
 		$el.html($ul);
+		$el.append($ports);
+		$el.append($submit);
 
 		//todo cancel hides form
 		$save.off('click').on('click',()=>{
-			this.submitForm(fields);
+			this.submitForm(fields,$ports);
 		})
 	}
 	showTooltip($element,text,label){
@@ -231,7 +249,7 @@ export class SiaHostConfig {
 	hideTooltip(){
 		$('#tooltip').hide();
 	}
-	submitForm(fields){
+	submitForm(fields,$ports){
 		let formOutput = {};
 		let hasValidationErrors = false;
 		Object.keys(fields).map(fieldKey=>{
@@ -309,6 +327,48 @@ export class SiaHostConfig {
 			console.log('error submitting',res)
 			this.showSaveConfirmationModal(res,true)
 		})
+		let portsData = {};
+		$('li',$ports).each(function(){
+			const key = $('input',this).attr('data-key');
+			const val = $('input',this).val();
+			if(val == ''){
+				let defaultPort;
+				switch(key){
+					case 'rpc':
+						defaultPort = '9981';
+					break;
+					case 'host':
+						defaultPort = '9982';
+					break;
+					case 'mux':
+						defaultPort = '9983';
+					break;
+					case 'muxWS':
+						defaultPort = '9984';
+					break;
+				}
+				portsData[key] = defaultPort;
+			}
+			else{
+				portsData[key] = val;
+			}
+		});
+		console.log('portsdata',portsData);
+		fetch("/api/sia/setPorts",
+		{
+		    headers: {
+		      'Accept': 'application/json',
+		      'Content-Type': 'application/json'
+		    },
+		    method: "POST",
+		    body: JSON.stringify(portsData)
+		})
+		.then((res)=>{ 
+			console.log('success submitting ports',res) 
+		})
+		.catch((res)=>{ 
+			console.log('error submitting ports',res)
+		});
 		//todo submit output
 	}
 	showSaveConfirmationModal(result,isError){
@@ -355,5 +415,14 @@ export class SiaHostConfig {
 			
 		});
 		
+	}
+	getPorts(){
+		return new Promise((resolve,reject)=>{
+			fetch('/api/sia/getPorts').then(d=>d.json()).then(data=>{
+				resolve(data);
+			}).catch(error=>{
+				reject(error);
+			})
+		})
 	}
 }

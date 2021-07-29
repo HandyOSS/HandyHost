@@ -11,6 +11,7 @@ import QRCode from 'qrcode';
 
 export class HandySia{
 	constructor(){
+		this.siaPortsPath = process.env.HOME+'/.HandyHost/siaData/siaPorts.json';
 		this.wallet = new Wallet();
 		this.consensus = new Consensus();
 		this.host = new Host();
@@ -31,13 +32,21 @@ export class HandySia{
 			process.env.SIA_WALLET_PASSWORD = unlockPW.replace(/\n/g,'').trim();
 		}
 		
+		this.trySpawningSiad();
+		//this.consensus.getChainStatus();
+	}
+	trySpawningSiad(){
+		if(!fs.existsSync(this.siaPortsPath)){
+			console.log('sia ports are not present yet, hold...')
+			return false;
+		}
 		this.daemon.getVersion().then(data=>{
 			console.log('fetched version',data);
 			this.consensus.getChainStatus().then(d=>{
 				console.log('chain stats',d);
 				if(typeof process.env.SIA_WALLET_PASSWORD != "undefined"){
 					//unlock on startup so that we can host files else lose $$$
-					console.log('doing wallet unlock',unlockPW)
+					//console.log('doing wallet unlock',unlockPW)
 					this.wallet.unlockWallet(process.env.SIA_WALLET_PASSWORD).then(data=>{
 						console.log('wallet unlock success',data);
 					}).catch(error=>{
@@ -57,8 +66,7 @@ export class HandySia{
 			}).catch(e=>{
 				console.log('error spawning siad')
 			})
-		})
-		//this.consensus.getChainStatus();
+		});
 	}
 	attemptWalletUnlock(){
 		setTimeout(()=>{
@@ -86,7 +94,7 @@ export class HandySia{
 					resolve(data);
 				}).catch(error=>{
 					reject(error);
-				})
+				});
 			break;
 			case 'updateHostConfig':
 				console.log('got config data',requestBody)
@@ -253,7 +261,7 @@ export class HandySia{
 	getSiaPorts(){
 		return new Promise((resolve,reject)=>{
 			let ports = {};
-			const portsFilePath = process.env.HOME+'/.HandyHost/siaData/siaPorts.json';
+			const portsFilePath = this.siaPortsPath;
 			if(fs.existsSync(portsFilePath)){
 				ports = JSON.parse(fs.readFileSync(portsFilePath));
 				resolve(ports);
@@ -299,9 +307,16 @@ export class HandySia{
 				reject(err);
 			})
 		}
-		const portsFilePath = process.env.HOME+'/.HandyHost/siaData/siaPorts.json';
-		parsed.portsSet = true;
-		fs.writeFileSync(portsFilePath,JSON.stringify(parsed),'utf8');
+		return new Promise((resolve,reject)=>{
+			const portsFilePath = this.siaPortsPath;
+			parsed.portsSet = true;
+			fs.writeFileSync(portsFilePath,JSON.stringify(parsed),'utf8');
+			this.trySpawningSiad(); //todo restart siad if it's already running???
+			resolve(parsed);
+		}).catch(error=>{
+			reject(error);
+		})
+		
 		//write to file
 	}
 	getHostMetrics(){
