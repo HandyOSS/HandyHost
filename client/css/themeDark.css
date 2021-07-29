@@ -68,7 +68,7 @@ html.darkTheme{
 .darkTheme .sendMax{
 	filter:invert(1);
 }
-.darkTheme #siaHostInfo li input, .darkTheme #siaHostInfo li select, .darkTheme #pathShortcut, .darkTheme #encryptionPW, .darkTheme #confirmPW, .darkTheme #mnemonic, .darkTheme #mnemonicOut, .darkTheme .balanceBox, .darkTheme #walletName, .darkTheme .modalInput, .darkTheme #nodeConfigInfo input, .darkTheme #unlockPW, .darkTheme .allKeys select, .darkTheme .addDiskSelect select, .styledSelect, .darkTheme .styledInput, .darkTheme .registerProviderModal input[type="checkbox"]{
+.darkTheme #siaHostInfo li input, .darkTheme #siaHostInfo li select, .darkTheme #pathShortcut, .darkTheme #encryptionPW, .darkTheme #confirmPW, .darkTheme #mnemonic, .darkTheme #mnemonicOut, .darkTheme .balanceBox, .darkTheme #walletName, .darkTheme .modalInput, .darkTheme #nodeConfigInfo input, .darkTheme #unlockPW, .darkTheme .allKeys select, .darkTheme .addDiskSelect select, .styledSelect, .darkTheme .styledInput, .darkTheme .registerProviderModal input[type="checkbox"], .setPortsModal input[type="checkbox"]{
 	filter:invert(1);
 }
 .darkTheme .button{

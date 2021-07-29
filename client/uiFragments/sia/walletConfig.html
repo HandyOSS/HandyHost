@@ -27,6 +27,56 @@
 		<div class="button save" id="importWallet"><div class="foreground">Import Wallet</div><div class="background">Import Wallet</div></div>
 
 	</div>
+	<!-- 
+	--host-addr 9982
+	--rpc-addr 9981
+	--siamux-addr 9983
+	--siamux-addr-ws 9984
+	 -->
+	<div class="setPortsModal walletModalContent">
+		<div class="logo">
+			<img src="./img/SiacoinSCLogo.svg" />
+		</div>
+		<div class="introText">
+			<div class="welcome">Welcome to Sia!</div>
+			<div class="welcomeBody">
+				Before we start the Sia fullnode, you need to make sure to setup port forwarding for default Sia ports (9981-9984) in your network router for TCP traffic to this device&#039;s IP (<span class="ip">IP address</span>). After you have configured port forwarding, click save to launch your Sia node.
+			</div>
+			<div class="setCustom">
+				<input type="checkbox" id="useCustomPorts" />
+				<label for="useCustomPorts">Set Custom Sia Ports</label>
+			</div>
+		</div>
+		<div id="ports">
+			<div class="portWrap">
+				<label for="rpcPort">RPC Port (default 9981)</label>
+				<input type="number" id="rpcPort" placeholder="9981" class="styledSelect" />
+			</div>
+			<div class="portWrap">
+				<label for="hostPort">Host Port (default 9982)</label>
+				<input type="number" id="hostPort" placeholder="9982" class="styledSelect" />
+			</div>
+			<div class="portWrap">
+				<label for="muxPort">Multiplexer Port (default 9983)</label>
+				<input type="number" id="muxPort" placeholder="9983" class="styledSelect" />
+			</div>
+			<div class="portWrap">
+				<label for="muxWSPort">Multiplexer WS Port (default 9984)</label>
+				<input type="number" id="muxWSPort" placeholder="9984" class="styledSelect" />
+			</div>
+			<small>Note: Make sure to setup Port Forwarding for TCP traffic to these specific ports in your network router</small>
+		</div>
+		
+		
+		<div class="button save" id="savePorts">
+			<div class="foreground">Start Node</div>
+			<div class="background">Start Node</div>
+		</div>
+		<!-- <div class="button cancel" id="cancelPorts">
+			<div class="foreground">Cancel</div>
+			<div class="background">Cancel</div>
+		</div> -->
+	</div>
 	<div class="newWalletInfo">
 		<div class="logo">
 			<img src="./img/SiacoinSCLogo.svg" />

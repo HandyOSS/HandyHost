@@ -9,7 +9,7 @@
 	display:none;
 	z-index:2;
 }
-.walletUtil, .newWalletInfo, .seedImportMessage{
+.walletUtil, .newWalletInfo, .seedImportMessage, .setPortsModal{
 	width:calc(50% - 20px);
 	padding: 10px;
 	margin-left:25%;
@@ -18,7 +18,7 @@
 	margin-top: -100%;
 	transition: margin-top 0.4s linear;
 }
-.walletUtil.showing, .newWalletInfo.showing, .seedImportMessage.showing{
+.walletUtil.showing, .newWalletInfo.showing, .seedImportMessage.showing, .setPortsModal.showing{
 	margin-top:0px;
 }
 .walletUtil #encryptionPW, .walletUtil #confirmPW, .balanceBox{
@@ -117,4 +117,37 @@
 }
 .seedImportMessage .message.error{
 	display:none;
+}
+
+.portWrap{
+	float:left;
+	width: calc(50% - 20px);
+	padding: 2px 10px;
+}
+.setPortsModal #ports{
+	display:none;
+}
+.setPortsModal .welcome{
+	font-size: 36px;
+	text-align:center;
+}
+.setPortsModal .welcomeBody{
+	font-size: 24px;
+}
+.setPortsModal .introText{
+	width: calc(100% - 20px);
+	padding: 5px 10px;
+	font-weight:200;
+}
+.setPortsModal input[type="checkbox"]{
+	height:20px;
+	width:20px;
+}
+.setPortsModal .setCustom{
+	line-height: 41px;
+    vertical-align: middle;
+    float: left;
+    width: 100%;
+    margin-top: 5px;
+    font-size: 24px;
 }

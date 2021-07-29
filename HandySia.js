@@ -234,7 +234,75 @@ export class HandySia{
 					reject(e);
 				})
 			break;
+			case 'getPorts':
+				this.getSiaPorts().then(data=>{
+					resolve(data);
+				}).catch(error=>{
+					reject(error);
+				})
+			break;
+			case 'setPorts':
+				this.setSiaPorts(requestBody).then(data=>{
+					resolve(data);
+				}).catch(error=>{
+					reject(error);
+				})
+			break;
 		}
+	}
+	getSiaPorts(){
+		return new Promise((resolve,reject)=>{
+			let ports = {};
+			const portsFilePath = process.env.HOME+'/.HandyHost/siaData/siaPorts.json';
+			if(fs.existsSync(portsFilePath)){
+				ports = JSON.parse(fs.readFileSync(portsFilePath));
+				resolve(ports);
+			}
+			else{
+				//if no ports defined yet we give some info about port forwarding with the local IP
+				let getIPCommand;
+				let getIPOpts;
+				let ipCommand;
+				let ipRangeOut;
+				
+				if(process.platform == 'darwin'){
+					getIPCommand = 'ipconfig';
+					getIPOpts =  ['getifaddr', 'en0'];
+				}
+				if(process.platform == 'linux'){
+					//hostname -I [0]
+					getIPCommand = 'hostname';
+					getIPOpts = ['-I'];
+				}
+
+				ipCommand = spawn(getIPCommand,getIPOpts); 
+				ipCommand.stdout.on('data',d=>{
+					ipRangeOut = d.toString('utf8').trim();
+				});
+				ipCommand.on('close',()=>{
+					if(process.platform == 'linux'){
+						ipRangeOut = ipRangeOut.split(' ')[0];
+					}
+					ports.ip = ipRangeOut;
+					resolve(ports);
+				});
+			}
+			
+		})
+		
+
+	}
+	setSiaPorts(requestBody){
+		const {parsed,err} = this.parseRequestBody(requestBody);
+		if(typeof parsed == "undefined"){
+			return new Promise((resolve,reject)=>{
+				reject(err);
+			})
+		}
+		const portsFilePath = process.env.HOME+'/.HandyHost/siaData/siaPorts.json';
+		parsed.portsSet = true;
+		fs.writeFileSync(portsFilePath,JSON.stringify(parsed),'utf8');
+		//write to file
 	}
 	getHostMetrics(){
 		return new Promise((resolve,reject)=>{

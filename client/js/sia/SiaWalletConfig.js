@@ -26,18 +26,30 @@ export class SiaWalletConfig{
 		$('#walletInitModal').hide();
 	}
 	initWallet(){
-		this.fetchChainAndWalletData().then((result)=>{
-			const wallet = result.wallet;
-			const chain = result.chain;
-			if(!wallet.encrypted && !wallet.unlocked && !wallet.rescanning){
-				//is a new install, we need to make a wallet
-				console.log('time for new wallet creation');
-				this.showInitModal();
+		this.getSiaPorts().then((result)=>{
+			console.log('get sia ports data',result);
+			if(result.portsSet){
+				this.fetchChainAndWalletData().then((result)=>{
+					const wallet = result.wallet;
+					const chain = result.chain;
+					if(!wallet.encrypted && !wallet.unlocked && !wallet.rescanning){
+						//is a new install, we need to make a wallet
+						console.log('time for new wallet creation');
+						this.showInitModal();
+					}
+					else{
+						$('#walletInitModal').hide();
+					}
+				});
 			}
 			else{
-				$('#walletInitModal').hide();
+				//show ports setter modal
+				console.log('show ports setter');
+				this.showSiaPortsModal(result);
+
 			}
 		})
+		
 		/*fetch('/api/sia/getChainStatus').then(chainRes=>chainRes.json()).then(chainData=>{
 			fetch('/api/sia/getWalletInfo').then(res=>res.json()).then(data=>{
 				console.log('got wallet data',data);
@@ -62,6 +74,64 @@ export class SiaWalletConfig{
 			this.hide();
 		})
 
+	}
+	getSiaPorts(){
+		return new Promise((resolve,reject)=>{
+			fetch('/api/sia/getPorts').then(d=>d.json()).then(data=>{
+				resolve(data);
+			})
+		});
+	}
+	showSiaPortsModal(data){
+		if(typeof data.ip != "undefined"){
+			$('.setPortsModal .welcomeBody .ip').html(data.ip);
+		}
+
+		$('.setPortsModal').addClass('showing');
+		$('.walletUtil').removeClass('showing');
+		$('.setCustom input#useCustomPorts').off('change').on('change',()=>{
+
+			const checked = $('input#useCustomPorts').is(':checked');
+			console.log('custom ports changed',checked);
+			if(checked){
+				$('.setPortsModal #ports').show();
+			}
+			else{
+				$('.setPortsModal #ports input').val('');
+				$('.setPortsModal #ports').hide();
+			}
+		})
+		$('#walletInitModal').show();
+
+		$('.setPortsModal #savePorts').off('click').on('click',()=>{
+			const rpcPort = $('#ports #rpcPort').val() == '' ? '9981' : $('#ports #rpcPort').val();
+			const hostPort = $('#ports #hostPort').val() == '' ? '9982' : $('#ports #hostPort').val();
+			const muxPort = $('#ports #muxPort').val() == '' ? '9983' : $('#ports #muxPort').val();
+			const muxWSPort = $('#ports #muxWSPort').val() == '' ? '9984' : $('#ports #muxWSPort').val();
+			const out = {
+				rpc:rpcPort,
+				host:hostPort,
+				mux:muxPort,
+				muxWS:muxWSPort
+			};
+			fetch('/api/sia/setPorts',
+			{
+			    headers: {
+			      'Accept': 'application/json',
+			      'Content-Type': 'application/json'
+			    },
+			    method: "POST",
+			    body: JSON.stringify(out)
+			})
+			.then((res)=>{ console.log('success'); return res.json(); }).then(data=>{
+				console.log('res data',data);
+				$('.setPortsModal').removeClass('showing');
+				$('#walletInitModal').hide();
+				this.initWallet();
+			})
+			.catch((res)=>{ console.log('error submitting',res) })
+		})
+		
 	}
 	fetchChainAndWalletData(){
 		return new Promise((resolve,reject)=>{

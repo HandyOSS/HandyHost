@@ -78,7 +78,10 @@ export class Daemon{
 	}
 	siadSpawn(){
 		return new Promise((resolve,reject)=>{
+
 			const siaDirectory = `${process.env.HOME}/.HandyHost/siaData`;
+			const siaPortsPath = siaDirectory + '/siaPorts.json';
+			let ports = {};
 			const appExists = fs.existsSync(siaDirectory);
 			let isNewInstall = false;
 			if(!appExists){
@@ -86,7 +89,31 @@ export class Daemon{
 				isNewInstall = true;
 				this.gateway = new Gateway();
 			}
+			let muxPort = ':9983';
+			let muxWSPort = ':9984';
+			let hostPort = ':9982';
+			let rpcPort = ':9981';
+
+			if(fs.existsSync(siaPortsPath)){
+				ports = JSON.parse(fs.readFileSync(siaPortsPath,'utf8'));
+				if(typeof ports.mux != "undefined"){
+					muxPort = ':'+ports.mux;
+				}
+				if(typeof ports.host != "undefined"){
+					hostPort = ':'+ports.host;
+				}
+				if(typeof ports.muxWS != "undefined"){
+					muxWSPort = ':'+ports.muxWS;
+				}
+				if(typeof ports.rpc != "undefined"){
+					rpcPort = ':'+ports.rpc;
+				}
+			}
 			console.log('start siad',siaDirectory);
+			console.log('hostPort',hostPort);
+			console.log('rpcPort',rpcPort);
+			console.log('muxPort',muxPort);
+			console.log('muxWSPort',muxWSPort);
 			//start siad
 			const opts = {
 				detached:true
@@ -100,11 +127,16 @@ export class Daemon{
 			const siadOutputStdout = fs.openSync(logOutputPath,'a');
 			const siadOutputStderr = fs.openSync(logOutputPath,'a');
 			opts.stdio = ['ignore',siadOutputStdout,siadOutputStderr];
+			
 			const siadCLIOpts = [
 				'--siamux-addr',
-				':9985',
+				muxPort,//':9985',
 				'--siamux-addr-ws',
-				':9986',
+				muxWSPort,//':9986',
+				'--host-addr',
+				hostPort,
+				'--rpc-addr',
+				rpcPort,
 				'--sia-directory',
 				siaDirectory,
 				'-M',
