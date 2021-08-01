@@ -48,3 +48,4 @@ export function rainbow(){
 	console.log(padding);
 	console.log('');
 }
+rainbow();

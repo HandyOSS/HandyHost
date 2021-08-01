@@ -1,6 +1,8 @@
 #!/bin/bash
 #install deps
 echo "installing akash dependencies..." && \
+sudo apt install unzip && \
+sudo apt install libssl-dev && \
 sudo apt install -y avahi-utils && \
 sudo apt install -y virtualenv && \
 sudo apt install -y expect && \

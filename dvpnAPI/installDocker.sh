@@ -24,3 +24,5 @@ if ! grep -q 'DOCKER_HOST' "${profile_file}" ; then
   echo "export DOCKER_HOST=unix:///run/user/1000/docker.sock" >> "${profile_file}"
   source $profile_file
 fi
+export PATH=/usr/bin:$PATH
+export DOCKER_HOST=unix:///run/user/1000/docker.sock
