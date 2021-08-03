@@ -84,7 +84,7 @@ export class DiskUtils{
 	parseFdiskResult(result){
 
 		let devices = result.split('\n\n');
-		console.log(devices.length);
+		//console.log(devices.length);
 		devices = devices.map(d=>{
 			return d.split('\n').filter(l=>{return l.length > 0;})
 		})
@@ -443,6 +443,70 @@ export class DiskUtils{
 				resolve(output);
 			})
 
+		})
+	}
+	
+	getThumbDrives(){
+		//get attached usb thumb drives for ubuntu iso creation
+		return new Promise((resolve,reject)=>{
+			this.getUSBFromLSBLK().then(blockDevices=>{
+				let fdiskOut = '';
+				const fdisk = spawn('sudo',['fdisk','-l'])
+				fdisk.stdout.on('data',d=>{
+					//console.log('fdisk out',d.toString())
+					fdiskOut += d.toString();
+				})
+				fdisk.stderr.on('data',d=>{
+					console.log('stderr',d.toString())
+				})
+				fdisk.on('close',()=>{
+					//console.log('fdisk out',fdiskOut);
+					let parsed = this.parseFdiskResult(fdiskOut);
+					//console.log('fdisk res',parsed);
+					let devicePaths = blockDevices.map(usb=>{
+						let name = usb.name;
+						if(name.indexOf('/dev/') == -1){
+							name = '/dev/'+name;
+						}
+						return name;
+					})
+					parsed.map(disk=>{
+						/*
+						type:'disk',
+						data:{
+							device: diskPath,
+							size: diskSize,
+							model:diskModel
+						}
+						*/
+						if(disk.type == 'disk'){
+							if(devicePaths.indexOf(disk.data.device) >= 0){
+								blockDevices[devicePaths.indexOf(disk.data.device)].meta = disk.data;
+							}
+						}
+					})
+					resolve(blockDevices);
+				})
+			}).catch(error=>{
+				reject(error);
+			})
+			
+		});
+	}
+	getUSBFromLSBLK(){
+		return new Promise((resolve,reject)=>{
+			let lsblkOut = '';
+			const lsblk = spawn('lsblk',['-a','-e','7','--json']);
+			lsblk.stdout.on('data',d=>{
+				lsblkOut += d.toString();
+			})
+			lsblk.on('close',()=>{
+				let j = JSON.parse(lsblkOut);
+				let blockDevices = j.blockdevices.filter(device=>{
+					return device.rm; //rm == removable
+				});
+				resolve(blockDevices);
+			})
 		})
 	}
 }

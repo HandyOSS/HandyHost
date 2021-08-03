@@ -115,7 +115,108 @@
 			<div class="background">Cancel</div>
 		</div>
 	</div>
-	<div id="buildABoxModal" class="walletModalContent">
+	<div id="buildAX86BoxModal" class="walletModalContent buildABoxModal">
+		<div class="title">Build &amp; Setup an x86 Cluster</div>
+		<div class="info">
+			For non-programmers/non-builders we make it as simple as possible to build an x86 (AMD | Intel CPU) cluster to host Akash. 
+		</div>
+		<div class="instructions panel">
+			<div class="subtitle">
+				Instructions/Tutorial:
+			</div>
+			<div class="step" data-id="step1x86">
+				Step 1: Go Shopping <span class="expand">+</span>
+			</div>
+			<div class="stepInfo" id="step1x86">
+				<ul>
+					<li>
+						Buy 3 or 4 UDOO Bolt Gear for ~$450/each <a>[link]</a>
+					</li>
+					<li>
+						Each UDOO Bolt supports up to 32GB RAM (2400MHz, 260 pins). I buy a single 8GB stick per machine for ~$35 <a>[link]</a>
+					</li>
+					<li>
+						The UDOO Bolt supports NVMe storage. I buy a single m.2 512GB B-key storage device per machine for ~$60 <a>[link]</a>
+					</li>
+					<li>
+						You need an Ethernet hub for fast and reliable internet connectivity (do not use wifi!) <a>[link]</a>
+					</li>
+					<li>
+						Dont forget some short (6-12 inch) ethernet cables for internet <a>[link]</a>
+					</li>
+					<li>
+						Buy a single USB Thumb drive (~16-32GB) for flashing Ubuntu Server OS onto each machine. 
+					</li>
+					
+					<li>
+						Alternately: Feel free to build any kind of PC you choose, just make sure it has a decent quad-core CPU (AMD|Intel only, NOT ARM or Raspberry Pi as Akash does not support ARM at this time), at least 2GB RAM per CPU Core, and at least 512GB NVMe storage.
+						<br />
+						<small>
+							Note: We already built HandyHost with ARM/Raspberry Pi support so once it is supported you will be able to use it.
+						</small>
+					</li>
+				</ul>
+			</div>
+			<div class="step" data-id="step2x86">
+				Step 2: Assemble <span class="expand">+</span>
+			</div>
+			<div class="stepInfo" id="step2x86">
+				Step 2 detail :: youtube video.
+			</div>
+			
+			<div class="step" data-id="step3x86">
+				Step 3: Create your USB ThumbDrive Auto-Installer<span class="expand">+</span>
+			</div>
+			<div class="stepInfo" id="step3x86">
+				<ol>
+					<div class="ackMessage">
+						We made configuring the Akash nodes as simple as possible. We have created a custom Ubuntu Server ThumbDrive installer that you can plug into your new machines and have them auto-configured and setup for access for the Akash Cluster.
+					</div>
+					<li>
+						Plug in your USB ThumbDrive to the machine running HandyHost.
+					</li>
+					<li>
+						Use the utility below to detect the ThumbDrive and burn Ubuntu Server onto the ThumbDrive.
+					</li>
+					<li>
+						After the Image is complete, make sure the akash node is powered off. Plug the thumbdrive into any of your brand new Akash nodes and power them on. We take care of the rest and will notify you within the app when the new node is online. 
+					</li>
+					<li>
+						Once the new node shows as online in your nodes list, you can plug the ThumbDrive into the next machine, repeat the previous step, until all your nodes are added.
+					</li>
+				</ol>
+			</div>
+			
+		</div>
+		
+		<div id="autoConfigx86" class="panel autoConfig">
+			<div class="subtitle">
+				Auto-Configure Ubuntu Thumb Drive Utility
+			</div>
+			<div>
+				<ul>
+					<li>Plug in your USB thumb drive into the machine running the HandyHost application. Then:</li>
+					<li class="bigger">
+						<a id="chooseDevicex86" class="chooseDevice">Detect USB Devices</a>
+						<div class="chooseDeviceResult">
+						</div>
+					</li>
+					<li class="bigger">
+						<a class="nonActive finishHost" id="finishHostx86">Create Ubuntu Auto-Installer</a>
+						<small>
+							Note: this will take 5-10 minutes
+						</small>
+					</li>
+					<li class="confirmation bigger">
+						Success! Now you can plug this ThumbDrive into any of your new nodes, power them on, and Ubuntu will autoinstall and auto configure access for HandyHost/Akash. Once added the new machine will automatically show in your nodes list. <br />
+					</li>
+					<li class="error bigger">ERROR</li>
+				</ul>
+			</div>
+		</div>
+	</div>
+
+	<div id="buildABoxModal" class="walletModalContent buildABoxModal">
 		<div class="title">Build &amp; Setup a Raspberry Pi Cluster</div>
 		<div class="info">
 			For non-programmers/non-builders we make it as simple as possible to build a Raspberry Pi cluster to host Akash. 
@@ -216,14 +317,14 @@
 			</div>
 		</div>
 		
-		<div id="autoConfig" class="panel">
+		<div id="autoConfig" class="panel autoConfig">
 			<div class="subtitle">
 				Auto-Configure Ubuntu NVMe Disk Utility
 			</div>
 			<div>
 				<ul>
 					<li class="bigger">
-						<a id="chooseDevice">Detect USB Devices</a>
+						<a id="chooseDevice" class="chooseDevice">Detect USB Devices</a>
 						<div class="chooseDeviceResult">
 						</div>
 					</li>
@@ -231,7 +332,7 @@
 						<input class="modalInput" id="setHostname" placeholder="Host Name (a-z,0-9 only)" size="32" />
 					</li>
 					<li class="bigger">
-						<a class="nonActive" id="finishHost">Configure NVMe</a>
+						<a class="nonActive finishHost" id="finishHost">Configure NVMe</a>
 					</li>
 					<li class="confirmation bigger">Success! Now repeat this for each NVMe, setting a unique host-name per each.<br />After finished, build and startup your cluster!</li>
 					<li class="error bigger">ERROR</li>
@@ -242,7 +343,10 @@
 </div>
 <div id="nodeConfigInfo" class="mainPanel aktPanel">
 	<div id="buildABox" class="configPanel">
-		<a id="buildLink">Setup a Raspberry Pi Cluster without the CLI <span class="expand">+</span></a>
+		<a id="buildLink" class="buildLink">Setup a Raspberry Pi Cluster without the CLI <span class="expand">+</span></a>
+	</div>
+	<div id="buildAX86Box" class="configPanel">
+		<a id="buildX86Link" class="buildLink">Build/Setup New x86 Nodes <span class="expand">+</span></a>
 	</div>
 	<div id="nodeConfiguration" class="configPanel">
 		<div class="configTitle">Kubernetes Cluster Configuration</div>

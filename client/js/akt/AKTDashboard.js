@@ -46,6 +46,10 @@ export class AKTDashboard {
 				$('#logs .logsMessage').html('Kubernetes Cluster Installation is Finished!')
 			}
 		})
+		this.socket.on('newNodeRegistered',nodeData=>{
+			console.log('new node data',nodeData);
+			this.showNewNodeAddedModal(nodeData);
+		})
 		
 	}
 	show(){
@@ -128,8 +132,42 @@ export class AKTDashboard {
 	hideModal(){
 		$('.walletModalContent').removeClass('showing');
 		$('#runProviderModal').hide();
+		$('#newNodeAddedModal').hide();
 		$('#unlockRunPW').val('');
 		$('.walletUtil').addClass('showing');
+	}
+	showNewNodeAddedModal(data){
+		$('#closeNewNodeAddedModal').off('click').on('click',()=>{
+			this.hideModal();
+		});
+		$('.addNodeMessage').show();
+		$('.addNodeMessage').addClass('showing');
+		$('#newNodeAddedModal').show();
+		$('.addNodeMessage .messageText').html('<div class="message0">Added an Akash Node named: '+data.hostname+', on IP '+data.ip+' successfully!</div>')
+		$('.addNodeMessage .messageText').append('<div class="message1">It is now safe to remove the USB ThumbDrive from the new node and setup other nodes.</div>')
+		$('.addNodeMessage .messageText').append('<div class="message1">Your new node is now available to add to your Akash cluster in the Configuration Interface.</div>')
+		$('#addedNodeMessageConf').off('click').on('click',()=>{
+			this.hideModal();
+		})
+		/*
+		<div id="newNodeAddedModal" class="modalWrap">
+			<div class="closeModal" id="closeNewNodeAddedModal">
+				[close]
+			</div>
+			<div class="addNodeMessage walletModalContent">
+				<div class="logo">
+					<img src="./img/AkashAKTLogo.svg" />
+				</div>
+				<div class="message success">
+					<div class="messageIcon">🥳</div>
+					<div class="messageText">Started Provider Successful!</div>
+				</div>
+				<div class="message error"></div>
+				<div class="button save" id="addedNodeMessageConf"><div class="foreground">Done</div><div class="background">Done</div></div>
+				
+			</div>
+		</div>
+		*/
 	}
 	showRunProviderModal(){
 		$('#closeRunProviderModal').off('click').on('click',()=>{

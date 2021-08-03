@@ -265,9 +265,9 @@ export class AKTNodeConfig{
 	}
 	showBuildABoxModal(){
 		$('#finishHost').addClass('nonActive');
-		$('#autoConfig .chooseDeviceResult').html('');
+		$('#buildABoxModal #autoConfig .chooseDeviceResult').html('');
 		$('#setHostname').val('');
-		$('#autoConfig .confirmation').hide();
+		$('#buildABoxModal #autoConfig .confirmation').hide();
 		$('#walletInitModal').show();
 		$('.walletModalContent').removeClass('showing');
 		$('#buildABoxModal').addClass('showing');
@@ -275,6 +275,15 @@ export class AKTNodeConfig{
 			this.hideModal();
 		})
 		
+	}
+	showBuildAX86BoxModal(){
+		$('#buildAX86BoxModal #autoConfig .confirmation').hide();
+		$('#walletInitModal').show();
+		$('.walletModalContent').removeClass('showing');
+		$('#buildAX86BoxModal').addClass('showing');
+		$('#closeModal').off('click').on('click',()=>{
+			this.hideModal();
+		})
 	}
 	showSSHSetupModal(nodeData){
 		//setupSSHModal

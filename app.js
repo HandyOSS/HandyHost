@@ -32,7 +32,12 @@ const httpServer = http.createServer(function(request, response) {
       });
       request.on('end', function () {
         api.get(safe,body).then(data=>{
-          response.end(JSON.stringify(data));
+          if(typeof data == 'string'){
+            response.end(data);
+          }
+          else{
+            response.end(JSON.stringify(data));
+          }
         }).catch(err=>{
           response.writeHead(404, {"Content-Type": "text/plain"});
           let out = '{}';

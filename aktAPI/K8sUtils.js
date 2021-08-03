@@ -1,10 +1,12 @@
 import fs from 'fs';
 import {spawn} from 'child_process';
 import https from 'https';
+import {DiskUtils} from './DiskUtils.js';
 
 export class K8sUtils{
 	constructor(configPath){
 		this.configJSONPath = configPath; //the json for handyhost app about the cluster inventory
+		this.diskUtils = new DiskUtils();
 	}
 	generateUbuntuCloudInit(params,hosts){
 		return new Promise((resolve,reject)=>{
@@ -367,5 +369,173 @@ export class K8sUtils{
 			request.end();
 			
 		})
+	}
+	getLocalIP(){
+		return new Promise((resolve,reject)=>{
+			let getIPCommand;
+			let getIPOpts;
+			let ipCommand;
+			let ipOut;
+			
+			if(process.platform == 'darwin'){
+				getIPCommand = 'ipconfig';
+				getIPOpts =  ['getifaddr', 'en0'];
+			}
+			if(process.platform == 'linux'){
+				//hostname -I [0]
+				getIPCommand = 'hostname';
+				getIPOpts = ['-I'];
+			}
+
+			ipCommand = spawn(getIPCommand,getIPOpts); 
+			ipCommand.stdout.on('data',d=>{
+				ipOut = d.toString('utf8').trim();
+			});
+			ipCommand.on('close',()=>{
+				if(process.platform == 'linux'){
+					ipOut = ipOut.split(' ')[0];
+				}
+				resolve(ipOut);
+			});
+		})
+	}
+	flashThumbDrive(path){
+		//path = device path. first verify it's detachable media just to be paranoid..
+		return new Promise((resolve,reject)=>{
+			let shouldProceed = false;
+			this.diskUtils.getThumbDrives().then(usbDrives=>{
+				usbDrives.map(usb=>{
+					if(usb.meta.device == path && usb.rm){
+						//is removable
+						shouldProceed = true;
+					}
+				})
+				if(!shouldProceed){
+					reject('error');
+					return;
+				}
+				else{
+					//ok lets flash the drive then
+					this.createUbuntuISO(path).then(data=>{
+						resolve(data)
+					})
+				}
+			});
+		});
+	}
+	createUbuntuISO(devicePath){
+		return new Promise((resolve,reject)=>{
+			this.generateSSHKey().then(()=>{
+				//done
+				this.getLocalIP().then((ip)=>{
+					this.getRandomPW().then((randomPW)=>{
+						const ssh_pub_key = fs.readFileSync(process.env.HOME+'/.ssh/handyhost.pub','utf8');
+						const cloudInitTemplate = fs.readFileSync('./aktAPI/ubuntu-cloud-config-x86','utf8');
+						
+						let cloudInitOutput = cloudInitTemplate.replace(/__SSH_PUB_KEY__/g,ssh_pub_key.trim());
+						cloudInitOutput = cloudInitOutput.replace(/__HOST_IP__/g,ip.trim());
+						cloudInitOutput = cloudInitOutput.replace(/__PASSWORD__/g,randomPW.trim());
+						//cloudInitOutput = cloudInitOutput.replace(/__SSH_PUB_KEY__/g,ssh_pub_key);
+						//3. write the config
+						const generatorPath = process.env.HOME+'/.HandyHost/aktData/ubuntu-autoinstall-generator';
+
+						fs.writeFileSync(generatorPath+'/user-data',cloudInitOutput,'utf8');
+						//ok now to generate the ISO...
+						console.log('device path',devicePath);
+						const args = ['./aktAPI/generateUbuntuAutoinstallerISO.sh'];
+						let output = '';
+						let errs = '';
+						const autogen = spawn('bash',args,{shell:true,env:process.env,cwd:process.env.PWD});
+						autogen.stdout.on('data',d=>{
+							console.log('autogen stdout output: ',d.toString());
+							output += d.toString();
+						})
+						autogen.stderr.on('data',d=>{
+							//ofc it dumps everything to stderr...
+							console.log('autogen stderr output: ',d.toString());
+							errs += d.toString();
+						})
+						autogen.on('close',()=>{
+							if(fs.existsSync(generatorPath+'/ubuntu-autoinstaller.iso')){
+								//ok it wrote it then, lets continue
+								const chunkSize = process.platform == 'darwin' ? '4m' : '4M';
+								const ddArgs = [
+									'./aktAPI/flashUbuntuISO.sh',
+									devicePath,
+									chunkSize
+								]
+								let ddOut = '';
+								let ddErr = '';
+								const dd = spawn('bash',ddArgs,{shell:true,env:process.env,cwd:process.env.PWD});
+
+								dd.stdout.on('data',d=>{
+									console.log('dd stdout output: ',d.toString());
+									ddOut += d.toString();
+								})
+								dd.stderr.on('data',d=>{
+									console.log('dd stderr output: ',d.toString());
+									ddErr += d.toString();
+								})
+								dd.on('close',()=>{
+									if(ddErr.indexOf('records in') == -1 && ddErr.indexOf('records out') == -1 && ddErr.indexOf('bytes') == -1 && ddErr.indexOf('copied') == -1){
+										//is a real error
+										reject({error:ddErr})
+									}
+									else{
+										resolve({success:true})
+									}
+								})
+							}
+							else{
+								resolve({error:errs})
+							}
+							
+						})
+						
+					})
+					
+				})
+				
+			})
+		})
+	}
+	getRandomPW(){
+		//mkpasswd -m sha-512 1234
+		return new Promise((resolve,reject)=>{
+			let output = '';
+			const mkpasswd = spawn('mkpasswd',['-m','sha-512',Math.floor(new Date().getTime() * Math.random())])
+			mkpasswd.stdout.on('data',d=>{
+				output += d.toString();
+			});
+			mkpasswd.on('close',()=>{
+				resolve(output);
+			})
+		})
+	}
+	addUbuntuAutoinstalledNode(ipAddress,moniker,socketIONamespace){
+		//ok thumbdrive flashed ubuntu onto a new node.
+		//that node contacted us to acquire a hostname
+		//so we need to add it to the configs now
+		const clusterConfig = JSON.parse(fs.readFileSync(this.configJSONPath,'utf8'));
+		
+		if(typeof clusterConfig.preConfiguredNVMe == "undefined"){
+			clusterConfig.preConfiguredNVMe = {};
+		}
+
+		clusterConfig.preConfiguredNVMe[moniker] = {
+			hostname:moniker,
+			path:null,
+			ip:ipAddress,
+			reservedNetworkHost:moniker+'.local',
+			isDiskConfigured:true
+		}
+		fs.writeFileSync(this.configJSONPath,JSON.stringify(clusterConfig),'utf8');
+		console.log('added node to config',ipAddress,moniker);
+		setTimeout(()=>{
+			//give the USB time to unmount and the node time to restart..
+			socketIONamespace.to('akt').emit('newNodeRegistered',clusterConfig.preConfiguredNVMe[moniker]);
+		},30000);
+		
+		//TODO socket io message about this new node
 	}
 }

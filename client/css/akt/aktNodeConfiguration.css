@@ -64,23 +64,23 @@
     font-size: 12px;
 }
 
-#buildABoxModal{
+.buildABoxModal{
 	max-height: 100%;
 	overflow-y:scroll;
 }
-#buildABoxModal .title{
+.buildABoxModal .title{
 	font-size: 36px;
 }
-#buildABoxModal .subtitle{
+.buildABoxModal .subtitle{
 	font-size: 24px;
 }
-#buildABoxModal .info{
+.buildABoxModal .info{
 	font-size: 18px;
 	padding: 10px 20px;
 	float:left;
 	width: calc(100% - 40px);
 }
-#buildABoxModal .panel{
+.buildABoxModal .panel{
 	padding: 10px;
 	background: rgba(121,121,121,0.1);
 	float:left;
@@ -92,10 +92,10 @@
 	display:none;
 }
 
-#buildABoxModal a, #buildABoxModal a:visited, #nodeConfigInfo #buildLink{
+.buildABoxModal a, .buildABoxModal a:visited/*, #nodeConfigInfo .buildLink*/{
 	color:#ed3624;
 }
-#buildABoxModal .step, #buildABoxModal #chooseDevice, #buildABoxModal #finishHost, #buildABox #buildLink{
+.buildABoxModal .step, .buildABoxModal .chooseDevice, .buildABoxModal .finishHost, .buildLink{
 	/* Permalink - use to edit and share this gradient: https://colorzilla.com/gradient-editor/#af1d22+0,af1d22+40,f03423+100 */
 	background: rgb(175,29,34); /* Old browsers */
 	background: -moz-linear-gradient(45deg,  rgba(175,29,34,1) 0%, rgba(175,29,34,1) 40%, rgba(240,52,35,1) 100%); /* FF3.6-15 */
@@ -111,11 +111,11 @@
 	margin: 5px;
 	cursor:pointer;
 }
-#buildABoxModal #chooseDevice, #buildABoxModal #finishHost{
+.buildABoxModal .chooseDevice, .buildABoxModal .finishHost{
 	margin: 5px 0;
 }
 
-.step span.expand, #buildLink .expand{
+.step span.expand, .buildLink .expand{
 	background: #fff;
     color: #ed3624;
     padding: 0px 5px;
@@ -123,15 +123,22 @@
     box-shadow: inset 1px 1px 1px #333;
 }
 
-#buildABoxModal .bigger{
+.stepInfo .ackMessage{
+	margin: 0 0 10px -20px;
+	width: calc(100% + 20px);
+}
+
+.buildABoxModal .bigger{
+	float:left;
+	width: 100%;
 	margin: 5px 0;
 }
-#buildABoxModal #chooseDevice, #buildABoxModal #finishHost{
+.buildABoxModal .chooseDevice, .buildABoxModal .finishHost{
 	float:none;
 	color:#fff;
 }
 
-#buildABoxModal .stepInfo{
+.buildABoxModal .stepInfo{
 	float:left;
 	width: 100%;
 	background: rgba(0,0,0,0.1);
@@ -151,20 +158,20 @@
 .chooseDeviceResult .usbError{
 	margin-top: 5px;
 }
-#usbDevice.styledSelect{
+.usbDevice.styledSelect{
 	width: auto !important;
 	font-size: 14px !important;
 	padding: 2px;
 	border-radius: 3px;
 }
-#autoConfig ul{
+.autoConfig ul{
 	list-style-type:none;
 	padding: 0 5px;
 }
-#autoConfig .confirmation, #autoConfig .error{
+.autoConfig .confirmation, .autoConfig .error{
 	display:none;
 }
-#finishHost.nonActive{
+.finishHost.nonActive{
 	background:#aaa !important;
 	cursor:none !important;
 }
@@ -172,7 +179,7 @@
 	width: 100%;
 	float:left;
 }
-#buildLink{
+.buildLink{
 	float:right !important;
 }
 #initCluster{

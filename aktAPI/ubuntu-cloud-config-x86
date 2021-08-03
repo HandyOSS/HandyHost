@@ -1,0 +1,44 @@
+#cloud-config
+autoinstall:
+  version: 1
+  interactive-sections: []
+  apt:
+    geoip: true
+    preserve_sources_list: false
+    primary:
+    - arches: [amd64, i386]
+      uri: http://us.archive.ubuntu.com/ubuntu
+    - arches: [default]
+      uri: http://ports.ubuntu.com/ubuntu-ports
+  packages:
+    - avahi-utils
+  identity: {hostname: handyhost, password: __PASSWORD__,
+    realname: handyhost, username: ansible}
+  keyboard: {layout: us, toggle: null, variant: ''}
+  locale: en_US.UTF-8
+  ssh:
+    allow-pw: false
+    authorized-keys: 
+    - __SSH_PUB_KEY__
+    install-server: true
+  storage:
+    config:
+    - {ptable: gpt, id: disk-primary, wipe: superblock-recursive, preserve: false, name: '', grub_device: false, type: disk, match: { size: largest }}
+    - {device: disk-primary, size: 1G, wipe: superblock, flag: boot, number: 1,
+      preserve: false, grub_device: true, type: partition, id: partition-0}
+    - {fstype: fat32, volume: partition-0, preserve: false, type: format, id: format-0}
+    - {device: disk-primary, size: -1, wipe: superblock, flag: '', number: 2,
+      preserve: false, grub_device: false, type: partition, id: partition-1}
+    - {fstype: ext4, volume: partition-1, preserve: false, type: format, id: format-1}
+    - {device: format-1, path: /, type: mount, id: mount-1}
+    - {device: format-0, path: /boot/efi, type: mount, id: mount-0}
+  user-data:
+    disable_root: false
+  late-commands:
+    - echo 'ansible ALL=(ALL) NOPASSWD:ALL' > /target/etc/sudoers.d/ansible
+    - echo $(curl "http://__HOST_IP__:8008/api/akt/getRandomHostname/$(echo $(hostname -I) | sed s/\ /%20/g)") > /target/etc/hostname
+    - sed -i -e "s/handyhost/$(cat /target/etc/hostname)/g" /target/etc/hosts
+    - curtin in-target --target=/target -- echo "Please wait...will reboot automatically"
+    - curtin in-target --target=/target -- umount cdrom/
+    - reboot
+  updates: security

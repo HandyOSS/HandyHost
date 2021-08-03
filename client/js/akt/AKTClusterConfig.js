@@ -405,21 +405,21 @@ export class AKTClusterConfig{
 		});
 		$('#buildABoxModal .step').off('click').on('click',function(){
 			const id = $(this).attr('data-id');
-			console.log('clicked',id,$('.stepInfo#'+id).is(':visible'))
-			if($('.stepInfo#'+id).is(':visible')){
-				$('.stepInfo#'+id).hide();
+			console.log('clicked',id,$('#buildABoxModal .stepInfo#'+id).is(':visible'))
+			if($('#buildABoxModal .stepInfo#'+id).is(':visible')){
+				$('#buildABoxModal .stepInfo#'+id).hide();
 			}
 			else{
-				$('.stepInfo#'+id).show();
+				$('#buildABoxModal .stepInfo#'+id).show();
 			}
 		})
-		$('#chooseDevice').off('click').on('click',()=>{
+		$('#buildABoxModal #chooseDevice').off('click').on('click',()=>{
 			fetch('/api/akt/getUbuntuUSBDisks').then(d=>d.json()).then(r=>{
 				if(typeof r.error != "undefined"){
 					$('.chooseDeviceResult').html('<div class="usbError">'+r.error+'</div>');
 				}
 				else{
-					const $select = $('<select class="styledSelect" id="usbDevice"></select>')
+					const $select = $('<select class="styledSelect usbDevice" id="usbDevice"></select>')
 					r.map(usb=>{
 						const $option = $('<option value="'+usb.mountPoint+'">'+usb.meta.model+' - '+usb.meta.size+'</option>')
 						$select.append($option);
@@ -445,15 +445,15 @@ export class AKTClusterConfig{
 				$('#finishHost').addClass('active');
 			}
 		})
-		$('#finishHost').off('click').on('click',()=>{
-			const path = $('#usbDevice option:selected').val();
-			const hostname = $('#setHostname').val();
-			if($('#finishHost').hasClass('nonActive')){
+		$('#buildABoxModal #finishHost').off('click').on('click',()=>{
+			const path = $('#buildABoxModal #usbDevice option:selected').val();
+			const hostname = $('#buildABoxModal #setHostname').val();
+			if($('#buildABoxModal #finishHost').hasClass('nonActive')){
 				return;
 			}
-			$('#finishHost').html('Submitting...').addClass('nonActive');
-			$('#autoConfig .error').hide();
-			$('#autoConfig .confirmation').hide();
+			$('#buildABoxModal #finishHost').html('Submitting...').addClass('nonActive');
+			$('#buildABoxModal #autoConfig .error').hide();
+			$('#buildABoxModal #autoConfig .confirmation').hide();
 			if(typeof path != "undefined" && hostname != ''){
 				//submit vals
 				fetch("/api/akt/configureNVMe",
@@ -466,13 +466,13 @@ export class AKTClusterConfig{
 			    body: JSON.stringify({path,hostname})
 			})
 			.then((res)=>{ console.log('success'); return res.json(); }).then(data=>{
-				$('#finishHost').html('Configure NVMe');
+				$('#buildABoxModal #finishHost').html('Configure NVMe');
 				console.log('result',data);
 				if(typeof data.error == "undefined"){
-					$('#autoConfig .confirmation').show();
+					$('#buildABoxModal #autoConfig .confirmation').show();
 				}
 				else{
-					$('#autoConfig .error').html('ERROR: '+data.error).show();
+					$('#buildABoxModal #autoConfig .error').html('ERROR: '+data.error).show();
 				}
 			})
 			.catch((res)=>{ 
@@ -480,6 +480,85 @@ export class AKTClusterConfig{
 
 			});
 			}
+		});
+		//x86 build a box
+		this.initBuildAX86Box();
+	}
+	initBuildAX86Box(){
+		/*<div id="buildAX86Box" class="configPanel">
+		<a id="buildX86Link" class="buildLink">Build/Setup New x86 Nodes <span class="expand">+</span></a>
+	</div>*/
+		$('#buildX86Link').off('click').on('click',()=>{
+			this.parentComponent.showBuildAX86BoxModal();
+		});
+		$('#buildAX86BoxModal .step').off('click').on('click',function(){
+			const id = $(this).attr('data-id');
+			console.log('clicked',id,$('#buildAX86BoxModal .stepInfo#'+id).is(':visible'))
+			if($('#buildAX86BoxModal .stepInfo#'+id).is(':visible')){
+				$('#buildAX86BoxModal .stepInfo#'+id).hide();
+			}
+			else{
+				$('#buildAX86BoxModal .stepInfo#'+id).show();
+			}
+		})
+		$('#buildAX86BoxModal #chooseDevicex86').off('click').on('click',()=>{
+			fetch('/api/akt/getThumbDrives').then(d=>d.json()).then(r=>{
+				if(typeof r.error != "undefined"){
+					$('#buildAX86BoxModal .chooseDeviceResult').html('<div class="usbError">'+r.error+'</div>');
+				}
+				else{
+					const $select = $('<select class="styledSelect usbDevice" id="usbDevicex86"></select>')
+					r.map(usb=>{
+						const $option = $('<option value="'+usb.meta.device+'">'+usb.meta.model+' - '+usb.meta.size+'</option>')
+						$select.append($option);
+					})
+					$('#buildAX86BoxModal .chooseDeviceResult').html($select);
+					if($('#buildAX86BoxModal .usbDevice option:selected').length > 0){
+						$('#buildAX86BoxModal #finishHostx86').removeClass('nonActive');
+					}
+					else{
+						$('#buildAX86BoxModal #finishHostx86').addClass('active');
+					}
+				}
+			})
+		});
+		$('#buildAX86BoxModal #finishHostx86').off('click').on('click',()=>{
+			const path = $('#buildAX86BoxModal #usbDevicex86 option:selected').val();
+			if($('#buildAX86BoxModal .finishHost').hasClass('nonActive')){
+				return;
+			}
+			$('#buildAX86BoxModal .finishHost').html('Submitting...').addClass('nonActive');
+			$('#buildAX86BoxModal .autoConfig .error').hide();
+			$('#buildAX86BoxModal .autoConfig .confirmation').hide();
+			if(typeof path != "undefined"){
+					//submit vals
+					fetch("/api/akt/flashThumbDrive",
+				{
+				    headers: {
+				      'Accept': 'application/json',
+				      'Content-Type': 'application/json'
+				    },
+				    method: "POST",
+				    body: JSON.stringify({path})
+				})
+				.then((res)=>{ console.log('success'); return res.json(); }).then(data=>{
+					$('#buildAX86BoxModal .finishHost').html('Create Ubuntu Auto-Installer');
+					console.log('result',data);
+					if(typeof data.error == "undefined"){
+						$('#buildAX86BoxModal .autoConfig .confirmation').show();
+						$('#buildAX86BoxModal .autoConfig .error').hide();
+					}
+					else{
+						$('#buildAX86BoxModal .autoConfig .confirmation').hide();
+						$('#buildAX86BoxModal .autoConfig .error').html('ERROR: '+data.error).show();
+					}
+				})
+				.catch((res)=>{ 
+					console.log("error",res);
+
+				});
+			}
+			console.log('device path',path);
 		});
 	}
 	initProviderDetails(config){

@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import url from 'url';
 import {spawn} from 'child_process';
+import generator from 'project-name-generator';
 import {AKTUtils} from './aktAPI/Utils.js';
 import {DiskUtils} from './aktAPI/DiskUtils.js';
 import {K8sUtils} from './aktAPI/K8sUtils.js';
@@ -181,6 +182,21 @@ export class HandyAKT{
 					reject(error);
 				});
 			break;
+			case 'getThumbDrives':
+				//get thumb drives for iso creation
+				this.diskUtils.getThumbDrives().then(usbs=>{
+					resolve(usbs);
+				}).catch(error=>{
+					reject(error);
+				})
+			break;
+			case 'flashThumbDrive':
+				this.flashThumbDrive(requestBody).then(data=>{
+					resolve(data);
+				}).catch(error=>{
+					reject(error);
+				})
+			break;
 			case 'configureNVMe':
 				//path,hostname
 				this.generateUbuntuCloudInit(requestBody).then(data=>{
@@ -282,8 +298,31 @@ export class HandyAKT{
 					reject(error);
 				});
 			break;
+			case 'getRandomHostname':
+				this.getRandomHostname(path[2]).then(data=>{
+					resolve(data);
+				}).catch(error=>{
+					reject(error);
+				})
+			break;
 		}
 		
+	}
+	getRandomHostname(ipAddress){
+		return new Promise((resolve,reject)=>{
+			const moniker = 'akash-'+generator({words: 3}).dashed;
+			this.k8sUtils.addUbuntuAutoinstalledNode(ipAddress,moniker,this.ioNamespace);
+			resolve(moniker);
+		})
+	}
+	flashThumbDrive(requestBody){
+		const {parsed,err} = this.parseRequestBody(requestBody);
+		if(typeof parsed == "undefined"){
+			return new Promise((resolve,reject)=>{
+				reject(err);
+			})
+		}
+		return this.k8sUtils.flashThumbDrive(parsed.path);
 	}
 	fetchAllOrderBids(requestBody){
 		const {parsed,err} = this.parseRequestBody(requestBody);

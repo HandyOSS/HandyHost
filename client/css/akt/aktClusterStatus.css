@@ -158,6 +158,12 @@ a.aktStatusPageLink{
     float: left;
     font-weight:200;
 }
+.addNodeMessage .message0{
+	font-size: 24px;
+}
+.addNodeMessage .message1{
+	font-size: 18px;
+}
 
 .registrationMessage .error, .walletModalContent .error{
 	display:none;

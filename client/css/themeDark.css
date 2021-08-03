@@ -127,14 +127,14 @@ html.darkTheme{
 	filter:invert(1);
 }
 
-.darkTheme #buildABoxModal a, .darkTheme #nodeConfigInfo #buildLink, .darkTheme .advancedOptions a, .darkTheme a.getGlobalIP, .darkTheme a.getWallet{
+.darkTheme .buildABoxModal a, .darkTheme #nodeConfigInfo .buildLink, .darkTheme .advancedOptions a, .darkTheme a.getGlobalIP, .darkTheme a.getWallet{
 	filter:invert(1);
 }
-.darkTheme #buildABoxModal .step{
+.darkTheme .buildABoxModal .step{
 	filter:invert(1);
 }
 
-.darkTheme #buildABoxModal #chooseDevice, .darkTheme #buildABoxModal #finishHost{
+.darkTheme .buildABoxModal .chooseDevice, .darkTheme .buildABoxModal .finishHost{
 	filter:invert(1);
 }
 .darkTheme .providerList .errorMessage{

@@ -15,6 +15,13 @@ cd ~/.HandyHost/aktData/kubespray && \
 git clone https://github.com/kubernetes-sigs/kubespray.git . && \
 virtualenv --python=python3 venv && \
 . venv/bin/activate && \
-pip3 install -r requirements.txt
+pip3 install -r requirements.txt && \
+cd ~/.HandyHost/aktData && \
+git clone https://github.com/covertsh/ubuntu-autoinstall-generator.git && \
+cd ubuntu-autoinstall-generator && \
+chmod +x ubuntu-autoinstall-generator.sh && \
+sudo apt install -y p7zip-full && \
+sudo apt install -y genisoimage && \
+sudo apt install -y whois
 
 
