@@ -9,7 +9,7 @@
 }
 .configPanel .configTitle{
 	font-size: 30px;
-	font-weight: 700;
+	font-weight: 200;
 }
 .configPanel ul{
 	list-style-type:none;
@@ -23,7 +23,7 @@
 	padding:0;
 }
 .configPanel li.title{
-	font-weight: 700;
+	font-weight: 600;
 	font-size: 20px;
 }
 li.hasInput{

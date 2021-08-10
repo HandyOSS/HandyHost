@@ -358,14 +358,15 @@
 			<tr class="provider_providerIP">
 				<td>
 					<div class="errorMessage">Required Value</div>
-					<label for="providerIP">Global Provider IP: </label>
+					<label for="providerIP">Provider Domain Name: </label>
 				</td>
 				<td>
-					<input class="styledSelect" type="text" id="providerIP" value="" placeholder="global IP address of the provider" size=32 />
-					<a class="getGlobalIP">Get My Global IP Address</a>
+					<input class="styledSelect" type="text" id="providerIP" value="" placeholder="example: akash.hopto.org" size=32 />
+					<!-- <a class="getGlobalIP">Get My Global IP Address</a> -->
+					<span class="domainNote">Note: You must provide a wildcard-enabled domain name via services like: Godaddy, AWS Route53, noip.com or others. The wildcard domain should be configured to resolve to your global IP address. <a class="getGlobalIP">Get My Global IP</a> <span class="myip"></span></span> 
 				</td>
 			</tr>
-			<tr class="provider_clusterIP">
+			<!-- <tr class="provider_clusterIP">
 				<td>
 					<div class="errorMessage">Required Value</div>
 					<label for="clusterIP">Global Cluster IP: </label>
@@ -373,7 +374,7 @@
 				<td>
 					<input class="styledSelect" type="text" id="clusterIP" value="" placeholder="(probably same as global IP)" size=32 /> <a class="getGlobalIP">Get My Global IP Address</a>
 				</td>
-			</tr>
+			</tr> -->
 			<tr class="provider_regionName">
 				<td>
 					<div class="errorMessage">Required Value</div>

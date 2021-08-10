@@ -35,10 +35,15 @@ export class AKTClusterStatus{
 		const address = statsData.providerData.providerWalletAddress;
 		const regionName = statsData.providerData.regionName;
 		const nodeCount = statsData.nodeCount;
-		const onlineCount = statsData.k8s.length;
+		let onlineCount = 0;
+		statsData.k8s.map(machine=>{
+			if(Object.keys(machine.sections).length > 0){
+				onlineCount++;
+			}
+		})
 		const shouldShowProviderStatusIndicator = statsData.providerIsRegistered && statsData.providerHasGeneratedCert;
 		
-		this.renderBalance(statsData.balance,address);
+		this.renderBalance(statsData.balance,address,statsData.k8s);
 		this.renderTitle(clusterName,onlineCount,nodeCount,statsData.providerIsRunning,shouldShowProviderStatusIndicator);
 		this.renderResourceUsage(statsData.k8s);
 		this.renderRunInfo(statsData);
@@ -81,7 +86,7 @@ export class AKTClusterStatus{
 		let summary = this.modelResourceSum(k8sData);
 		console.log('summary',summary);
 		
-		const cpuUsed = (summary.Capacity.sumCapacityCPUm - summary.Allocatable.sumAllocatableCPUm);
+		const cpuUsed = (summary.Used.cpu/*summary.Allocatable.sumAllocatableCPUm*/);
 		const cpuData = [
 			{name:'Used',value: cpuUsed, formatted: cpuUsed+'m'},
 			{name:'Total',value:summary.Capacity.sumCapacityCPUm, formatted: summary.Capacity.sumCapacityCPUm+'m'}
@@ -102,7 +107,7 @@ export class AKTClusterStatus{
 		];
 		this.ephemeralDonut.render(ephemeralData);
 
-		const podsUsed = (summary.Capacity.sumCapacityPods - summary.Allocatable.sumAllocatablePods);
+		const podsUsed = summary.Used.pods;//(summary.Capacity.sumCapacityPods - summary.Allocatable.sumAllocatablePods);
 		const podsData = [
 			{name:'Used',value: podsUsed, formatted: podsUsed.toString()},
 			{name:'Total',value:summary.Capacity.sumCapacityPods, formatted: summary.Capacity.sumCapacityPods.toString()}
@@ -121,7 +126,9 @@ export class AKTClusterStatus{
 			$table.append('<tr><td>'+name+'</td></tr>')*/
 			const $node = $('<div class="nodeDetail"></div>')
 			$node.append('<div class="nodeTitle">'+name+'</div>')
-
+			if(Object.keys(node.sections).length == 0){
+				$node.append('<div class="nonConnected"><span class="emoji">⚠️</span> Node is Offline</div>')
+			}
 			Object.keys(node.sections).map(sectionKey=>{
 				/*const $sectionTitle = $('<tr><td>'+sectionKey+'</td></tr>')
 				const $header = $('<tr />');
@@ -140,6 +147,9 @@ export class AKTClusterStatus{
 						}
 						if(key == 'ephemeral-storage' && sectionKey == 'Allocatable'){
 							val = numeral(val).format('0.00b').toUpperCase();
+						}
+						if(key == 'pods' && sectionKey == 'Allocatable'){
+							val = val - node.realtime.pods;
 						}
 						const $li = $('<li><span class="nodeLabel">'+key+'</span>: '+val+'</li>');
 						$section.append($li);
@@ -183,9 +193,16 @@ export class AKTClusterStatus{
 		let sumAllocatableMemory = 0;
 		let sumAllocatablePods = 0;
 
+		let sumUsedCPUm = 0;
+		let sumUsedMemory = 0;
+		let sumUsedPods = 0;
+
 		k8sData.map(node=>{
 			//allocatable
 			let section = node.sections['Allocatable'];
+			if(typeof section == 'undefined'){
+				return;
+			}
 			let mCPU = numeral(section.cpu).value() / 1000000; //ie 3900m
 			let storage = numeral(section['ephemeral-storage']).value();
 			let pods = parseInt(section.pods);
@@ -231,7 +248,21 @@ export class AKTClusterStatus{
 			sumCapacityMemory += numeral(section['memory']).value() * 1000;
 			sumCapacityPods += parseInt(section['pods']);
 
+			//used
+			const realtime = node.realtime;
+			sumUsedCPUm += parseInt(realtime['cpu(cores)'].replace('m',''));
+			let memVal = realtime['memory(bytes)'];
+			if(memVal.indexOf('G') >= 0){
+				//gb
+				memVal = numeral(memVal).multiply(1000000000).value();
+			}
+			else if(memVal.indexOf('M') >= 0){
+				//mb
+				memVal = numeral(memVal).multiply(1000000).value();
+			}
 			
+			sumUsedMemory += parseInt(memVal);
+			sumUsedPods += realtime.pods;
 		});
 
 		return {
@@ -260,6 +291,11 @@ export class AKTClusterStatus{
 				sumAllocatableMemory,
 				sumAllocatableEphemeral,
 				sumAllocatablePods
+			},
+			Used:{
+				cpu: sumUsedCPUm,
+				memory: sumUsedMemory,
+				pods: sumUsedPods
 			}
 		}
 
@@ -292,9 +328,10 @@ export class AKTClusterStatus{
 			
 		}
 	}
-	renderBalance(balanceData,address){
+	renderBalance(balanceData,address,k8sData){
 		const $el = $('#clusterStatus');
 		let balance = 0;
+		let lockedBalance = 0;
 		let denom = 'uakt';
 		if(balanceData.balance.balances.length > 0){
 			balanceData.balance.balances.map(v=>{
@@ -304,6 +341,15 @@ export class AKTClusterStatus{
 		}
 		if(denom == 'uakt'){
 			balance = balance / 1000000;
+		}
+		
+		//no easy way to lookup so:: 50akt per contract * pods = locked.....
+		k8sData.map(node=>{
+			lockedBalance += (node.realtime.pods * 50);
+		});
+		let shouldDisplayLowFundsMessage = false;
+		if(balance < 50){
+			shouldDisplayLowFundsMessage = true;
 		}
 		balance =  numeral(balance).format('0,0.0000')+' AKT';
 
@@ -316,8 +362,16 @@ export class AKTClusterStatus{
 			<div class="balanceMeta">
 				<div class="address">Address: <input type="text" readonly class="walletAddress" value="${address}" size="46" /></div>
 				<div class="balance">${balance}</div>
+
 			</div>
 		`)
+		if(shouldDisplayLowFundsMessage){
+			$('.balanceMeta',$balance).append('<div class="lowFundsNote">Note: Each contract will lock up 50AKT in collateral. Please add more funds to provide hosts.</div>')
+		}
+
+		if(lockedBalance > 0){
+			$('.balance',$balance).append('<div class="locked">Locked Collateral: '+lockedBalance+' AKT</div>')
+		}
 		$('.walletAddress',$balance).off('click').on('click',()=>{
 			$('.walletAddress',$balance).select();
 		})
@@ -362,10 +416,15 @@ export class AKTClusterStatus{
 				endpoint = 'generateServerCert';
 			}
 			const generateCert = $('#generateCert').is(':checked');
+			let fees = $('#regFees').val();
+			if(fees == ''){
+				fees = '10000';
+			}
 			const registrationData = {
 				pw:$('#unlockRegPW').val(),
 				walletName,
-				generateCert
+				generateCert,
+				fees
 			};
 			fetch("/api/akt/"+endpoint,
 			{

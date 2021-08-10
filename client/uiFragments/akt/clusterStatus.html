@@ -9,6 +9,9 @@
 		<div class="pwWrap">
 			<input type="password" id="unlockRegPW" class="styledInput" placeholder="Keyring Passphrase" />
 		</div>
+		<div class="pwWrap">
+			<input type="number" id="regFees" class="styledInput" placeholder="Custom Tx Fees (uakt), default: 10000uakt" />
+		</div>
 		<div class="checkboxWrap">
 			<input type="checkbox" value="" id="generateCert" />
 			<label for="generateCert">Generate or Update Akash Server Certificate</label>
@@ -41,10 +44,9 @@
 <div id="clusterStatus" class="mainPanel aktPanel">
 	<div class="title">Akash Cluster Status</div>
 	<div class="accountBalance panel">
-		acct balance
 	</div>
 	<div class="runClusterInfo panel">
-		run cluster info
+		Fetching Cluster Stats...
 	</div>
 	<div class="clusterResourceStats panel">
 		<div class="subtitle">Cluster Utilization</div>

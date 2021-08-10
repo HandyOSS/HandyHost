@@ -1,9 +1,10 @@
 import fs from 'fs';
 import https from 'https';
+import http from 'http';
 import parse from 'parse-duration';
 import {open} from 'sqlite';
 import sqlite3 from 'sqlite3';
-
+import QRCode from 'qrcode';
 
 export class DVPNStats{
 	constructor(){
@@ -51,13 +52,13 @@ export class DVPNStats{
 				path: '/status',
 				method:'GET',
 				rejectUnauthorized: false,
-				requestCert: true,
+				//requestCert: true,
 				agent: false
 			};
 			
 			
 			let output = '';
-			const request = https.request(options,response=>{
+			const request = http.request(options,response=>{
 				//another chunk of data has been received, so append it to `str`
 				
 				response.on('data', (chunk) => {
@@ -142,11 +143,13 @@ export class DVPNStats{
 	}
 	getWalletTransactions(address){
 		//https://api-sentinel.cosmostation.io/v1/account/txs/sent15slyktswyxs87e0nq4et5uxatmpnru9k007awk
+		//https://api-sentinel.cosmostation.io/v1/account/new_txs/sent15slyktswyxs87e0nq4et5uxatmpnru9k007awk?from=0&limit=50
+		console.log('get tx for',address);
 		return new Promise((resolve,reject)=>{
 			const options = {
 				host: 'api-sentinel.cosmostation.io',
 				port:'443',
-				path: '/v1/account/txs/'+address,
+				path: '/v1/account/new_txs/'+address+'?from=0&limit=50',
 				method:'GET',
 				rejectUnauthorized: true,
 				requestCert: true,
@@ -164,7 +167,7 @@ export class DVPNStats{
 
 				//the whole response has been received, so we just print it out here
 				response.on('end', () => {
-					console.log('tx output',output);
+					//console.log('tx output',output);
 					let json = [];
 					try{
 						json = JSON.parse(output);
@@ -220,8 +223,15 @@ export class DVPNStats{
 			})
 			this.getWalletBalance(walletAddress).then(json=>{
 				output.balance = json;
-				hasCompleted++;
-				finish(output,resolve);
+				this.getQRCode(walletAddress).then((qr)=>{
+					output.wallet = {
+						address: walletAddress,
+						qr: qr
+					};
+					hasCompleted++;
+					finish(output,resolve);
+				})
+				
 			}).catch(err=>{
 				console.log("err?? get wallet bal",err);
 				hasCompleted++;
@@ -258,6 +268,11 @@ export class DVPNStats{
 			}
 		}
 		
+	}
+	getQRCode(walletAddress){
+		return new Promise((resolve,reject)=>{
+			resolve(QRCode.toDataURL(walletAddress));
+		})
 	}
 	getActiveSessionAnalytics(){
 		return new Promise((resolve,reject)=>{
@@ -303,14 +318,16 @@ export class DVPNStats{
 				let durationSum = 0;
 				let durationCount = 0;
 				console.log('now model parsed txes');
-				newOutput.txes.map(tx=>{
-					if(typeof tx.messages == "undefined"){
+				newOutput.txes.map(newtx=>{
+					if(typeof newtx.data.tx.body.messages == "undefined"){
 						return;
 					}
+					const tx = newtx.data.tx.body;
+
 					tx.messages.map((msg,i)=>{
 						//const msg = tx.messages[0];
 						if(msg['@type'] == '/sentinel.session.v1.MsgUpdateRequest' && typeof msg.proof != "undefined"){
-							
+							//console.log('valid tx message',msg);
 							//ok this is a proof request
 							const durationString = msg.proof.duration;
 							const durationMinutes = parse(msg.proof.duration,'m');
@@ -319,7 +336,7 @@ export class DVPNStats{
 							const sessionID = msg.proof.id;
 							let address,subscriptionID;
 
-							tx.logs[i].events.map(logEntry=>{
+							newtx.data.logs[i].events.map(logEntry=>{
 								logEntry.attributes.map(attr=>{
 									if(attr.key == 'address'){
 										address = attr.value.replace(/\"/gi,'');

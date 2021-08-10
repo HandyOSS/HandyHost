@@ -349,7 +349,7 @@ export class AKTClusterConfig{
 				}
 			})
 			const providerIP = $('#providerIP').val();
-			const clusterIP = $('#clusterIP').val();
+			const clusterIP = $('#providerIP').val();//$('#clusterIP').val();
 			const regionName = $('#regionName').val();
 			const clusterName = $('#clusterName').val();
 			const providerWalletName = $('#providerWalletName').val();
@@ -575,7 +575,7 @@ export class AKTClusterConfig{
 			const $this = $(this);
 			fetch('/api/akt/getGlobalIP').then(d=>d.json()).then(d=>{
 				const ip = d.global_ip;
-				$this.prev('input').val(ip);
+				$('.myip').html(': '+ip);
 			})
 
 		});

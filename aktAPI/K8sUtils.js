@@ -2,6 +2,8 @@ import fs from 'fs';
 import {spawn} from 'child_process';
 import https from 'https';
 import {DiskUtils} from './DiskUtils.js';
+import yaml from 'js-yaml';
+
 
 export class K8sUtils{
 	constructor(configPath){
@@ -99,6 +101,7 @@ export class K8sUtils{
 					masterUser = node.user;
 					masterIP = node.ip;
 					masterMDNS = node.hostname;
+					//ingressNode = name;
 				}
 				if(node.kubernetes.role == 'etcd'){
 					etcdNodeName = name;
@@ -108,6 +111,19 @@ export class K8sUtils{
 				}
 				if(node.kubernetes.isCompute){
 					nodeNames.push(name);
+				}
+				if(configJSON.nodes.length == 1){
+					etcdNodeName = name;
+					ingressNode = name;
+				}
+				if(i == configJSON.nodes.length-1){
+					//its the last node, check if we set etcd and ingress
+					if(ingressNode == ''){
+						ingressNode = name;
+					}
+					if(etcdNodeName == ''){
+						etcdNodeName = name;
+					}
 				}
 
 				let entry = `${tab}${tab}${name}:\n`;
@@ -161,6 +177,7 @@ export class K8sUtils{
 	postInitNewCluster(socketIONamespace,masterNodeName,masterUser,masterIP,masterMDNS,ingressNodeName){
 		///./postInitK8sCluster.sh ansible akashnode1.local akashnode1 192.168.0.17
 		return new Promise((resolve,reject)=>{
+
 			const args = ['./aktAPI/postInitK8sCluster.sh',masterUser,masterMDNS,ingressNodeName,masterIP];
 			const postProcess = spawn('bash',args,{shell:true,env:process.env,cwd:process.env.PWD});
 			postProcess.stdout.on('data',d=>{
@@ -170,10 +187,79 @@ export class K8sUtils{
 				socketIONamespace.to('akt').emit('k8sBuildLogs','POST INSTALL: '+d.toString());
 			})
 			postProcess.on('close',()=>{
-				resolve();
+				this.installMetricsServer(socketIONamespace).then(()=>{
+					resolve();
+				})
+				
 			})
 		})
 		
+	}
+	fetchMetricsServerYaml(url,resolve,reject){
+		let output = '';
+		const request = https.get(url,response=>{
+			response.on('data', (chunk) => {
+				output += chunk;
+			});
+			if(response.statusCode.toString() == '301' || response.statusCode.toString() == '302'){
+				//something went wrong
+				return this.fetchMetricsServerYaml(response.headers.location, resolve, reject)
+			}
+			//the whole response has been received, so we just print it out here
+			response.on('end', () => {
+				resolve(output);
+			});
+
+			
+		});
+	}
+	installMetricsServer(socketIONamespace){
+		return new Promise((installResolve,installReject)=>{
+			new Promise((resolve,reject)=>{
+				const url = 'https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml';
+				
+				this.fetchMetricsServerYaml(url,resolve,reject);
+				
+			}).then(data=>{
+				const parsed = yaml.loadAll(data);
+				let output = [];
+				parsed.map(d=>{
+					
+					let args = [];
+					try{
+						if(typeof d.spec.template.spec.containers != "undefined"){
+						  	args = 	d.spec.template.spec.containers[0].args;
+						}
+					}
+					catch(e){
+						//console.log('no args defined',e);
+					}
+					//console.log('args',args);
+					if(args.length > 0){
+						if(args.indexOf('--kubelet-insecure-tls') == -1){
+							args.push('--kubelet-insecure-tls');
+						}
+						d.spec.template.spec.containers[0].args = args;
+					}
+					output.push(yaml.dump(d));
+				});
+				socketIONamespace.to('akt').emit('k8sBuildLogs','Setting up Metrics Server');
+				fs.writeFileSync(process.env.HOME+'/.HandyHost/aktData/akash_cluster_resources/metrics-server-handyhost.yaml',output.join('---\n'),'utf8');
+				const applyKubectl = spawn('./installMetricsServer.sh',[],{shell:true,env:process.env,cwd:process.env.PWD+'/aktAPI'});
+				applyKubectl.stdout.on('data',d=>{
+					socketIONamespace.to('akt').emit('k8sBuildLogs','POST INSTALL: '+d.toString());
+				})
+				applyKubectl.stderr.on('data',d=>{
+					socketIONamespace.to('akt').emit('k8sBuildLogs','POST INSTALL: '+d.toString());
+				})
+				applyKubectl.on('close',()=>{
+					installResolve();
+				})
+			}).catch(err=>{
+				console.log('error',err);
+				installReject();
+			})
+		});
 	}
 	teardownOldCluster(socketIONamespace){
 		return new Promise((resolve,reject)=>{
@@ -229,7 +315,89 @@ export class K8sUtils{
 						output.push(data);
 						finished++;
 						if(finished == targetNames.length){
-							resolve(output);
+							//now get realtime stats
+							const realtimeArgs = ['./aktAPI/getK8sTop.sh'];
+							let topOutput = '';
+							const top = spawn('bash',realtimeArgs,{shell:true,env:process.env,cwd:process.env.PWD});
+							top.stdout.on('data',d=>{
+								topOutput += d.toString();
+							})
+							top.on('close',()=>{
+								/*
+								NAME                        CPU(cores)   CPU%   MEMORY(bytes)   MEMORY%   
+								akash-blue-gratis-texture   292m         3%     1215Mi          19%
+								*/
+								//let topData = {};
+								let headers = [];
+								topOutput.split('\n').filter(line=>{
+									return line != '';
+								}).map((line,i)=>{
+									let cells = line.split(' ').filter(cell=>{
+										return cell.trim() != '';
+									}).map(cell=>{
+										return cell.trim();
+									})
+									if(i == 0){
+										//is headers
+										headers = cells.slice(0).map(cell=>{
+											return cell.toLowerCase();
+										});
+									}
+									else{
+										let record = {};
+										let name = cells[0];
+										cells.map((val,valI)=>{
+											record[headers[valI]] = val;
+										});
+										output.map(outRec=>{
+											if(outRec.name == name){
+												outRec.realtime = record;
+											}
+										})
+										//topData.push(record);
+									}
+								});
+								let podsOut = '';
+								const getPods = spawn('bash',['./aktAPI/getRunningPodList.sh'],{shell:true,env:process.env,cwd:process.env.PWD});
+								getPods.stdout.on('data',d=>{
+									podsOut += d.toString();
+								})
+								getPods.on('close',d=>{
+									let json = {items:[]};
+									try{
+										json = JSON.parse(podsOut);
+									}
+									catch(e){
+
+									}
+									let itemsOut = {};
+									let ignoreNS = [
+										'ingress-nginx',
+										'kube-system'
+									]
+									json.items.map(pod=>{
+										if(ignoreNS.indexOf(pod.metadata.namespace) >= 0){
+											return;
+										}
+										const machine = pod.spec.nodeName;
+										if(typeof itemsOut[machine] == "undefined"){
+											itemsOut[machine] = 0;
+										}
+										itemsOut[machine] += 1;
+									});
+									output.map(outRec=>{
+										if(typeof itemsOut[outRec.name] != "undefined"){
+											outRec.realtime.pods = itemsOut[outRec.name];
+										}
+										else {
+											outRec.realtime.pods = 0;
+										}
+									})
+									resolve(output);
+								})
+								
+							})
+							
 						}
 					});
 				})
@@ -262,6 +430,7 @@ export class K8sUtils{
 					if(section.trim().length == 0){
 						return;
 					}
+					let hasOverflowed = false;
 					section.split('\n').filter(line=>{return line.trim().length > 0;}).map((line,i)=>{
 						//console.log('line is',line,i);
 						if(i == 0){
@@ -270,6 +439,15 @@ export class K8sUtils{
 								allocatedVals = [];
 								allocatedHeaders = [];
 							}
+							return;
+						}
+						else{
+							//if there is overflow from the next section forget it...
+							if(line.indexOf(' ') > 0 || line.indexOf(' ') == -1){
+								hasOverflowed = true;
+							}
+						}
+						if(hasOverflowed){
 							return;
 						}
 						//else{
@@ -318,10 +496,13 @@ export class K8sUtils{
 					}
 					
 				});
+			
 				resolve({
 					name:nodeName,
 					sections
 				})
+				
+				
 			})
 		})
 	}
@@ -516,6 +697,7 @@ export class K8sUtils{
 		//ok thumbdrive flashed ubuntu onto a new node.
 		//that node contacted us to acquire a hostname
 		//so we need to add it to the configs now
+
 		const clusterConfig = JSON.parse(fs.readFileSync(this.configJSONPath,'utf8'));
 		
 		if(typeof clusterConfig.preConfiguredNVMe == "undefined"){
@@ -533,7 +715,7 @@ export class K8sUtils{
 		console.log('added node to config',ipAddress,moniker);
 		setTimeout(()=>{
 			//give the USB time to unmount and the node time to restart..
-			socketIONamespace.to('akt').emit('newNodeRegistered',clusterConfig.preConfiguredNVMe[moniker]);
+			socketIONamespace.to('akt').emit('newNodeRegistered',clusterConfig.preConfiguredNVMe[moniker],clusterConfig);
 		},30000);
 		
 		//TODO socket io message about this new node

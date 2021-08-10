@@ -3,13 +3,25 @@ export class DonutChart{
 		this.$el = $el;
 	}
 	getContainerDimensions(){
+		let w = this.$el.width();
+		let h = this.$el.height() - $('.donutTitle',this.$el).height();
+		w = Math.max(w,150);
+		h = Math.max(h,150);
 		return {
 			width:this.$el.width(),
-			height: this.$el.height() - $('.donutTitle',this.$el).height()
+			height: h
 		}
 	}
-	render(data){
-		console.log('donut data',data);
+	render(dataOG){
+		
+		let data = dataOG;
+		dataOG.map(d=>{
+			d.originalValue = d.value;
+		})
+		data = dataOG.slice(0);
+		data[1].value = data[1].value - data[0].value;
+		
+		
 		const svg = d3.select(this.$el[0]).select('svg');
 		const {width,height} = this.getContainerDimensions();
 		
@@ -50,7 +62,7 @@ export class DonutChart{
 			.join('text')
 				.attr('x',5)
 				.attr('text-anchor','middle')
-				.text(numeral(data[0].value/data[1].value).format('0.00%'))
+				.text(numeral(data[0].originalValue/data[1].originalValue).format('0.00%'))
 		textPercentage.attr('y',function(d){
 			const h = d3.select(this).node().getBoundingClientRect().height;
 			return h/2-5;

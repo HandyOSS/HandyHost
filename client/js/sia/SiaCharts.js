@@ -132,7 +132,8 @@ export class ContractsChart{
 			}
 			else{
 				completedContracts += 1;
-				if(contract.obligationstatus == "obligationSucceeded" && contract.proofconfirmed){
+				if(contract.obligationstatus == "obligationSucceeded"/* && contract.proofconfirmed*/){
+					
 					completedRevenue += (hastingsToSiacoins(validProofOutputHost).toNumber());// - hastingsToSiacoins(contract.riskedcollateral).toNumber());
 					returnedCollateralSum += hastingsToSiacoins(collateral).toNumber();
 				}
@@ -188,6 +189,7 @@ export class EarningsStorageChart{
 	fetchData(){
 		fetch('/api/sia/getHostMetrics').then(d=>d.json()).then(data=>{
 			console.log('data',data);
+			this.rawData = data;
 			this.renderEarningsPanel(data);
 			this.renderStoragePanel(data);
 		})
@@ -257,7 +259,8 @@ export class EarningsStorageChart{
 
 	}
 	resize(){
-		this.registryDonut.render(this.registryData);
-		this.storageDonut.render(this.storageData);
+		/*this.registryDonut.render(JSON.parse(JSON.stringify(this.registryData)));
+		this.storageDonut.render(JSON.parse(JSON.stringify(this.storageData)));*/
+		this.renderStoragePanel(this.rawData);
 	}
 }

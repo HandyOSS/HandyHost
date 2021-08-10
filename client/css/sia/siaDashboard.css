@@ -147,6 +147,9 @@
 	border-top: 1px solid #ccc;
 	padding-top:20px;
 }
+.dashboardPanel{
+	padding-bottom: 10px;
+}
 .contractsMeta{
 	float:left;
 	width: 30%;

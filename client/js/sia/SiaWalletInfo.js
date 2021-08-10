@@ -149,7 +149,7 @@ export class SiaWalletInfo{
 	renderTransactions(txes,type){
 		txes.sort((a,b)=>{
 			return b.confirmationtimestamp - a.confirmationtimestamp;
-		}).map(tx=>{
+		}).map((tx,txI)=>{
 			let height = tx.confirmationheight;
 			const timestamp = tx.confirmationtimestamp;
 			let direction = tx.inputs[0].walletaddress ? 'out' : 'in';
@@ -161,6 +161,10 @@ export class SiaWalletInfo{
 			let isCollateralPosting = true;
 			let isStorageProof = false;
 			let isContractFormation = false;
+			let isCollateralReturned = false;
+			let allInputsAreMe = true;
+			let allOutputsAreMe = true;
+			let hasUpDownClass = '';
 			tx.inputs.map(t=>{
 				if(!t.walletaddress){
 					isCollateralPosting = false;
@@ -171,6 +175,64 @@ export class SiaWalletInfo{
 					isCollateralPosting = false;
 				}
 			});
+			//check if this is a returned collateral tx
+			tx.inputs.map(t=>{
+				if(!t.walletaddress){
+					allInputsAreMe = false;
+				}
+			})
+			tx.outputs.map(t=>{
+				if(!t.walletaddress){
+					allOutputsAreMe = false;
+				}
+			});
+			if(allInputsAreMe && allOutputsAreMe){
+				if(tx.transaction.filecontracts != null && tx.transaction.filecontractrevisions != null){
+					if(tx.transaction.filecontracts.length == 0 && tx.transaction.filecontractrevisions.length == 0){
+						//check to see if there area any synonym tx to reference
+						let isParentID = false;
+						let ids = [];
+						tx.outputs.map(t=>{
+							if(typeof t.parentid == "undefined"){
+								isParentID = true;
+								ids.push(t.id);
+							}
+						});
+						if(isParentID){
+							console.log('is parentID',txI,ids);
+							let childTX = txes.find((child,childI)=>{
+								if(child.inputs.length == ids.length){
+									//console.log('potential match child tx',childI,child);
+									let toreturn = true;
+									child.inputs.map(input=>{
+										
+										if(ids.indexOf(input.parentid) == -1){
+											toreturn = false;
+										}
+									});
+									return toreturn;
+								}
+								return false;
+							});
+							console.log('childTX',childTX);
+							if(childTX){
+								if(childTX.transaction.filecontracts != null && childTX.transaction.filecontractrevisions != null){
+									if(childTX.transaction.filecontracts.length == 0 && childTX.transaction.filecontractrevisions.length == 0){
+										//this is retuned collateral
+										direction = 'collateralReturned';
+										isCollateralReturned = true;
+										isCollateralPosting = false;
+									}
+								}
+							}
+						}
+						
+
+					}
+				}
+			}
+
+
 			if(tx.transaction.filecontracts != null && tx.transaction.filecontractrevisions != null){
 				if(tx.transaction.filecontracts.length > 0 || tx.transaction.filecontractrevisions.length > 0){
 					isContractFormation = true;
@@ -186,7 +248,7 @@ export class SiaWalletInfo{
 				direction = 'collateralPosting';
 				//console.log('collateral',tx);
 			}
-			let hasUpDownClass = '';
+			
 			if(direction == 'out'){
 				hasUpDownClass = ' hasUpDownColor';
 				dirMarker = '-';
@@ -231,6 +293,12 @@ export class SiaWalletInfo{
 				}
 				
 				console.log('cf val',val);
+			}
+			if(direction == 'collateralReturned'){
+				hasUpDownClass = ' hasUpDownColor';
+				dirMarker = '(returned collateral) +';
+				dirColor = '#23db75'
+				val = hastingsToSiacoins(tx.outputs[0].value).toNumber();
 			}
 
 			if(val == 0){

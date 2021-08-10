@@ -29,7 +29,16 @@ html,body{
 }
 
 /*dashboard*/
-
+#serviceBackground{
+	position:fixed;
+	z-index:0;
+	background:#fff;
+	width:100%;
+	height:100%;
+	float:left;
+	top:0;
+	left:0;
+}
 .serviceMain{
 	float:left;
 	width: 100%;
@@ -38,7 +47,7 @@ html,body{
 	left:0;
 	width: 100%;
 	height: 100%;
-	z-index:0;
+	z-index:1;
 }
 .serviceMain .options{
 	float:left;
@@ -95,7 +104,7 @@ html,body{
     left: calc(20% + 10px);
     width: calc(80% - 40px);
     height: calc(100% - 40px);
-    z-index: 1;
+    z-index: 2;
     background: #eee;
     border-radius: 10px;
     padding: 10px;

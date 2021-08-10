@@ -373,7 +373,8 @@ export class Wallet{
 	registerProvider(params,mode,providerHost){
 		return new Promise((resolve,reject)=>{
 			//console.log('register called',params,mode);
-			const args = ['./registerProvider.sh',params.pw,params.walletName,mode];
+			const fees = typeof params.fees != "undefined" ? (params.fees == "" ? '10000' : params.fees) : '10000';
+			const args = ['./registerProvider.sh',params.pw,params.walletName,mode,fees];
 			let output = '';
 			let errOutput = '';
 			const s = spawn('bash',args,{shell:true,env:process.env,cwd:process.env.PWD+'/aktAPI'});

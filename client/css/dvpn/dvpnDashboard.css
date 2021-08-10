@@ -42,6 +42,20 @@
 	color:#444;
 }
 
+.dashboard .nodeInfo{
+  float:left;
+}
+.dashboard .walletQR{
+  float:left;
+  width: 100px;
+  height: 100px;
+  margin-right: 5px;
+}
+.walletQR img{
+  width: 100px;
+  height: 100px;
+}
+
 .loadingText{
 	margin-top: 10px;
 }

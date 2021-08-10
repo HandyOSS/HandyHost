@@ -41,21 +41,26 @@ export class AKTUtils{
 				const nmap = spawn('nmap',['-sP',ipRangeOut])
 				nmap.on('close',()=>{
 					//nmap refreshes the network for arp, sheesh...
-					const arp = spawn('arp',['-a']);
-					let output = '';
-					arp.stdout.on('data',d=>{
-						output += d.toString();
-					})
-					arp.stderr.on('data',d=>{
-						reject(d.toString());
-					})
-					arp.on('close',()=>{
-						this.processArp(output,existingConfigData).then(data=>{
-							resolve(data);
-						}).catch(err=>{
-							reject(err);
+					//and first arp will often fill the reouter tables so do another
+					const arp0 = spawn('arp',['-a']);
+					arp0.on('close',()=>{
+						const arp = spawn('arp',['-a']);
+						let output = '';
+						arp.stdout.on('data',d=>{
+							output += d.toString();
+						})
+						arp.stderr.on('data',d=>{
+							reject(d.toString());
+						})
+						arp.on('close',()=>{
+							this.processArp(output,existingConfigData).then(data=>{
+								resolve(data);
+							}).catch(err=>{
+								reject(err);
+							})
 						})
 					})
+					
 				})
 			})
 			
@@ -509,6 +514,6 @@ export class AKTUtils{
 			resolve({saved:true});
 		})
 	}
-	
+
 
 }

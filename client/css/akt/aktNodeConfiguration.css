@@ -17,11 +17,29 @@
 }
 .configTitle{
 	font-size: 24px;
+	font-weight: 200;
 }
 .topLevel li a, .topLevel td a, .advancedOptions a, a.getGlobalIP, a.getWallet{
 	text-decoration: underline;
 	cursor:pointer;
 	color:#ed3624;
+}
+a.getGlobalIP{
+	line-height: 14px !important;
+	float:none !important;
+	margin-left:0px !important;
+}
+.domainNote{
+	float: left;
+    max-width: 380px;
+    margin-left: 20px;
+    color: #555;
+    font-size: 14px;
+    margin-top: 8px;
+    position:absolute;
+}
+.myip{
+	color:#111;
 }
 .advancedOptions a{
 	line-height: 50px;
@@ -262,6 +280,10 @@
 	display:block !important;
 }
 
+.logsMessage{
+	font-size: 18px;
+	font-weight: 200;
+}
 
 
 

@@ -100,6 +100,13 @@ export class EnvUtils{
 					return n.trim().length > 0;
 				}).map(n=>{
 					return 'http'+n;
+				}).filter(n=>{
+					//forbole is returning http responses to https client
+					//breaking all kinds of shite
+					if(n.indexOf('rpc.akash.forbole.com') >= 0){
+						return false;
+					}
+					return true;
 				})
 				//get a random node
 				resolve(nodeList[Math.floor(Math.random() * (nodeList.length-1))]);

@@ -29,12 +29,18 @@ export class HandyAKT{
 			process.env.AKT_ACCT_NAME = acctName.replace(/\n/g,'');
 			//try startup here since we have already inited
 		}
-		
+		this.checkClusterConfigExistence();
 		this.utils = new AKTUtils(this.clusterConfigFilePath);
 		this.diskUtils = new DiskUtils();
 		this.k8sUtils = new K8sUtils(this.clusterConfigFilePath);
 		this.wallet = new Wallet();
 		this.market = new Marketplace();
+	}
+	checkClusterConfigExistence(){
+		if(!fs.existsSync(this.clusterConfigFilePath)){
+			//init an empty config file
+			fs.writeFileSync(this.clusterConfigFilePath,'{}','utf8');
+		}
 	}
 	addSocketNamespace(ioNamespace){
 		//this.io.of('/dvpn')
@@ -256,6 +262,13 @@ export class HandyAKT{
 					reject(error);
 				});
 			break;
+			case 'getMarketplaceOrder':
+				this.getMarketOrder(requestBody).then(data=>{
+					resolve(data);
+				}).catch(error=>{
+					reject(error);
+				})
+			break;
 			case 'getMarketplaceBids':
 				this.getMarketBids(requestBody).then(data=>{
 					resolve(data);
@@ -424,6 +437,15 @@ export class HandyAKT{
 			})
 		}
 		return this.market.getOrders(parsed);
+	}
+	getMarketOrder(requestBody){
+		const {parsed,err} = this.parseRequestBody(requestBody);
+		if(typeof parsed == "undefined"){
+			return new Promise((resolve,reject)=>{
+				reject(err);
+			})
+		}
+		return this.market.getOrder(parsed);
 	}
 	generateServerCert(requestBody){
 		const {parsed,err} = this.parseRequestBody(requestBody);

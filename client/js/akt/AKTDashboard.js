@@ -46,8 +46,9 @@ export class AKTDashboard {
 				$('#logs .logsMessage').html('Kubernetes Cluster Installation is Finished!')
 			}
 		})
-		this.socket.on('newNodeRegistered',nodeData=>{
-			console.log('new node data',nodeData);
+		this.socket.on('newNodeRegistered',(nodeData,clusterConfig)=>{
+			console.log('new node data',nodeData,clusterConfig);
+			this.nodeConfig.clusterConfig.renderClusterConfig(clusterConfig);
 			this.showNewNodeAddedModal(nodeData);
 		})
 		

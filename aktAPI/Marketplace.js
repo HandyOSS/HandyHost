@@ -39,6 +39,38 @@ export class Marketplace{
 			})
 		});
 	}
+	getOrder(params){
+		return new Promise((resolve,reject)=>{
+			console.log('get order params',params);
+			let args = ['query', 'market', 'order', 'get', '--owner', params.owner, '--dseq', params.dseq, '--gseq', params.gseq, '--oseq', params.oseq, '--output','json'];
+			
+			const s = spawn('./bin/akash',args,{shell:true,env:process.env,cwd:process.env.PWD+'/aktAPI'});
+			let output = '';
+			let errOut = '';
+			s.stdout.on('data',d=>{
+				output += d.toString();
+			})
+			s.stderr.on('data',d=>{
+				console.log('error',d.toString());
+				errOut += d.toString();
+			});
+			s.on('close',()=>{
+				if(errOut != ''){
+					reject({error:errOut});
+				}
+				else{
+					let json = {};
+					try{
+						json = JSON.parse(output);
+					}
+					catch(e){
+						reject({error:output})
+					}
+					resolve(json);
+				}
+			})
+		});
+	}
 	getBids(params,wallet){
 		return new Promise((resolve,reject)=>{
 			console.log('get orders params',params);

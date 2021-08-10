@@ -11,7 +11,10 @@
 --kubeconfig $HOME/.HandyHost/aktData/admin.conf \
 --cluster-k8s true \
 --deployment-ingress-domain $2 \
+--cluster-public-hostname $2 \
 --deployment-ingress-static-hosts true \
 --deployment-runtime-class none \
 --bid-price-strategy scale \
---bid-price-cpu-scale 10
+--bid-price-cpu-scale 10 \
+--deployment-runtime-class none \
+--cluster-node-port-quantity 10

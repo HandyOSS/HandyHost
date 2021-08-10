@@ -7,7 +7,7 @@
 	width:100%;
 	height:100%;
 	display:none;
-	z-index:2;
+	z-index:3;
 }
 .walletUtil, .newWalletInfo, .seedImportMessage, .walletModalContent, .modalContent{
 	width:calc(50% - 20px);

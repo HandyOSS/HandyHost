@@ -106,9 +106,30 @@ export class AKTMarketplace{
 		})
 		.then((res)=>{ console.log('success'); return res.json(); }).then(data=>{
 			console.log('res data',data);
+			this._lastBidsData = data;
 			this.renderBidsPanel(data);
 		})
 		.catch((res)=>{ console.log('error submitting',res) });
+	}
+	fetchSingleOrder(owner,dseq,gseq,oseq){
+		return new Promise((resolve,reject)=>{
+			const queryParams = {
+				owner,
+				dseq,
+				gseq,
+				oseq
+			};
+			fetch('/api/akt/getMarketplaceOrder',{
+				headers: {
+			      'Accept': 'application/json',
+			      'Content-Type': 'application/json'
+			    },
+			    method: "POST",
+			    body: JSON.stringify(queryParams)
+			}).then(d=>d.json()).then(data=>{
+				resolve(data);
+			});
+		});
 	}
 	fetchLeasesData(leasesState){
 		let queryParams = {
@@ -129,6 +150,7 @@ export class AKTMarketplace{
 		})
 		.then((res)=>{ console.log('success'); return res.json(); }).then(data=>{
 			console.log('res data',data);
+			this._lastLeasesData = data;
 			this.renderLeasesPanel(data);
 		})
 		.catch((res)=>{ console.log('error submitting',res) });
@@ -145,6 +167,7 @@ export class AKTMarketplace{
 		})
 		.then((res)=>{ console.log('success'); return res.json(); }).then(data=>{
 			console.log('res data',data);
+			this._lastOrdersData = data;
 			this.renderOrdersPanel(data);
 		})
 		.catch((res)=>{ console.log('error submitting',res) });
@@ -172,7 +195,7 @@ export class AKTMarketplace{
 		</div>`);
 		return $pagination;
 	}
-	renderBidsPanel(data,isAllBidsForOrder,targetedBid){
+	renderBidsPanel(data,isAllBidsForOrder,targetedBid,backToDataset){
 		const $el = $('#marketplace .ordersPanel .data');
 		if(data.bids.length == 0){
 			$el.html('<div class="message">No Bids Found</div>')
@@ -182,8 +205,14 @@ export class AKTMarketplace{
 			$el.html('<div class="message">Error: '+data.error+'</div>')
 			return;
 		}
+		let $pagination;
+		if(typeof backToDataset != "undefined"){
+			$pagination = $('<div class="pagination"><a class="back akashLink">Back</a></div>')
+		}
+		else{
+			$pagination = this.getPagination$El(data);
+		}
 		
-		const $pagination = this.getPagination$El(data);
 		const $bids = $('<table cellspacing=0 />');
 		const $header = $('<tr />');
 		$header.append('<th>Status</th>')
@@ -212,7 +241,11 @@ export class AKTMarketplace{
 			else{
 				id = bid.bid.bid_id.owner+'/'+bid.bid.bid_id.dseq+'/'+bid.bid.bid_id.gseq+'/'+bid.bid.bid_id.oseq;
 				label = 'Order ID: ';
-				$links = '<a class="seeAllBids akashLink">View All Bids</a> | <a class="cancelBid akashLink">Cancel My Bid</a>';
+				let cancelBidLink = '| <a class="cancelBid akashLink">Cancel My Bid</a>';
+				if(bid.bid.state == 'closed'){
+					cancelBidLink = '';
+				}
+				$links = '<a class="seeAllBids akashLink">View All Bids</a> '+cancelBidLink;
 			}
 			const $trid = $('<tr class="orderID" data-id="'+id+'" />');
 			
@@ -226,8 +259,8 @@ export class AKTMarketplace{
 			$bids.append($row);
 			$('.seeAllBids',$trid).off('click').on('click',()=>{
 				//get all bids
-				this.pageNow = 1; //reset to lowest.
-				this.getAllBidsForOrder(bid);
+				//this.pageNow = 1; //reset to lowest.
+				this.getAllBidsForOrder(bid,'bids');
 				this.showLoading('All Bids');
 			});
 			$('.cancelBid',$trid).off('click').on('click',()=>{
@@ -254,7 +287,7 @@ export class AKTMarketplace{
 		$('.ordersPanel .pagination .nextPage').off('click').on('click',()=>{
 			this.pageNow += 1;
 			if(isAllBidsForOrder){
-				this.getAllBidsForOrder(targetedBid);
+				this.getAllBidsForOrder(targetedBid,'bids');
 			}
 			else{
 				this.fetchBidsData(this.lastBidsState);
@@ -265,7 +298,7 @@ export class AKTMarketplace{
 		$('.ordersPanel .pagination .prevPage').off('click').on('click',()=>{
 			this.pageNow -= 1;
 			if(isAllBidsForOrder){
-				this.getAllBidsForOrder(targetedBid);
+				this.getAllBidsForOrder(targetedBid,'bids');
 			}
 			else{
 				this.fetchBidsData(this.lastBidsState);
@@ -273,60 +306,40 @@ export class AKTMarketplace{
 			this.showLoading('All Bids');
 			
 		})
-		$('.ordersPanel .pagination select').off('change').on('change',()=>{
-			const val = $('.ordersPanel .pagination select option:selected').val();
-			this.pageNow = parseInt(val);
+		const _this = this;
+		$('.ordersPanel .pagination select').off('change').on('change',function(){
+			const val = $('option:selected',$(this)).val();
+			_this.pageNow = parseInt(val);
 			if(isAllBidsForOrder){
-				this.getAllBidsForOrder(targetedBid);
+				_this.getAllBidsForOrder(targetedBid,'bids');
 			}
 			else{
-				this.fetchBidsData(this.lastBidsState);
+				_this.fetchBidsData(this.lastBidsState);
 			}
-			this.showLoading('All Bids');
+			_this.showLoading('All Bids');
 		})
-		/*
-		[
-    {
-        "bid": {
-            "bid_id": {
-                "owner": "akash1fnc04mjln6y0y7qgkkz9nwkjane50nnjxq32yf",
-                "dseq": "1887409",
-                "gseq": 1,
-                "oseq": 1,
-                "provider": "akash1mqnj2euks0aq82q0f2tknz6kua6zdfn97kmvhj"
-            },
-            "state": "open",
-            "price": {
-                "denom": "uakt",
-                "amount": "2"
-            },
-            "created_at": "1887499"
-        },
-        "escrow_account": {
-            "id": {
-                "scope": "bid",
-                "xid": "akash1fnc04mjln6y0y7qgkkz9nwkjane50nnjxq32yf/1887409/1/1/akash1mqnj2euks0aq82q0f2tknz6kua6zdfn97kmvhj"
-            },
-            "owner": "akash1mqnj2euks0aq82q0f2tknz6kua6zdfn97kmvhj",
-            "state": "open",
-            "balance": {
-                "denom": "uakt",
-                "amount": "50000000"
-            },
-            "transferred": {
-                "denom": "uakt",
-                "amount": "0"
-            },
-            "settled_at": "1887499"
-        }
-    }
-]
-		*/
+
+		if(typeof backToDataset != "undefined"){
+			//back button event
+			$('.pagination .back').off('click').on('click',()=>{
+				switch(backToDataset){
+					case 'leases':
+						this.renderLeasesPanel(this._lastLeasesData);
+					break;
+					case 'bids':
+						this.renderBidsPanel(this._lastBidsData);
+					break;
+					case 'orders':
+						this.renderOrdersPanel(this._lastOrdersData);
+					break;
+				}
+			})
+		}
 	}
-	getAllBidsForOrder(bid){
+	getAllBidsForOrder(bid,backToDataset){
 		const params = {
-			limit:this.orderLimit,
-			page:this.pageNow
+			limit:50,//this.orderLimit,
+			page:1//this.pageNow
 		}
 		fetch('/api/akt/fetchAllOrderBids',
 			{
@@ -344,7 +357,7 @@ export class AKTMarketplace{
 					this.showErrorModal(data.message);
 				}
 				else{
-					this.renderBidsPanel(data,true,bid);
+					this.renderBidsPanel(data,true,bid,backToDataset);
 				}
 			
 			})
@@ -381,15 +394,86 @@ export class AKTMarketplace{
 		}
 		const $pagination = this.getPagination$El(data);
 
+		const $leases = $('<table cellspacing="0" />');
+		const $header = $('<tr />');
+		$header.append('<th>Rate (uAKT/Block)</th>');
+		$header.append('<th>Escrow Balance</th>');
+		$header.append('<th>Escrow Withdrawn</th>');
+		$header.append('<th>State</th>');
+		$header.append('<th>Link</th>')
+
+		$leases.append($header);
+		data.leases.map(leaseData=>{
+			const escrow_payment = leaseData.escrow_payment;
+			const lease = leaseData.lease;
+			const rate = `${numeral(escrow_payment.rate.amount).format('0,0')} ${escrow_payment.rate.denom}`;
+			const balance = `${numeral(escrow_payment.balance.amount).format('0,0')} ${escrow_payment.balance.denom}`;
+			const withdrawn = `${numeral(escrow_payment.withdrawn.amount).format('0,0')} ${escrow_payment.withdrawn.denom}`;
+			const state = lease.state;
+			const link = `<a class="viewOrder akashLink" data-owner="${lease.lease_id.owner}" data-dseq="${lease.lease_id.dseq}" data-gseq="${lease.lease_id.gseq}" data-oseq="${lease.lease_id.oseq}">View Order</a>`;
+			const orderID = `${lease.lease_id.owner}/${lease.lease_id.dseq}/${lease.lease_id.gseq}/${lease.lease_id.oseq}`
+			const $orderRow = $('<tr class="orderID" data-id="'+orderID+'" />')
+			$orderRow.append('<td colspan="5">Order: '+orderID+'</td>')
+			const $row = $('<tr data-id="'+orderID+'" />')
+			$row.append(`<td>${rate}</td>`)
+			$row.append(`<td>${balance}</td>`)
+			$row.append(`<td>${withdrawn}</td>`)
+			$row.append(`<td>${state}</td>`)
+			$row.append(`<td>${link}</td>`)
+			$leases.append($orderRow);
+			$leases.append($row);
+			$('a.viewOrder',$row).off('click').on('click',()=>{
+				this.fetchSingleOrder(lease.lease_id.owner,lease.lease_id.dseq,lease.lease_id.gseq,lease.lease_id.oseq).then(orderData=>{
+					this.renderOrdersPanel({orders:[orderData]},true);
+				})
+			})
+		});
+
+
+		$('tr',$leases).off('mouseenter').on('mouseenter',function(){
+			$('tr',$leases).removeClass('highlighted');
+			let id = $(this).attr('data-id');
+			$('tr[data-id="'+id+'"]',$leases).addClass('highlighted');
+		});
+		$('tr',$leases).off('mouseleave').on('mouseleave',function(){
+			$('tr',$leases).removeClass('highlighted');
+		});
+
+		$el.html($pagination.clone());
+		$el.append($leases);
+		$el.append($pagination);
+		$('.ordersPanel .pagination .nextPage').off('click').on('click',()=>{
+			this.pageNow += 1;
+			this.fetchLeasesData();
+			this.showLoading('Leases');
+			
+		})
+		$('.ordersPanel .pagination .prevPage').off('click').on('click',()=>{
+			this.pageNow -= 1;
+			this.fetchLeasesData();
+			this.showLoading('Leases');
+			
+		})
+		const _this = this;
+		$('.ordersPanel .pagination select').off('change').on('change',function(){
+			const val = $('option:selected',$(this)).val();
+			_this.pageNow = parseInt(val);
+			_this.fetchLeasesData();
+			_this.showLoading('Leases');
+		})
+		
 	}
-	renderOrdersPanel(data){
+	renderOrdersPanel(data,isSingleOrder){
+		let backToDatasetType = 'orders';
+		if(isSingleOrder){
+			backToDatasetType = 'leases';
+		}
 		const $el = $('#marketplace .ordersPanel .data');
 		if(data.error){
 			$el.html('<div class="message">Error: '+data.error+'</div>')
 			return;
 		}
-		const $pagination = this.getPagination$El(data);
-
+		
 		const $orders = $('<table cellspacing="0" />')
 		const $header = $('<tr />')
 		$header.append('<th>Price (uAKT/Block)</th>');
@@ -416,8 +500,8 @@ export class AKTMarketplace{
 						bid_id:order.order_id
 					}
 				};
-				this.pageNow = 1; //reset to lowest.
-				this.getAllBidsForOrder(bidData);
+				//this.pageNow = 1; //reset to lowest.
+				this.getAllBidsForOrder(bidData,backToDatasetType);
 				this.showLoading('All Bids');
 			})
 			$orders.append($tr);
@@ -447,9 +531,19 @@ export class AKTMarketplace{
 		$('tr',$orders).off('mouseleave').on('mouseleave',function(){
 			$('tr',$orders).removeClass('highlighted');
 		});
+		let $pagination;
+		if(isSingleOrder){
+			$pagination = $('<div class="pagination"><a class="back akashLink">Back</a></div>')
+		}
+		else{
+			$pagination = this.getPagination$El(data);
+		}
+		
 		
 		$el.html($pagination.clone());
+
 		$el.append($orders);
+
 		$el.append($pagination);
 		//pagination
 		$('.ordersPanel .pagination .nextPage').off('click').on('click',()=>{
@@ -464,14 +558,19 @@ export class AKTMarketplace{
 			this.showLoading('Orders');
 			
 		})
-		$('.ordersPanel .pagination select').off('change').on('change',()=>{
-			const val = $('.ordersPanel .pagination select option:selected').val();
-			this.pageNow = parseInt(val);
-			this.fetchOrdersData();
-			this.showLoading('Orders');
+		const _this = this;
+		$('.ordersPanel .pagination select').off('change').on('change',function(){
+			const val = $('option:selected',$(this)).val();
+			_this.pageNow = parseInt(val);
+			_this.fetchOrdersData();
+			_this.showLoading('Orders');
 		})
 
-
+		if(isSingleOrder){
+			$('.pagination .back').off('click').on('click',()=>{
+				this.renderLeasesPanel(this._lastLeasesData);
+			})
+		}
 	}
 	showLoading(label){
 		$('.ordersPanel .data').html(`

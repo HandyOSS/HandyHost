@@ -17,6 +17,7 @@ export class DVPNDashboardAnalytics{
 	renderAnalytics(data){
 		const analytics = data.analytics;
 		const balance = data.balance;
+		const addressMeta = data.wallet;
 		let node = data.node;
 		console.log('data IN',data);
 		if(Object.keys(data.node).length == 0){
@@ -36,10 +37,10 @@ export class DVPNDashboardAnalytics{
 			}
 		}
 		$('.analyticsPanel').removeClass('loading');
-		this.renderNodeAnalytics(node.result,balance,analytics);
+		this.renderNodeAnalytics(node.result,balance,analytics,addressMeta);
 		this.renderSessionsRealtime(data.activeSessions);
 	}
-	renderNodeAnalytics(node,balance,analytics){
+	renderNodeAnalytics(node,balance,analytics,addressMeta){
 		console.log('node data',node);
 		const bandwidth = node.bandwidth;
 		const moniker = node.moniker;
@@ -64,20 +65,27 @@ export class DVPNDashboardAnalytics{
 		$el.html(`<div class="title">
 			${moniker}
 		</div>`)
+		const $info = $('<div class="nodeInfo"></div>');
+
 		$el.append(`
+			<div class="walletQR"><img src="${addressMeta.qr}" /></div>
+		`)
+		$el.append($info);
+		$info.append(`<div class="addr"><span>Node Address:</span> ${addressMeta.address}</div>`);
+		$info.append(`<div class="balance"><span>Wallet Balance:</span> ${walletBalance}</div>`)
+		$info.append(`
 			<div class="bandwidth">
 				<span>Download Speed:</span> ${numeral(node.bandwidth.download).format('0.00b').toUpperCase()}
 				<span>Upload Speed:</span> ${numeral(node.bandwidth.upload).format('0.00b').toUpperCase()}
 			</div>`)
-		$el.append(`
-			<div class="addr"><span>Node Address:</span> ${nodeAddress}</div>
-		`)
-		$el.append(`<div class="price"><span>Price (GB):</span> ${price.toUpperCase()}</div>`);
-		$el.append(`<div class="sessions"><span>Connected Sessions:</span> ${sessions}</div>`);
-		$el.append(`<div class="balance"><span>Wallet Balance:</span> ${walletBalance}</div>`)
+		
+		$info.append(`<div class="price"><span>Price (GB):</span> ${price.toUpperCase()}</div>`);
+		$info.append(`<div class="sessions"><span>Connected Sessions:</span> ${sessions}</div>`);
+		
 		this.renderAnalyticsPanel(analytics);
 	}
 	renderAnalyticsPanel(analytics){
+		//console.log('analytics',analytics);
 		const avgDuration = Math.floor(analytics.avgDuration*100)/100;
 		const sumDuration = Math.floor(analytics.durationSum*100)/100;
 		const sessionCount = analytics.sessionCount;
@@ -122,9 +130,9 @@ export class DVPNDashboardAnalytics{
 			`)
 			$('ul',$subs).append($li);
 		})
-		$nodeAnalytics.append($durations)
-		$nodeAnalytics.append($sessions);
-		$subscriptionAnalytics.append($subs);
+		$nodeAnalytics.html($durations)
+		$nodeAnalytics.html($sessions);
+		$subscriptionAnalytics.html($subs);
 	}
 	renderSessionsRealtime(data){
 		const $el = $('#sessionMeta');
