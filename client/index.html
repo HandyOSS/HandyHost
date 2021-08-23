@@ -1,0 +1,112 @@
+<html>
+<head>
+	<title>HandyHost</title>
+	<link rel="stylesheet" type="text/css" href="./intro/css/main.css" />
+	<script src="./intro/triangulate/clean-pslg/bundle.js"></script>
+	<script src="./external/Tween.js"></script>
+	<script src="./external/jquery.min.js"></script>
+</head>
+<body>
+	<div id="introLogo"></div>
+	<script type="module">
+		const logoAkash = './intro/svg/akash.svg';
+		const logoSentinel = './intro/svg/sentinel.svg';
+		const logoSia = './intro/svg/sia.svg';
+		const handyHostLogo = './intro/svg/HandyHost.svg';
+		import {TriangulatedLogo} from './intro/logo-static.js';
+		const app = new TriangulatedLogo();
+
+		let handyHostColSpan = 3,
+		handyHostRowSpan = 4,
+		cols = 3,
+		rows = 5,
+		sentinelRow = 4,
+		sentinelCol = 0,
+		akashRow = 4,
+		akashCol = 1,
+		siaRow = 4,
+		siaCol = 2,
+		handyHostLeftOffset = -0.03,
+		handyHostTopOffset = 0.1;
+
+		if($(window).width() < $(window).height()){
+			handyHostColSpan = 1;
+			handyHostRowSpan = 5;
+			cols = 1;
+			rows = 8;
+			sentinelRow = 5;
+			sentinelCol = 0;
+			akashRow = 6;
+			akashCol = 0;
+			siaRow = 7;
+			siaCol = 0;
+			handyHostLeftOffset = -0.08;
+		}
+
+		const handyHostParams = {
+			type:'static',
+			left:handyHostLeftOffset,
+			top: handyHostTopOffset,
+			cellPos:{
+				cols,
+				rows,
+				rowPos:0,
+				colPos:0,
+				rowSpan:handyHostRowSpan,
+				colSpan:handyHostColSpan
+			},
+			wireframe:false
+		}
+		const sentinelParams = {
+			cellPos:{
+				cols,
+				rows,
+				rowPos:sentinelRow,
+				colPos:sentinelCol
+			},
+			logo: 'Sentinel',
+			easing:TWEEN.Easing.Circular.InOut,
+			wireframe:true,
+			link:'dvpn.html'
+		};
+		const akashParams = {
+			cellPos:{
+				cols,
+				rows,
+				rowPos:akashRow,
+				colPos:akashCol
+			},
+			logo: 'Akash',
+			easing:TWEEN.Easing.Circular.InOut,
+			wireframe:true,
+			link:'akt.html'
+		};
+		const siaParams = {
+			cellPos:{
+				cols,
+				rows,
+				rowPos:siaRow,
+				colPos:siaCol
+			},
+			padding: 9.0,
+			logo: 'Sia',
+			easing:TWEEN.Easing.Circular.InOut,
+			wireframe:true,
+			link:'sia.html'
+		};
+		
+		
+		
+		app.loadStaticJSONLogo('HandyHost',handyHostParams).then(mesh=>{
+			setTimeout(()=>{
+				app.loadStaticJSONLogo('dvpn',sentinelParams);
+				app.loadStaticJSONLogo('akt',akashParams);
+				app.loadStaticJSONLogo('sc',siaParams);
+			},500)
+		})
+		
+		
+		window.app = app;
+	</script>
+</body>
+</html>

@@ -45,7 +45,7 @@ export class DVPNDashboard {
 			console.log('socket node is updated')
 			$('#dvpnMain .options li#dvpnUpdatesWarning').hide();
 		});
-		this.socket.on('sessionAnalytics',data=>{
+		this.socket.on('sessionAnalytics',(data,timeseries)=>{
 			console.log('session analytics realtime update',data);
 			this.dashboardAnalytics.renderSessionsRealtime(data);
 		})
@@ -124,6 +124,9 @@ export class DVPNDashboard {
 					_this.nodeConfig.hide();
 					_this.nodeStatus.show();
 					_this.nodeStatus.showDVPNUpdateModal()
+				break;
+				case 'allServices':
+					window.location.href = '/';
 				break;
 			}
 			

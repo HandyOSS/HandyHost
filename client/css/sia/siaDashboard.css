@@ -232,3 +232,26 @@
 	margin: 0px 5px;
 	margin-top:3px;
 }
+
+.loadingPanel{
+	margin-top: 50px;
+	font-size: 24px;
+	font-weight: 200;
+	float:left;
+	color:#666;
+}
+#updateSia, #warnings{
+	display:none;
+}
+.warningsInfo ul{
+	float:left;
+	width: calc(100% - 20px);
+	margin:0;
+	padding:0 10px;
+	list-style-type:none;
+	font-size: 24px;
+	font-weight:200;
+}
+.warningsInfo ul li{
+	padding: 5px 0px;
+}

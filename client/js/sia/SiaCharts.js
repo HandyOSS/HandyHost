@@ -9,6 +9,7 @@ export class HostScoreRadarChart{
 		
 	}
 	render(data){
+		$('#hostScoreLoader').remove();
 		console.log('render charts',data);
 		const $chartEl = $('<div class="radarChart" id="hostScoreChart"><svg /></div>');
 		$('.hostRadars',this.$el).html($chartEl);
@@ -168,6 +169,7 @@ export class ContractsChart{
 			});
 			this.data = filtered;
 			this.height = height;
+			$('#beeswarmLoading').remove();
 			this.chart.render(filtered,height);
 		})
 		
@@ -190,6 +192,7 @@ export class EarningsStorageChart{
 		fetch('/api/sia/getHostMetrics').then(d=>d.json()).then(data=>{
 			console.log('data',data);
 			this.rawData = data;
+			$('#earningsLoading').remove();
 			this.renderEarningsPanel(data);
 			this.renderStoragePanel(data);
 		})

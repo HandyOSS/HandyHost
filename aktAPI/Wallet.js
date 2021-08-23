@@ -492,9 +492,14 @@ export class Wallet{
 		//params = walletName,serverHost,prob password????
 		return new Promise((resolve,reject)=>{
 			let logInterval;
-			const args = [params.pw,params.walletName,params.serverHost];
-			const s = spawn('./runProviderAutomated.sh',args,{env:process.env,cwd:process.env.PWD+'/aktAPI'});
+			const args = [params.pw,params.walletName,params.serverHost,params.cpuPrice,params.fees];
+			const s = spawn('./runProviderAutomated.sh',args,{env:process.env,cwd:process.env.PWD+'/aktAPI',detached:true});
+			fs.writeFileSync(process.env.HOME+'/.HandyHost/aktData/provider.pid',s.pid.toString());
 			let logsPath = process.env.HOME+'/.HandyHost/aktData/providerRun.log';
+			if(fs.existsSync(logsPath)){
+				//unlink if exists
+				fs.unlinkSync(logsPath);
+			}
 			let intervalsPassed = 0;
 			
 			logInterval = setInterval(()=>{
@@ -527,9 +532,24 @@ export class Wallet{
 				hasReturned = true;
 				clearTimeout(returnTimeout);
 				clearInterval(logInterval);
-				resolve({success:false,error:output})
+				resolve({success:false,error:output});
+				fs.unlinkSync(process.env.HOME+'/.HandyHost/aktData/provider.pid',s.pid.toString());
 			})	
 		});
+	}
+	haltProvider(){
+		return new Promise((resolve,reject)=>{
+			const pidPath = process.env.HOME+'/.HandyHost/aktData/provider.pid';
+			if(fs.existsSync(pidPath)){
+				const pid = parseInt(fs.readFileSync(pidPath,'utf8').trim());
+				process.kill(pid);
+				resolve({success:true});
+			}
+			else{
+				//ok must laready be dead
+				resolve({success:true});
+			}
+		})
 	}
 	createOrUpdateServerCertificate(params,wallet,providerHost){
 		//params = {pw,walletName}

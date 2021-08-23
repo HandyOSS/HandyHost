@@ -10,7 +10,9 @@ export class AKTMarketplace{
 	}
 	show(){
 		$('#marketplace').show();
-		this.fetchOrdersData();
+		if(typeof this.lastEndpoint == "undefined"){
+			this.fetchOrdersData();
+		}
 
 	}
 	hide(){
@@ -94,6 +96,7 @@ export class AKTMarketplace{
 		else{
 			this.lastBidsState = undefined;
 		}
+		this.lastEndpoint = 'bids';
 
 		fetch("/api/akt/getMarketplaceBids",
 			{
@@ -139,6 +142,7 @@ export class AKTMarketplace{
 		if(typeof leasesState != "undefined"){
 			queryParams.state = leasesState;
 		}
+		this.lastEndpoint = 'leases';
 		fetch("/api/akt/getMarketplaceLeases",
 			{
 			    headers: {
@@ -156,6 +160,7 @@ export class AKTMarketplace{
 		.catch((res)=>{ console.log('error submitting',res) });
 	}
 	fetchOrdersData(){
+		this.lastEndpoint = 'orders';
 		fetch("/api/akt/getMarketplaceOrders",
 			{
 			    headers: {
@@ -341,6 +346,7 @@ export class AKTMarketplace{
 			limit:50,//this.orderLimit,
 			page:1//this.pageNow
 		}
+		this.lastEndpoint = 'bids';
 		fetch('/api/akt/fetchAllOrderBids',
 			{
 			    headers: {
@@ -482,6 +488,8 @@ export class AKTMarketplace{
 		$header.append('<th>Memory (MB)</th>');
 		$header.append('<th>Storage (MB)</th>');
 		$header.append('<th>Endpoints</th>');
+		$header.append('<th>Region</th>');
+		$header.append('<th>Requirements</th>');
 		$orders.append($header);
 		data.orders.map(order=>{
 			const $tr = $('<tr class="orderID" />');
@@ -489,7 +497,7 @@ export class AKTMarketplace{
 			$tr.attr('data-id',longID);
 			let shortenedID = order.order_id.owner;
 			shortenedID = (shortenedID.slice(0,10) + '...' + shortenedID.slice(-8));
-			$tr.append('<td colspan="6">Order: '+shortenedID+'/'+order.order_id.dseq+'/'+order.order_id.oseq+'/'+order.order_id.gseq+' <div class="bidOpts"><a class="seeAllBids akashLink">View All Bids</a> | <a class="placeBid akashLink">Place Bid</a></div></td>')
+			$tr.append('<td colspan="8">Order: '+shortenedID+'/'+order.order_id.dseq+'/'+order.order_id.oseq+'/'+order.order_id.gseq+' <div class="bidOpts"><a class="seeAllBids akashLink">View All Bids</a> | <a class="placeBid akashLink">Place Bid</a></div></td>')
 			$('a.placeBid',$tr).off('click').on('click',()=>{
 				this.showBidModal(order);
 			})
@@ -505,6 +513,18 @@ export class AKTMarketplace{
 				this.showLoading('All Bids');
 			})
 			$orders.append($tr);
+			const region = order.spec.name;
+			let requirements = '';
+			order.spec.requirements.attributes.map(attr=>{
+				requirements += `${attr.key}: ${attr.value}; `;
+			})
+			order.spec.requirements.signed_by.all_of.map(attr=>{
+				requirements += `signed_by.all_of: ${attr}; `
+			})
+			order.spec.requirements.signed_by.any_of.map(attr=>{
+				requirements += `signed_by.any_of: ${attr}; `
+			})
+
 			order.spec.resources.map(resource=>{
 				const $res = $('<tr />');
 				$res.attr('data-id',longID);
@@ -517,6 +537,8 @@ export class AKTMarketplace{
 				$res.append(`<td>${numeral(resource.resources.memory.quantity.val).format('0.00b').toUpperCase()}</td>`);
 				$res.append(`<td>${numeral(resource.resources.storage.quantity.val).format('0.00b').toUpperCase()}</td>`);
 				$res.append(`<td>${endpointsFormatted.join('')}</td>`);
+				$res.append(`<td>${region}</td>`)
+				$res.append(`<td>${requirements}</td>`)
 				
 				$orders.append($res);
 			})

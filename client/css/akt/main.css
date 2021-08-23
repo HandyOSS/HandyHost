@@ -27,3 +27,41 @@
 .aktPanel #providerStatus{
 	display:none;
 }
+
+.options #updateAkash{
+	display:none;
+}
+
+.updateInfo{
+	font-size: 18px;
+}
+
+#providerLogs{
+	display:none;
+}
+.providerLogsModal{
+	width: 80% !important;
+	margin-left: 10% !important;
+}
+#providerLogsModal pre{
+	color: #00cc00;
+    float: left;
+    text-align: left;
+    width: calc(100% - 10px);
+    background: rgba(255,255,255,0.1);
+    padding: 10px 5px;
+}
+#providerLogsModal .logs{
+	width: 100%;
+	float:left;
+	max-height: 500px;
+    overflow-y: scroll;
+}
+#refreshLogs{
+	cursor:pointer;
+	text-decoration: underline;
+	color:#ed3624;
+	margin: 4px 5px 5px 0px;
+	font-size: 14px;
+	float:right;
+}

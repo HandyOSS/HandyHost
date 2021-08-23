@@ -256,6 +256,13 @@ export class HandySia{
 					reject(error);
 				})
 			break;
+			case 'updateSia':
+				this.daemon.updateDaemon().then(data=>{
+					resolve(data);
+				}).catch(error=>{
+					reject(error);
+				})
+			break;
 		}
 	}
 	getSiaPorts(){
@@ -709,7 +716,11 @@ export class HandySia{
 				dir = decodeURIComponent(path);
 			}
 			
-			let output = fs.readdirSync(dir,{withFileTypes:true}).filter(d=>{return d.isDirectory();}).map(d=>{return d.name;})
+			let output = fs.readdirSync(dir,{withFileTypes:true}).filter(d=>{
+				return d.isDirectory();
+			}).filter(d=>{
+				return d.name.indexOf('.') != 0;
+			}).map(d=>{return d.name;});
 			resolve({base:dir,paths:output});
 		})
 		
@@ -784,10 +795,23 @@ export class HandySia{
 			this.consensus.getChainStatus().then(chainD=>{
 				chainData = chainD;
 				this.daemon.getVersion().then(versionD=>{
-					this.ioNamespace.to('sia').emit('update',{
-						chain:chainData,
-						wallet:walletData,
-						daemon: versionD
+					this.daemon.getUpdateAvailStatus().then(updateAvailable=>{
+						this.host.getHostInfo().then(hostConfig=>{
+							let cherries = {};
+							cherries.connectabilitystatus = hostConfig.connectabilitystatus;
+							cherries.workingstatus = hostConfig.workingstatus;
+							cherries.collateralbudget = hostConfig.internalsettings.collateralbudget;
+							cherries.lockedcollateral = hostConfig.financialmetrics.lockedstoragecollateral;
+							cherries.acceptingcontracts = hostConfig.internalsettings.acceptingcontracts;
+							this.ioNamespace.to('sia').emit('update',{
+								chain:chainData,
+								wallet:walletData,
+								daemon: versionD,
+								updates:updateAvailable,
+								config:cherries
+							});
+						})
+
 					});
 				});
 			});

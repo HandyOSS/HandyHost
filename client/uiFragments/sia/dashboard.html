@@ -1,3 +1,44 @@
+<div id="updateSCModal" class="modalWrap">
+	<div id="closeModal">
+		[close]
+	</div>
+	<div class="launchModal modalContent">
+		<div class="logo">
+			<img src="./img/SiacoinSCLogo.svg" />
+		</div>
+		<div class="updateInfo">
+			
+		</div>
+		<div class="button save" id="updateSC">
+			<div class="foreground">Update 🚀</div>
+			<div class="background">Update 🚀</div>
+		</div>
+		<div class="button cancel" id="cancelUpdate">
+			<div class="foreground">Cancel</div>
+			<div class="background">Cancel</div>
+		</div>
+	</div>
+	
+</div>
+<div id="warningsSCModal" class="modalWrap">
+	<div id="closeModal">
+		[close]
+	</div>
+	<div class="warningsModal modalContent">
+		<div class="logo">
+			<img src="./img/SiacoinSCLogo.svg" />
+		</div>
+		<div class="warningsInfo">
+			
+		</div>
+		<div class="button save" id="warningsSC">
+			<div class="foreground">OK</div>
+			<div class="background">OK</div>
+		</div>
+	</div>
+	
+</div>
+
 <div id="siaMain" class="serviceMain">
 	<div class="options">
 		<div class="logo">
@@ -5,6 +46,7 @@
 			<span class="logoText">Sia</span>
 		</div>
 		<ul>
+			<li id="allServices">All Services</li>
 			<li id="dashboard">Dashboard</li>
 			<li id="wallet">Wallet</li>
 			<li id="storage">Storage</li>
@@ -18,6 +60,8 @@
 				</div>
 				<div class="toggleLabel">Dark Mode</div>
 			</li>
+			<li id="updateSia"><span class="emoji">⚠️</span> Update Available</li>
+			<li id="warnings"><span class="emoji">⚠️</span> Warnings</li>
 
 		</ul>
 	</div>
@@ -28,19 +72,34 @@
 	</div>
 	<div class="dashboard mainPanel">
 		<div class="hostScore">
+			<div id="hostScoreLoader" class="loadingPanel">
+				<div class="lds-roller"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
+				<div class="loadingMessage">Loading Host Score...</div>
+			</div>
 			<div class="hostScoreValue"></div>
 			<div class="hostRadars"></div>
-			<div class="scoreInfo"></div>
+			<div class="scoreInfo">
+			</div>
 		</div>
 		<div class="contractsChart dashboardPanel">
 			<div class="contractsValue valueLabel">Contracts</div>
-			<div class="contractsMeta"></div>
+			<div id="beeswarmLoading" class="loadingPanel">
+				<div class="lds-roller"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
+				<div class="loadingMessage">Loading Contracts...</div>
+			</div>
+			<div class="contractsMeta">
+			</div>
 			<div class="contractsBeeswarm"><svg /></div>
 			<div id="beeswarmTooltip"></div>
 		</div>
 		<div class="earningsChart dashboardPanel">
 			<div class="earningsValue valueLabel">Earnings</div>
-			<div class="earningsMeta"></div>
+			<div class="earningsMeta">
+				<div id="earningsLoading" class="loadingPanel">
+					<div class="lds-roller"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
+					<div class="loadingMessage">Loading Earnings...</div>
+				</div>
+			</div>
 		</div>
 		<div class="storageChart dashboardPanel">
 			<div class="storageValue valueLabel">Storage</div>

@@ -6,7 +6,7 @@
 }
 
 .dashboard #nodeMeta span, .dashboard #nodeAnalytics span, .dashboard #sessionMeta span, .dashboard #subscriptionAnalytics span{
-	font-weight: 600;
+	font-weight: 200;
 	color:#444;
 }
 
@@ -56,10 +56,31 @@
   height: 100px;
 }
 
+.title small{
+  font-size: 16px;
+}
+
 .loadingText{
 	margin-top: 10px;
 }
 
+#streamgraph svg{
+  float:left;
+  width: 100%;
+  height: 200px;
+}
+#streamgraph .sectionTitle{
+  display: none;
+}
+#streamgraph .tick text{
+  fill:#444;
+}
+#streamgraph .tick line{
+  stroke:#444;
+}
+#streamgraph path.domain{
+  stroke:#444;
+}
 .lds-ripple {
   display: inline-block;
   position: relative;

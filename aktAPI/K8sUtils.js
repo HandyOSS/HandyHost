@@ -91,8 +91,14 @@ export class K8sUtils{
 			let masterIP = ''
 			let masterMDNS = '';
 			let etcdNodeName = '';
-			let ingressNode = '';//no roles is ingress
-
+			let ingressNode = '';
+			let noneNode = ''; //in case we didnt add ingress...
+			let allIPs = [];
+			configJSON.nodes.filter(node=>{
+				return node.kubernetes.ingress;
+			}).map(node=>{
+				ingressNode = node.kubernetes.name;
+			})
 			configJSON.nodes.map((node,i)=>{
 			    //let name = node.hostname == '?' : 'akashnode'+i : node.hostname.split('.local')[0];
 				let name = node.kubernetes.name;
@@ -100,14 +106,18 @@ export class K8sUtils{
 					masterNodeName = name;
 					masterUser = node.user;
 					masterIP = node.ip;
+					allIPs.push(node.ip);
 					masterMDNS = node.hostname;
 					//ingressNode = name;
 				}
 				if(node.kubernetes.role == 'etcd'){
 					etcdNodeName = name;
 				}
-				if(node.kubernetes.role == 'none'){
+				/*if(node.kubernetes.role == 'ingress'){
 					ingressNode = name;
+				}*/
+				if(node.kubernetes.role == 'none'){
+					noneNode = name;
 				}
 				if(node.kubernetes.isCompute){
 					nodeNames.push(name);
@@ -162,10 +172,13 @@ export class K8sUtils{
 			this.teardownOldCluster(socketIONamespace).then(()=>{
 				socketIONamespace.to('akt').emit('k8sBuildLogStatus',{part:'teardown',status:'finished'})
 				this.initNewCluster(socketIONamespace).then(()=>{
-					this.postInitNewCluster(socketIONamespace,masterNodeName,masterUser,masterIP,masterMDNS,ingressNode).then(()=>{
-						socketIONamespace.to('akt').emit('k8sBuildLogStatus',{part:'init',status:'finished'})
-						resolve({success:true})
-					})
+					this.cleanupKnownHosts(allIPs).then(()=>{
+						this.postInitNewCluster(socketIONamespace,masterNodeName,masterUser,masterIP,masterMDNS,ingressNode).then(()=>{
+							socketIONamespace.to('akt').emit('k8sBuildLogStatus',{part:'init',status:'finished'})
+							resolve({success:true})
+						});
+					});
+					
 					
 				})
 			})
@@ -173,6 +186,30 @@ export class K8sUtils{
 		}).catch(error=>{
 			reject(error);
 		});
+	}
+	cleanupKnownHosts(allIPs){
+		return new Promise((resolve,reject)=>{
+			// ssh-keygen -f "/home/earthlab/.ssh/known_hosts" -R "192.168.0.218"
+			let finished = 0;
+			const finCount = allIPs.length;
+			allIPs.map(ip=>{
+				const args = ['./aktAPI/cleanupKnownHosts.sh',ip];
+				const cleanup = spawn('bash',args,{shell:true,env:process.env,cwd:process.env.PWD});
+				cleanup.stdout.on('data',d=>{
+					console.log('cleanup stdout',ip,d.toString())
+				})
+				cleanup.stderr.on('data',d=>{
+					console.log('cleanup stderr',ip,d.toString())
+				})
+				cleanup.on('close',()=>{
+					finished++;
+					if(finCount == finished){
+						resolve();
+					}
+				})
+			})
+			
+		})
 	}
 	postInitNewCluster(socketIONamespace,masterNodeName,masterUser,masterIP,masterMDNS,ingressNodeName){
 		///./postInitK8sCluster.sh ansible akashnode1.local akashnode1 192.168.0.17
@@ -308,6 +345,9 @@ export class K8sUtils{
 				}).map(node=>{
 					return node.kubernetes.name;
 				});
+				if(targetNames.length == 0){
+					resolve([]);
+				}
 				let finished = 0;
 				let output = [];
 				targetNames.map(name=>{
@@ -386,6 +426,9 @@ export class K8sUtils{
 										itemsOut[machine] += 1;
 									});
 									output.map(outRec=>{
+										if(typeof outRec.realtime == "undefined"){
+											outRec.realtime = {};
+										}
 										if(typeof itemsOut[outRec.name] != "undefined"){
 											outRec.realtime.pods = itemsOut[outRec.name];
 										}
@@ -402,6 +445,9 @@ export class K8sUtils{
 					});
 				})
 			}
+			else{
+				resolve([]);
+			}
 			
 		})
 	}
@@ -410,14 +456,19 @@ export class K8sUtils{
 			const args = ['./aktAPI/getK8sClusterStats.sh',nodeName];
 			const getStats = spawn('bash',args,{shell:true,env:process.env,cwd:process.env.PWD});
 			let output = '';
+			let errOut = '';
 			getStats.stdout.on('data',d=>{
 				output += d.toString();
 			});
+			getStats.stderr.on('data',d=>{
+				errOut += d.toString();
+			})
 			getStats.on('close',()=>{
 				//parse it
 				/*
 				
 				*/
+				//console.log('node top stats errOut??',errOut,output);
 				let sections = {};
 				let allocatedVals = [];
 				let allocatedHeaders = [];

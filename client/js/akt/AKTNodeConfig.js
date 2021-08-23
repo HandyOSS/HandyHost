@@ -19,7 +19,7 @@ export class AKTNodeConfig{
 		$('.walletUtil').removeClass('showing');
 		$('#walletInitModal').show();
 		this.showInitModal();
-		$('#closeModal').off('click').on('click',()=>{
+		$('.closeWalletInitModal').off('click').on('click',()=>{
 			this.hideModal();
 		})
 	}

@@ -25,14 +25,33 @@ export class AKTClusterStatus{
 			}
 			if(data.providerIsRunning){
 				$('#aktMain .options li#providerStatus').hide();
+				$('#aktMain .options li#providerLogs').show();
 			}
 			this.dashboard.aktStatus = data;
+			this.dashboard.showUpdateOpts(data.akashVersion);
 			this.renderStats(data);
 		});
+		fetch('/api/akt/getMarketAggregates').then(d=>d.json()).then(data=>{
+			this.marketAggs = data;
+			this.renderMarketAggregates(data);
+		})
+	}
+	marketAggsUpdate(data){
+		this.renderMarketAggregates(data);
+	}
+	realtimeUpdate(data){
+		this.dashboard.aktStatus = data;
+		this.renderStats(data);
 	}
 	renderStats(statsData){
-		const clusterName = statsData.providerData.clusterName;
-		const address = statsData.providerData.providerWalletAddress;
+		let clusterName = statsData.providerData.clusterName;
+		let address = statsData.providerData.providerWalletAddress;
+		if(typeof clusterName == "undefined"){
+			clusterName = 'No Configuration Found'
+		}
+		if(typeof address == "undefined"){
+			address = "No Configuration Found";
+		}
 		const regionName = statsData.providerData.regionName;
 		const nodeCount = statsData.nodeCount;
 		let onlineCount = 0;
@@ -49,26 +68,65 @@ export class AKTClusterStatus{
 		this.renderRunInfo(statsData);
 		
 	}
+	renderMarketAggregates(data){
+		const $el = $('.marketAggregatesInfo');
+		let leasesClosed = data.leasesClosed || 0;
+		/*if(typeof leasesClosed == "undefined"){
+			leasesClosed = 0;
+		}*/
+		leasesClosed = leasesClosed >= 1000 ? numeral(leasesClosed).format('0.0a') : leasesClosed;
+		let leasesActive = data.leasesActive || 0;
+		leasesActive = leasesActive >= 1000 ? numeral(leasesActive).format('0.0a') : leasesActive;
+		let bidsOpen = data.bidsOpen || 0;
+		bidsOpen = bidsOpen >= 1000 ? numeral(bidsOpen).format('0.0a') : bidsOpen;
+		let bidsClosed = data.bidsClosed || 0;
+		bidsClosed = bidsClosed >= 1000 ? numeral(bidsClosed).format('0.0a') : bidsClosed;
+		const $q0 = $(`
+		<div class="quadrant">
+			<div class="quadTitle">Leases Active</div>
+			<div class="value">${leasesActive}</div>
+		</div>`)
+		const $q1 = $(`
+		<div class="quadrant">
+			<div class="quadTitle">Leases Closed</div>
+			<div class="value">${leasesClosed}</div>
+		</div>`)
+		const $q2 = $(`
+		<div class="quadrant">
+			<div class="quadTitle">Bids Open</div>
+			<div class="value">${bidsOpen}</div>
+		</div>`)
+		const $q3 = $(`
+		<div class="quadrant">
+			<div class="quadTitle">Bids Closed</div>
+			<div class="value">${bidsClosed}</div>
+		</div>`)
+		$el.html('<div class="subtitle">Marketplace Stats</div>');
+		$el.append($q0);
+		$el.append($q1);
+		$el.append($q2);
+		$el.append($q3);
+	}
 	renderRunInfo(statsData){
 		const $el = $('.runClusterInfo');
 		$el.html('<div class="subtitle">Akash Provider Registration Status</div>');
 		if(statsData.providerIsRegistered){
 			//heyo we registered
 			$el.append('<div class="isregistered"><span class="emoji">✅</span> Provider is Registered <a class="aktStatusPageLink" href="https://www.mintscan.io/akash/txs/'+statsData.providerReceiptTX+'" target="_blank">View Transaction in Explorer</a></div>')
-			$el.append('<div class="updateRegistration"><a class="aktStatusPageLink">Update Registration?</a><small>(note: ~0.01AKT transaction fee will be incurred)</small></div>')
+			$el.append('<div class="updateRegistration"><a class="aktStatusPageLink">Update Registration?</a></div>')
 		}
 		else{
 			//not yet registered..
 			$el.append('<div class="noregistered"><span class="emoji">⚠️</span> No Registration Found for Your Address</div>')
-			$el.append('<div class="createRegistration"><a class="aktStatusPageLink">Create Registration</a><small>(note: ~0.01AKT transaction fee will be incurred)</small></div>')
+			$el.append('<div class="createRegistration"><a class="aktStatusPageLink">Create Registration</a></div>')
 		}
 		if(statsData.providerHasGeneratedCert){
 			$el.append('<div class="hasGeneratedCert"><span class="emoji">✅</span> Provider has Generated Akash Certificate</div>');
-			$el.append('<div class="regenCertificate"><a class="aktStatusPageLink">Re-Generate Certificate?</a><small>(note: ~0.01AKT transaction fee will be incurred)</small></div>')
+			$el.append('<div class="regenCertificate"><a class="aktStatusPageLink">Re-Generate Certificate?</a></div>')
 		}
 		else{
 			$el.append('<div class="hasGeneratedCert"><span class="emoji">⚠️</span> No Akash Server Certificate Found for Your Address</div>');
-			$el.append('<div class="regenCertificate"><a class="aktStatusPageLink">Generate Certificate</a><small>(note: ~0.01AKT transaction fee will be incurred)</small></div>')
+			$el.append('<div class="regenCertificate"><a class="aktStatusPageLink">Generate Certificate</a></div>')
 		}
 		$('.updateRegistration a').off('click').on('click',()=>{
 			//show pw modal and fetch updateRegistration
@@ -84,7 +142,7 @@ export class AKTClusterStatus{
 	}
 	renderResourceUsage(k8sData){
 		let summary = this.modelResourceSum(k8sData);
-		console.log('summary',summary);
+		//console.log('summary',summary);
 		
 		const cpuUsed = (summary.Used.cpu/*summary.Allocatable.sumAllocatableCPUm*/);
 		const cpuData = [
@@ -216,7 +274,7 @@ export class AKTClusterStatus{
 			section = node.sections['Allocated resources'];
 			
 			section.map(res=>{
-				console.log('res',res);
+				//console.log('res',res);
 				let requests = res.Requests.split(' (')[0];
 				let limits = res.Limits.split(' (')[0];
 				switch(res.Resource){

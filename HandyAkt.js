@@ -83,19 +83,35 @@ export class HandyAKT{
 	}
 	initSocketListener(room){
 		//TODO: add when we get more stats on nodes..
-		/*if(typeof this.socketRoomInterval == "undefined"){
+		if(typeof this.socketRoomInterval == "undefined"){
 			//spin up an interval to send out stats
 			this.socketRoomInterval = setInterval(()=>{
 				this.sendSocketUpdates();
 			},60000);
-		}*/
+		}
+		if(typeof this.marketQueryInterval == "undefined"){
+			this.marketQueryInterval = setInterval(()=>{
+				this.getMarketAggregates().then(data=>{
+					this.ioNamespace.to('akt').emit('marketAggregatesUpdate',data);
+				}).catch(error=>{
+					console.log('error fetching market aggregates',error);
+				});
+			},180000);
+		}
 	}
 	removeSocketListener(room){
 		//everybody left the room, kill the update interval
-		/*clearInterval(this.socketRoomInterval);
-		delete this.socketRoomInterval;*/
+		clearInterval(this.socketRoomInterval);
+		delete this.socketRoomInterval;
+		clearInterval(this.marketQueryInterval);
+		delete this.marketQueryInterval;
 	}
 	sendSocketUpdates(){
+		this.getClusterStats().then(data=>{
+			this.ioNamespace.to('akt').emit('update',data);
+		}).catch(error=>{
+			console.log('error fetching realtime cluster stats',error);
+		});
 		/*
 		this.ioNamespace.to('dvpn').emit('update',{
 			chain:chainData,
@@ -318,7 +334,51 @@ export class HandyAKT{
 					reject(error);
 				})
 			break;
+			case 'getMarketAggregates':
+				this.getMarketAggregates().then(data=>{
+					resolve(data);
+				}).catch(error=>{
+					reject(error);
+				})
+				
+			break;
+			case 'updateAkashToLatest':
+				this.utils.updateAkashToLatest(this.ioNamespace).then(data=>{
+					resolve(data);
+				}).catch(error=>{
+					reject(error);
+				})
+			break;
+			case 'getProviderLogs':
+				this.getProviderLogs().then(data=>{
+					resolve(data);
+				}).catch(error=>{
+					reject(error);
+				})
+			break;
+			case 'haltProvider':
+				this.wallet.haltProvider().then(data=>{
+					resolve(data);
+				}).catch(error=>{
+					reject(error);
+				})
+			break;
 		}
+		
+	}
+	getProviderLogs(){
+		return new Promise((resolve,reject)=>{
+			let logs = 'No Logs Found...';
+			const logsPath = process.env.HOME+'/.HandyHost/aktData/providerRun.log';
+			if(fs.existsSync(logsPath)){
+				logs = fs.readFileSync(logsPath,'utf8');
+			}
+			resolve(logs);
+		});
+	}
+	getMarketAggregates(){
+		const myWallet = this.getProviderWalletAddress();
+		return this.market.getMarketAggregates(myWallet);
 		
 	}
 	getRandomHostname(ipAddress){
@@ -384,7 +444,9 @@ export class HandyAKT{
 						const params = {
 							serverHost: this.getProviderHost(),
 							walletName: this.getProviderWalletName(),
-							pw: parsed.pw
+							pw: parsed.pw,
+							cpuPrice:parsed.cpu,
+							fees:parsed.fees
 						}
 						
 						this.wallet.startProvider(params).then(response=>{
@@ -474,6 +536,9 @@ export class HandyAKT{
 	}
 	getProviderWalletAddress(){
 		const config = JSON.parse(fs.readFileSync(this.clusterConfigFilePath,'utf8'));
+		if(typeof config.provider == "undefined"){
+			return undefined;
+		}
 		return config.provider.providerWalletAddress;
 	}
 	getProviderHost(){
@@ -486,7 +551,7 @@ export class HandyAKT{
 	}
 	getClusterStats(){
 		return new Promise((resolve,reject)=>{
-			const statsToFetch = 4;
+			const statsToFetch = 5;
 			let statsFetched = 0;
 			const statsOut = {};
 			let providerIsRegistered = false; //TODO get fs.existsSync of something?
@@ -495,32 +560,55 @@ export class HandyAKT{
 				statsOut.k8s = k8sStats;
 				statsFetched++;
 				finish(statsFetched,statsToFetch,statsOut,resolve);
-			});
+			}).catch(error=>{
+				console.log('error fetching k8s stats',error);
+			})
+			this.utils.getCurrentAkashVersion().then(versionData=>{
+				statsOut.akashVersion = versionData;
+				statsFetched++;
+				finish(statsFetched,statsToFetch,statsOut,resolve);
+			})
 			this.getClusterConfig().then(config=>{
-				const numberNodes = config.nodes.length;
-				const providerData = config.provider;
+				let numberNodes = 0;
+				let providerData = {};
+				if(typeof config.nodes != "undefined"){
+					numberNodes = config.nodes.length;
+				}
+				if(typeof config.provider != "undefined"){
+					providerData = config.provider;
+				}
+				
+				//const providerData = config.provider;
 				statsOut.nodeCount = numberNodes;
 				statsOut.providerData = providerData;
 				statsOut.providerIsRegistered = providerIsRegistered;
 				statsOut.providerHasGeneratedCert = fs.existsSync(process.env.HOME+'/.akash/'+providerData.providerWalletAddress+'.pem');
-				if(fs.existsSync(process.env.HOME+'/.HandyHost/aktData/providerReceipt.'+providerData.providerWalletAddress+'.json')){
-					const receipt = JSON.parse(fs.readFileSync(process.env.HOME+'/.HandyHost/aktData/providerReceipt.'+providerData.providerWalletAddress+'.json','utf8'))
-					//https://www.mintscan.io/akash/txs/FB427B253030607DF2548F6C568F17D73E91A7E6CD962087F33360D68461A1F4
-					const {tx,wallet} = this.wallet.getMetaFromTransaction(receipt);
-					if(wallet == providerData.providerWalletAddress){
-						statsOut.providerIsRegistered = true;
-						statsOut.providerReceiptTX = tx;
-					}
-					
-				};
+				if(typeof providerData.providerWalletAddress != "undefined"){
+					if(fs.existsSync(process.env.HOME+'/.HandyHost/aktData/providerReceipt.'+providerData.providerWalletAddress+'.json')){
+						const receipt = JSON.parse(fs.readFileSync(process.env.HOME+'/.HandyHost/aktData/providerReceipt.'+providerData.providerWalletAddress+'.json','utf8'))
+						//https://www.mintscan.io/akash/txs/FB427B253030607DF2548F6C568F17D73E91A7E6CD962087F33360D68461A1F4
+						const {tx,wallet} = this.wallet.getMetaFromTransaction(receipt);
+						if(wallet == providerData.providerWalletAddress){
+							statsOut.providerIsRegistered = true;
+							statsOut.providerReceiptTX = tx;
+						}
+						
+					};
+				}
 				statsFetched++;
 				finish(statsFetched,statsToFetch,statsOut,resolve);
-
-				this.wallet.getBalance(providerData.providerWalletAddress).then(balance=>{
-					statsOut.balance = balance;
+				if(typeof providerData.providerWalletAddress != "undefined"){
+					this.wallet.getBalance(providerData.providerWalletAddress).then(balance=>{
+						statsOut.balance = balance;
+						statsFetched++;
+						finish(statsFetched,statsToFetch,statsOut,resolve);
+					});
+				}
+				else{
+					statsOut.balance = {balance:{balances:[]}};
 					statsFetched++;
 					finish(statsFetched,statsToFetch,statsOut,resolve);
-				});
+				}
 				this.wallet.checkProviderUpStatus().then(d=>{
 					statsOut.providerIsRunning = true;
 					statsFetched++;

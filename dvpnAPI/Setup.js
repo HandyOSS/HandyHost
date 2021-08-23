@@ -363,7 +363,7 @@ export class DVPNSetup{
 				let lineCount = 0;
 				let hasFailed = false;
 				let hasReturned = false;
-				const s = spawn('bash',args,{shell:true,env:process.env,cwd:process.env.PWD});
+				const s = spawn('bash',args,{shell:true,env:process.env,cwd:process.env.PWD,detached:true});
 				//s.stdin.write('(echo derparoo;)');
 				fs.writeFileSync(`${process.env.HOME}/.HandyHost/dvpnData/hostLogs`,output,'utf8')
 				s.stdout.on('data',d=>{

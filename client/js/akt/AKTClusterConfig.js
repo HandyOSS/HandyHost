@@ -175,6 +175,10 @@ export class AKTClusterConfig{
 				title = 'Compute Nodes:';
 				body = 'In a 2-4 node cluster, set all nodes to compute. In a larger cluster, use your master node primarily as a load balancer and not for compute.';
 			break;
+			case 'ingressAnswer':
+				title = 'Ingress Controller:';
+				body = 'One single node must run the Ingress Controller which routes internet traffic to all the other nodes in the cluster. In addition: you must open port 80 and 30000-32767 to this particular machine in your internet router port forwarding.'
+			break;
 		}
 		$('#answerPopup .title').html(title);
 		$('#answerPopup .answer').html(body);
@@ -198,11 +202,29 @@ export class AKTClusterConfig{
 		$header.append('<th>Node Name</th>');
 		$header.append('<th>Cluster Role <div class="question" id="roleAnswer">?</div></th>');
 		$header.append('<th>Is Compute Node <div class="question" id="computeAnswer">?</div></th>');
+		$header.append('<th>Ingress Controller <div class="question" id="ingressAnswer">?</div></th>')
 		$table.append($header);
 		$('.question',$header).off('mouseenter').on('mouseenter',function(){
 			_this.showQuestionPopup($(this).attr('id'));
 		}).off('mouseleave').on('mouseleave',()=>{
 			$('#answerPopup').hide();
+		})
+		let ingressName = '';
+		let masterName = '';
+		configData.nodes.map(node=>{
+			if(!node.selected){
+				return;
+			}
+			if(typeof node.kubernetes != "undefined"){
+				let k8sName = node.kubernetes.name;
+				let k8sRole = node.kubernetes.role;
+				if(k8sRole == 'master'){
+					masterName = k8sName;
+				}
+				if(node.kubernetes.ingress){
+					ingressName = k8sName;
+				}
+			}
 		})
 		configData.nodes.map(node=>{
 			if(!node.selected){
@@ -211,6 +233,8 @@ export class AKTClusterConfig{
 			let k8nName = '';
 			let k8nRole = '';
 			let isCompute = false;
+			let isIngress = false;
+			let ingressSelected = '';
 			const $k8nRoleSelect = $('<select class="role" />');
 			$k8nRoleSelect.append('<option value="none">none</option>');
 			$k8nRoleSelect.append('<option value="master">Master Node</option>');
@@ -219,25 +243,50 @@ export class AKTClusterConfig{
 			const $isComputeCheckbox = $('<input type="checkbox" class="isCompute" />')
 
 			if(typeof node.kubernetes != "undefined"){
+				const hostname = node.hostname.replace('.local','');
 				k8nName = node.kubernetes.name;
+				if(k8nName.indexOf(hostname) == -1){
+					//must have changed, newly reconfigured server.
+					//hostname & kubernetes name is joined by mac address and not user editable.
+					k8nName = hostname;
+				}
 				k8nRole = node.kubernetes.role;
 				isCompute = node.kubernetes.isCompute;
 				$('option[value="'+k8nRole+'"]',$k8nRoleSelect).attr('selected','selected');
 				if(isCompute){
 					$isComputeCheckbox.attr('checked','checked');
 				}
+				if(ingressName == '' && k8nRole == 'master'){
+					ingressName = k8nName;
+					isIngress = true;
+					ingressSelected = ' checked="checked"';
+				}
+				if(!isIngress && ingressName == k8nName){
+					isIngress = true;
+					ingressName = k8nName;
+					ingressSelected = ' checked="checked"';
+				}
+				if(isIngress){
+					$('#ingressPortsMessage .ip').html(node.ip);
+				}
 			}
 			const $tr = $('<tr />');
 			$tr.append(`<td>${node.hostname}</td>`);
 			$tr.append(`<td class="ip">${node.ip}</td>`);
-			$tr.append(`<td><input class="nodename" type="text" placeholder="Short Name ie: akash0" value="${k8nName}" /></td>`)
+			$tr.append(`<td><input class="nodename" type="hidden" placeholder="Short Name ie: akash0" value="${k8nName}" />${k8nName}</td>`)
 			const $sel = $('<td />');
 			$sel.append($k8nRoleSelect);
 			$tr.append($sel);
 			const $comp = $('<td />');
 			$comp.append($isComputeCheckbox);
 			$tr.append($comp)
+			const $ingress = $(`<td><input type="radio" class="ingressRadio" name="ingress" value="${node.kubernetes.name}"${ingressSelected} data-ip="${node.ip}" /></td>`)
+			$tr.append($ingress);
 			$table.append($tr);
+		})
+		$('input[name="ingress"]').off('change').on('change',()=>{
+			const ip = $('input[name="ingress"]:checked').attr('data-ip');
+			$('#ingressPortsMessage .ip').html(ip);
 		})
 		$('#initCluster').off('click').on('click',()=>{
 			if(!confirm('If there is currently a kubernetes cluster, this operation will completely remove it. Still Continue?')){
@@ -252,18 +301,21 @@ export class AKTClusterConfig{
 				const name = $('input.nodename',$(this)).val();
 				const role = $('select option:selected',$(this)).val();
 				const isCompute = $('input[type="checkbox"]',$(this)).is(':checked');
+				const isIngress = $('input[name="ingress"]',$(this)).is(':checked');
 				const ip = $('td.ip',$(this)).html();
 				configOut.nodes.map(node=>{
 					if(node.ip == ip){
 						node.kubernetes = {
 							name,
 							role,
-							isCompute
+							isCompute,
+							ingress:isIngress
 						}
 					}
 				});
 				
 			})
+
 			fetch("/api/akt/generateKubernetesInventory",
 			{
 			    headers: {
@@ -287,6 +339,11 @@ export class AKTClusterConfig{
 	initLogs(){
 		$('#logs').addClass('showing');
 		$('#logs .logsMessage').html('Kubernetes cluster build is running, it will take at least 5-10 minutes...')
+		setTimeout(()=>{
+			$('body').scrollTop($('#initCluster').offset().top)
+		},250);
+		
+		
 	}
 	updateLogs(message,showTimestamp){
 		if(typeof this.logs == "undefined"){
@@ -348,6 +405,19 @@ export class AKTClusterConfig{
 
 				}
 			})
+			if(output.nodes.length > 0){
+				output.nodes = output.nodes.map(node=>{
+					const hostname = node.hostname.replace('.local','');
+					if(typeof node.kubernetes != "undefined"){
+						const kname = node.kubernetes.name;
+						if(kname.indexOf(hostname) == -1){
+							//need to update the kubernetes name, this must have changed aka new host/config
+							node.kubernetes.name = hostname;
+						}
+					}
+					return node;
+				})
+			}
 			const providerIP = $('#providerIP').val();
 			const clusterIP = $('#providerIP').val();//$('#clusterIP').val();
 			const regionName = $('#regionName').val();

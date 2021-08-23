@@ -281,8 +281,36 @@ a.getGlobalIP{
 }
 
 .logsMessage{
-	font-size: 18px;
+	font-size: 24px;
 	font-weight: 200;
+}
+
+.ingressRadio{
+	width: 23px;
+	height: 23px;
+}
+
+#ingressPortsMessage{
+	font-size: 14px;
+    padding: 10px 25% 10px 20px;
+    float: left;
+    width: calc(75% - 20px);
+    clear: both;
+    display: block;
+    color: #555;
+}
+#ingressPortsMessage .standout{
+	color:#000;
+}
+#ingressPortsMessage a.akashLink{
+	float:none;
+}
+
+#buildABox{
+	display:none; 
+	/*
+	temporarily remove until arm/raspi is supported
+	*/
 }
 
 

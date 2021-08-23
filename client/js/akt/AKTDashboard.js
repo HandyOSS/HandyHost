@@ -5,6 +5,7 @@ import {Theme} from '../ColorTheme.js';
 
 export class AKTDashboard {
 	constructor(){
+		this.ansi_up = new AnsiUp();
 		this.theme = new Theme();
 		this.nodeConfig = new AKTNodeConfig();
 		this.clusterStatus = new AKTClusterStatus(this);
@@ -29,6 +30,9 @@ export class AKTDashboard {
 		this.socket.on('update',(data)=>{
 			this.doRealtimeUpdates(data);
 		})
+		this.socket.on('marketAggregatesUpdate',data=>{
+			this.marketAggregatesUpdate(data);
+		})
 		this.socket.on('k8sBuildLogs',data=>{
 			console.log('k8sBuildLogs',data);
 			this.nodeConfig.clusterConfig.updateLogs(data);
@@ -51,19 +55,103 @@ export class AKTDashboard {
 			this.nodeConfig.clusterConfig.renderClusterConfig(clusterConfig);
 			this.showNewNodeAddedModal(nodeData);
 		})
+		this.socket.on('akashInstallLogs',data=>{
+			$('#updateAKTModal .updateInfo').html('Log: '+data);
+		})
 		
 	}
 	show(){
-		$('.dashboard').show();
+		//$('.dashboard').show();
+		this.nodeConfig.hide();
+		this.clusterStatus.show();
+		this.marketplace.hide();
 	}
 	hide(){
 		$('.dashboard').hide();
 	}
+	marketAggregatesUpdate(data){
+		this.clusterStatus.marketAggsUpdate(data);
+		console.log('market aggs update',data);
+	}
 	doRealtimeUpdates(data){
 		console.log('realtime update',data);
+		this.clusterStatus.realtimeUpdate(data);
+		let podSum = 0;
+		if(typeof data.k8s != "undefined"){
+			data.k8s.map(node=>{
+				podSum = node.realtime.pods;
+			})
+		}
+		if(typeof this.podsActive == "undefined"){
+			this.podsActive = podSum;
+		}
+		else{
+			//check for difference and notify
+			const diff = podSum - this.podsActive;
+			if(diff != 0){
+				let msg = '';
+				if(diff < 0){
+					action = ' Ended';
+				}
+				if(diff > 0){
+					action = ' Started';
+				}
+				const absVal = Math.abs(diff);
+				let label = ' Instance';
+				if(absVal > 1){
+					' Instances';
+				}
+				msg = absVal+label+action;
+				$('#aktMain .options').append('<li id="changeMessage">'+msg+'</li>')
+				$('li#changeMessage').fadeOut(15000);
+				setTimeout(()=>{
+					$('li#changeMessage').remove();
+				},15000)
+			}
+		}
+		//need to update?
+		this.showUpdateOpts(data.akashVersion);
+		
 		/*const walletData = data.wallet;
 		const chainData = data.chain;
 		this.walletInfo.setSyncedStatus(walletData.height,chainData.height);*/
+	}
+	showUpdateOpts(versionData){
+		if(versionData.installed != versionData.latest){
+			//show update opts
+			$('#updateAkash').show();
+			$('#updateAKTModal .updateInfo').html('Installed: '+versionData.installed+'<br />Latest: '+versionData.latest);
+		}
+		else{
+			//hide update opts
+			$('#updateAkash').hide();
+		}
+	}
+	showUpdateModal(){
+		$('#updateAKTModal').show();
+		$('#updateAKTModal .launchModal').addClass('showing');
+		$('#updateAKTModal #closeModal').off('click').on('click',()=>{
+			$('#updateAKTModal').hide();
+		});
+		$('#updateAKT').off('click').on('click',()=>{
+			if($('#updateAKTModal').hasClass('isUpdating')){
+				return false;
+			}
+			$('#updateAKT .foreground, #updateAKT .background').html('🚀 Updating 🚀');
+			$('#updateAKT').addClass('isUpdating');
+			fetch('/api/akt/updateAkashToLatest').then(d=>d.json()).then(d=>{
+				$('.updateInfo').html('SUCCESSFULLY UPDATED!!')
+				setTimeout(()=>{
+					$('#updateAKTModal').hide();//.removeClass('showing');
+					$('#updateAKT').removeClass('isUpdating');
+					$('#updateAKT .foreground, #updateAKT .background').html('Update 🚀');
+				},2000);
+			});
+
+		})
+		$('#cancelUpdate').off('click').on('click',()=>{
+			$('#updateAKTModal').hide()//.removeClass('showing');
+		});
 	}
 	initDashboard(){
 		const _this = this;
@@ -73,6 +161,9 @@ export class AKTDashboard {
 
 			if(!json.exists){
 				this.nodeConfig.showWalletInit();
+			}
+			else{
+				this.show();
 			}
 			//this.nodeStatus.setStatus(json.active);
 		})
@@ -97,15 +188,13 @@ export class AKTDashboard {
 		$('#aktMain .options li').off('click').on('click',function(){
 			const id = $(this).attr('id');
 			switch(id){
-				case 'dashboard':
-
-				break;
 				case 'config':
 					_this.nodeConfig.getNodeConfigData();
 					_this.clusterStatus.hide();
 					_this.marketplace.hide();
 				break;
 				case 'status':
+				case 'dashboard':
 					_this.nodeConfig.hide();
 					_this.clusterStatus.show();
 					_this.marketplace.hide();
@@ -125,6 +214,18 @@ export class AKTDashboard {
 					//needs to show modal and run provider, then hide it on success
 					_this.showRunProviderModal();
 				break;
+				case 'changeMessage':
+					$('li#changeMessage').hide().remove();
+				break;
+				case 'updateAkash':
+					_this.showUpdateModal();
+				break;
+				case 'allServices':
+					window.location.href = '/';
+				break;
+				case 'providerLogs':
+					_this.showProviderLogsModal();
+				break;
 			}
 			
 		})
@@ -133,6 +234,7 @@ export class AKTDashboard {
 	hideModal(){
 		$('.walletModalContent').removeClass('showing');
 		$('#runProviderModal').hide();
+		$('#providerLogsModal').hide();
 		$('#newNodeAddedModal').hide();
 		$('#unlockRunPW').val('');
 		$('.walletUtil').addClass('showing');
@@ -150,25 +252,65 @@ export class AKTDashboard {
 		$('#addedNodeMessageConf').off('click').on('click',()=>{
 			this.hideModal();
 		})
-		/*
-		<div id="newNodeAddedModal" class="modalWrap">
-			<div class="closeModal" id="closeNewNodeAddedModal">
-				[close]
-			</div>
-			<div class="addNodeMessage walletModalContent">
-				<div class="logo">
-					<img src="./img/AkashAKTLogo.svg" />
-				</div>
-				<div class="message success">
-					<div class="messageIcon">🥳</div>
-					<div class="messageText">Started Provider Successful!</div>
-				</div>
-				<div class="message error"></div>
-				<div class="button save" id="addedNodeMessageConf"><div class="foreground">Done</div><div class="background">Done</div></div>
-				
-			</div>
-		</div>
-		*/
+	}
+	showProviderLogsModal(){
+		$('#closeProviderLogsModal').off('click').on('click',()=>{
+			this.hideModal();
+		})
+		$('#providerLogsModal').show();
+		$('.walletModalContent').removeClass('showing');
+		$('.providerLogsModal').addClass('showing');
+		//fetch logs
+		fetch('/api/akt/getProviderLogs').then(d=>d.text()).then(d=>{
+			this.updateProviderLogs(d);
+		})
+		$('#haltProviderSave').off('click').on('click',()=>{
+			//todo halt provider process api call
+			fetch('/api/akt/haltProvider').then(d=>d.json()).then(d=>{
+				//todo make message, update status
+				if(d.success){
+					this.verifyHalt('Successfully Halted Provider');
+				}
+				else{
+					this.showErrorModal(data);
+				}
+			})
+		});
+		$('#refreshLogs').off('click').on('click',()=>{
+			$('#providerLogsModal pre').html('Fetching Logs...')
+			fetch('/api/akt/getProviderLogs').then(d=>d.text()).then(d=>{
+				this.updateProviderLogs(d);
+			})
+		})
+	}
+	updateProviderLogs(message){
+		if(typeof this.logs == "undefined"){
+			this.logs = []
+			$('#providerLogsModal .logs pre').html('');
+		}
+		//message.split('\n').map(line=>{
+			this.logs.push(message);
+			if(this.logs.length > 500){
+				this.logs = this.logs.slice(-300);
+				//redraw all logs
+				$('#providerLogsModal .logs pre').html('')
+				this.logs.map(line=>{
+					$('.logs pre').append(line);
+				})
+			}
+			else{
+				/*let timestring = `<em style="color: yellow;">[${moment().format('MM-DD hh:mm:ssA')}]</em> `;
+				if(showTimestamp === false){
+					timestring = '';
+				}*/
+				$('#providerLogsModal .logs pre').append(this.ansi_up.ansi_to_html(message))
+			}
+			if($('#providerLogsModal .logs pre').height() > $('#providerLogsModal .logs').height()){
+				const diff = $('#providerLogsModal .logs pre').height() - $('#providerLogsModal .logs').height();
+				$('#providerLogsModal .logs').scrollTop(diff);
+			}
+		//})
+		
 	}
 	showRunProviderModal(){
 		$('#closeRunProviderModal').off('click').on('click',()=>{
@@ -180,13 +322,25 @@ export class AKTDashboard {
 		$('#runProviderModal').show();
 		$('.walletModalContent').removeClass('showing');
 		$('.runProviderModal').addClass('showing');
-		
+		/*
+		<div class="pwWrap">
+			<input type="number" id="runFees" class="styledInput" placeholder="TX fees (default 10000 uAKT)" />
+		</div>
+		<div class="pricingLabel">Provider Pricing (per block, ~8 seconds)</div>
+		<div class="pwWrap">
+			<input type="number" id="cpuPrice" class="styledInput" placeholder="uAKT per milliCPU (default 10 uAKT)" />
+		</div>
+		*/
 		$('#runSave').off('click').on('click',()=>{
+			const fees = $('#runFees').val() == '' ? 10000 : parseInt($('#runFees').val());
+			const cpu = $('#cpuPrice').val() == '' ? 10 : parseInt($('#cpuPrice').val());
 			$('#runSave .foreground').html('Starting Up...');
 			$('#runSave .background').html('Starting Up...');
 			
 			const runProviderData = {
-				pw:$('#unlockRunPW').val()
+				pw:$('#unlockRunPW').val(),
+				fees,
+				cpu
 			};
 			fetch("/api/akt/runProvider",
 			{
@@ -207,6 +361,7 @@ export class AKTDashboard {
 					if(typeof msg == "undefined"){
 						msg = 'Started Provider Successfully!';
 					}
+
 					this.verifyRun(msg);
 				}
 				$('#runSave .foreground').html(label);
@@ -225,6 +380,7 @@ export class AKTDashboard {
 		$('.runMessage .error').show();
 		$('.runMessage .success').hide();
 		$('.runProviderModal').removeClass('showing');
+		$('.providerLogsModal').removeClass('showing');
 		$('.runMessage').addClass('showing');
 		this.handleVerifyModalHide(true);
 	}
@@ -236,13 +392,39 @@ export class AKTDashboard {
 		$('.runMessage .error').hide();
 		$('.runMessage .success').show();
 		$('.runProviderModal').removeClass('showing');
+		$('.providerLogsModal').removeClass('showing');
 		$('.runMessage').addClass('showing');
-		this.clusterStatus.fetchStats();
+		setTimeout(()=>{
+			this.clusterStatus.fetchStats();
+		},10000);
+		$('#aktMain .options li#providerLogs').show();
+		this.handleVerifyModalHide();
+
+	}
+	verifyHalt(message){
+		console.log('verify data',message);
+		//$('.messageText').html('a wallet aaddress')
+		$('.logsMessage .success .messageText').html(message);
+		
+		$('.logsMessage .error').hide();
+		$('.logsMessage .success').show();
+		$('.runProviderModal').removeClass('showing');
+		$('.providerLogsModal').removeClass('showing');
+		$('.logsMessage').addClass('showing');
+		setTimeout(()=>{
+			this.clusterStatus.fetchStats();
+		},10000);
+		$('#providerStatus').show();
+		$('#providerLogs').hide();
+
+		
 		this.handleVerifyModalHide();
 
 	}
 	handleVerifyModalHide(wasError){
+		console.log('handleVerifyModalHide called');
 		$('#runMessageConf').off('click').on('click',()=>{
+			console.log('should close modal');
 			this.hideModal()
 			if(wasError){
 				//this.showRunProviderModal();
@@ -251,6 +433,9 @@ export class AKTDashboard {
 			else{
 				this.clusterStatus.fetchStats();
 			}
+		})
+		$('#logsMessageConf').off('click').on('click',()=>{
+			this.hideModal()
 		})
 	}
 	initMobileMenu(){

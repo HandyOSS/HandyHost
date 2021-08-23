@@ -514,6 +514,40 @@ export class AKTUtils{
 			resolve({saved:true});
 		})
 	}
+	getCurrentAkashVersion(){
+		return new Promise((resolve,reject)=>{
+			const args = ['version'];
+			const getVersion = spawn('./bin/akash',args,{shell:true,env:process.env,cwd:process.env.PWD+'/aktAPI'});
+			let output = '';
+			getVersion.stdout.on('data',d=>{
+				output += d.toString();
+			})
+			getVersion.stderr.on('data',d=>{
+				output += d.toString();
+			})
+			getVersion.on('close',()=>{
+				resolve({
+					installed:output.trim(),
+					latest:(process.env.AKASH_VERSION.indexOf('v') != 0 ? 'v'+process.env.AKASH_VERSION : process.env.AKASH_VERSION)
+				});
+			})
+		});
+	}
+	updateAkashToLatest(socketIONamespace){
+		return new Promise((resolve,reject)=>{
+			const args = ['./install.sh'];
+			const updater = spawn('bash',args,{shell:true,env:process.env,cwd:process.env.PWD+'/aktAPI'});
+			updater.stdout.on('data',d=>{
+				socketIONamespace.to('akt').emit('akashInstallLogs',d.toString());
+			})
+			updater.stderr.on('data',d=>{
+				socketIONamespace.to('akt').emit('akashInstallLogs',d.toString());
+			})
+			updater.on('close',()=>{
+				resolve({updated:true});
+			})
+		})
+	}
 
 
 }

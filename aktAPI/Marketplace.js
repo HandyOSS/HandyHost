@@ -37,7 +37,9 @@ export class Marketplace{
 					resolve(json);
 				}
 			})
-		});
+		}).catch(error=>{
+			this.envUtils.trySetEnv(); //reset env on fail
+		})
 	}
 	getOrder(params){
 		return new Promise((resolve,reject)=>{
@@ -69,7 +71,10 @@ export class Marketplace{
 					resolve(json);
 				}
 			})
-		});
+		})
+		.catch(error=>{
+			this.envUtils.trySetEnv(); //reset env on fail
+		})
 	}
 	getBids(params,wallet){
 		return new Promise((resolve,reject)=>{
@@ -107,6 +112,8 @@ export class Marketplace{
 					resolve(json);
 				}
 			})
+		}).catch(error=>{
+			this.envUtils.trySetEnv(); //reset env on fail
 		});
 	}
 	getLeases(params,wallet){
@@ -133,6 +140,7 @@ export class Marketplace{
 			s.on('close',()=>{
 				if(errOut != ''){
 					reject({error:errOut});
+					this.envUtils.trySetEnv(); //reset env on fail
 				}
 				else{
 					let json = {};
@@ -145,7 +153,97 @@ export class Marketplace{
 					resolve(json);
 				}
 			})
+		}).catch(error=>{
+			this.envUtils.trySetEnv(); //reset env on fail
 		});
+	}
+	getMarketAggregates(wallet){
+		return new Promise((resolve,reject)=>{
+			const argsLeasesActive = ['query', 'market', 'lease', 'list', '--limit', 1, '--output', 'json', '--provider', wallet, '--count-total','--state','active'];
+			const argsLeasesClosed = ['query', 'market', 'lease', 'list', '--limit', 1, '--output', 'json', '--provider', wallet, '--count-total','--state','closed'];
+			const argsBidsOpen = ['query', 'market', 'bid', 'list', '--limit', 1, '--output', 'json', '--provider', wallet, '--count-total','--state','open'];
+			const argsBidsClosed = ['query', 'market', 'bid', 'list', '--limit', 1, '--output', 'json', '--provider', wallet, '--count-total','--state','closed'];
+			let leasesActive = 0;
+			let leasesClosed = 0;
+			let bidsOpen = 0;
+			let bidsClosed = 0;
+			let finished = 0;
+			if(typeof wallet == "undefined"){
+				finish(4);
+			}
+			else{
+				this.getAggregatesQuery(argsLeasesActive).then(data=>{
+					leasesActive = data;
+					finished+=1;
+					finish(finished);
+				})
+				this.getAggregatesQuery(argsLeasesClosed).then(data=>{
+					leasesClosed = data;
+					finished+=1;
+					finish(finished);
+				})
+				this.getAggregatesQuery(argsBidsOpen).then(data=>{
+					bidsOpen = data;
+					finished+=1;
+					finish(finished);
+				})
+				this.getAggregatesQuery(argsBidsClosed).then(data=>{
+					bidsClosed = data;
+					finished+=1;
+					finish(finished);
+				})
+			}
+			
+
+			function finish(finished){
+				if(finished == 4){
+					resolve({
+						leasesActive,
+						leasesClosed,
+						bidsOpen,
+						bidsClosed
+					})
+				}
+			}
+
+			
+		}).catch(error=>{
+			//this.envUtils = new EnvUtils();
+			this.envUtils.trySetEnv(); //reset env on fail
+		})
+	}
+	getAggregatesQuery(args){
+		return new Promise((resolve,reject)=>{
+			let output = '';
+			let errOut = '';
+			
+			const s = spawn('./bin/akash',args,{shell:true,env:process.env,cwd:process.env.PWD+'/aktAPI'});
+			s.stdout.on('data',d=>{
+				output += d.toString();
+			})
+			s.stderr.on('data',d=>{
+				console.log('error',d.toString());
+				errOut += d.toString();
+			});
+			s.on('close',()=>{
+				if(errOut != ''){
+					reject({error:errOut});
+					this.envUtils.trySetEnv(); //reset env on fail
+				}
+				else{
+					let json = {};
+					try{
+						json = JSON.parse(output);
+					}
+					catch(e){
+						reject({error:output})
+					}
+					resolve(json.pagination.total);
+				}
+			});
+		}).catch(error=>{
+			this.envUtils.trySetEnv(); //reset env on fail
+		})
 	}
 	getCurrentChainHeight(){
 		return new Promise((resolve,reject)=>{
@@ -156,6 +254,7 @@ export class Marketplace{
 			})
 			p.stderr.on('data',d=>{
 				console.log('error fetching chain',d.toString())
+				this.envUtils.trySetEnv(); //reset env on fail
 			})
 			p.on('close',()=>{
 				let json = {};
@@ -232,6 +331,7 @@ export class Marketplace{
 				p.stderr.on('data',d=>{
 					errOut += d.toString();
 					console.log('err bid output',d.toString());
+					this.envUtils.trySetEnv(); //reset env on fail
 				})
 				p.on('close',()=>{
 					let json = {};
@@ -257,6 +357,8 @@ export class Marketplace{
 					
 				})
 			})
+		}).catch(error=>{
+			this.envUtils.trySetEnv(); //reset env on fail
 		})
 		
 	}
@@ -308,6 +410,7 @@ export class Marketplace{
 			p.stderr.on('data',d=>{
 				errOut += d.toString();
 				console.log('err bid output',d.toString());
+				this.envUtils.trySetEnv(); //reset env on fail
 			})
 			p.on('close',()=>{
 				let json = {};
@@ -333,6 +436,8 @@ export class Marketplace{
 				
 			})
 		
+		}).catch(error=>{
+			this.envUtils.trySetEnv(); //reset env on fail
 		})
 	}
 	fetchAllOrderBids(bid,params){
@@ -356,6 +461,7 @@ export class Marketplace{
 			});
 			s.on('close',()=>{
 				if(errOut != ''){
+					this.envUtils.trySetEnv(); //reset env on fail
 					reject({error:errOut});
 				}
 				else{
@@ -369,6 +475,8 @@ export class Marketplace{
 					resolve(json);
 				}
 			})
+		}).catch(error=>{
+			this.envUtils.trySetEnv(); //reset env on fail
 		});
 	}
 

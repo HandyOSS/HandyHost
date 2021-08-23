@@ -1,3 +1,5 @@
+import {StreamGraph} from '../charts/StreamGraph.js';
+
 export class DVPNDashboardAnalytics{
 	constructor(){
 		/*
@@ -13,6 +15,7 @@ export class DVPNDashboardAnalytics{
 			</div>
 		</div>
 		*/
+		
 	}
 	renderAnalytics(data){
 		const analytics = data.analytics;
@@ -37,10 +40,22 @@ export class DVPNDashboardAnalytics{
 			}
 		}
 		$('.analyticsPanel').removeClass('loading');
-		this.renderNodeAnalytics(node.result,balance,analytics,addressMeta);
+		this.renderNodeAnalytics(node.result,balance,analytics,addressMeta,data.activeSessions);
 		this.renderSessionsRealtime(data.activeSessions);
+		this.streamGraph = new StreamGraph($('#streamgraph'));
+		this.streamGraph.render(data.timeseries);
+		let timeout;
+		$(window).off('resize').on('resize',()=>{
+			if(typeof timeout != "undefined"){
+				clearTimeout(timeout);
+			}
+			timeout = setTimeout(()=>{
+				this.streamGraph.resize();
+				delete this.timeout;
+			},80)
+		})
 	}
-	renderNodeAnalytics(node,balance,analytics,addressMeta){
+	renderNodeAnalytics(node,balance,analytics,addressMeta,sessionMeta){
 		console.log('node data',node);
 		const bandwidth = node.bandwidth;
 		const moniker = node.moniker;
@@ -82,15 +97,20 @@ export class DVPNDashboardAnalytics{
 		$info.append(`<div class="price"><span>Price (GB):</span> ${price.toUpperCase()}</div>`);
 		$info.append(`<div class="sessions"><span>Connected Sessions:</span> ${sessions}</div>`);
 		
-		this.renderAnalyticsPanel(analytics);
+		this.renderAnalyticsPanel(analytics,sessionMeta);
 	}
-	renderAnalyticsPanel(analytics){
+	renderAnalyticsPanel(analytics,sessionMeta){
 		//console.log('analytics',analytics);
 		const avgDuration = Math.floor(analytics.avgDuration*100)/100;
 		const sumDuration = Math.floor(analytics.durationSum*100)/100;
 		const sessionCount = analytics.sessionCount;
-		const totalBandwidthDown = analytics.totalBandwidthDOWN;
-		const totalBandwidthUp = analytics.totalBandwidthUP;
+		let totalBandwidthDown = analytics.totalBandwidthDOWN;
+		let totalBandwidthUp = analytics.totalBandwidthUP;
+		sessionMeta.map(subscriber=>{
+			//direction is from the subscriber perspective
+			totalBandwidthDown += subscriber.nodeUP;
+			totalBandwidthUp += subscriber.nodeDOWN;
+		});
 		const subscriptionCount = Object.keys(analytics.uniqueSubscriptions).length;
 		const uniqueSubs = analytics.uniqueSubscriptions;
 		const $nodeAnalytics = $('#nodeAnalytics');
@@ -104,6 +124,9 @@ export class DVPNDashboardAnalytics{
 		`);
 		const $sessions = $(`
 			<div class="sessions">
+				<div class="title">
+					Analytics</small>
+				</div>
 				<div class="subs"><span>Subscription Count:</span> ${subscriptionCount}</div>
 				<div class="count"><span>Completed Sessions:</span> ${sessionCount}</div>
 				<div class="totalDown"><span>Total Bandwidth Download:</span> ${numeral(totalBandwidthDown).format('0.00b').toUpperCase()}</div>
@@ -141,7 +164,8 @@ export class DVPNDashboardAnalytics{
 			$el.append('<div class="nosessions">(no active sessions)</div>')
 		}
 		else{
-			const $ul = $('<ul />')
+			const $ul = $('<ul />');
+
 			data.map(subscriber=>{
 				const mins = moment().diff(moment(subscriber.latestCreated),'minutes');
 				const humanizedCreated = moment.duration(mins,'minutes').humanize();

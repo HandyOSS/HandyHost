@@ -150,7 +150,7 @@ html.darkTheme{
 .darkTheme .ordersPanel .prevNextTri{
 	filter:invert(1);
 }
-.darkTheme .ordersPanel .lds-roller{
+.darkTheme .lds-roller{
 	filter:invert(1);
 }
 .darkTheme .ordersPanel tr.highlighted{
@@ -160,6 +160,10 @@ html.darkTheme{
 	filter:invert(1);
 }
 .darkTheme a.akashLink{
+	filter:invert(1);
+}
+
+.darkTheme #streamgraph path.stream{
 	filter:invert(1);
 }
 

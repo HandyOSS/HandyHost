@@ -56,18 +56,18 @@ export class Daemon{
 		});*/
 	}
 	getUpdateAvailStatus(){
-		siacCommand('daemon/update','GET').then(d=>{
+		return siacCommand('daemon/update','GET')/*.then(d=>{
 			console.log('daemon update availability stats',d);
 		}).catch(e=>{
 			console.error('ERROR GETTING DAEMON UPDATE AVAIL INFO',e);
-		});
+		});*/
 	}
 	updateDaemon(){
-		siacCommand('daemon/update','POST').then(d=>{
+		return siacCommand('daemon/update','POST')/*.then(d=>{
 			console.log('daemon updating stats',d);
 		}).catch(e=>{
 			console.error('ERROR GETTING DAEMON UPDATING INFO',e);
-		});
+		});*/
 	}
 	getVersion(){
 		return siacCommand('daemon/version','GET');/*.then(d=>{

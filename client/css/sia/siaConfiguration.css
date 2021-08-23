@@ -224,12 +224,12 @@ span.info{
 	filter: invert(0.0);
 }
 .editButton{
-	background: url(../img/edit.png);
+	background: url(../../img/edit.png);
     background-size: 16px 16px;
     right: 25px;
 }
 .deleteButton{
-	background:url('../img/delete.png');
+	background:url('../../img/delete.png');
 	background-size: 16px 16px;
     top: 4px;
     right: 5px;

@@ -8,7 +8,30 @@ import QRCode from 'qrcode';
 
 export class DVPNStats{
 	constructor(){
-
+		open({filename:process.env.HOME+'/.HandyHost/sentinelData/sessionsTimeseries.db',driver:sqlite3.Database}).then(db=>{
+			this.timeseriesDB = db;
+			this.timeseriesDB.run(`
+				CREATE TABLE IF NOT EXISTS subscribers (
+					id INTEGER PRIMARY KEY,
+					subscriber INTEGER NOT NULL,
+					session INTEGER NOT NULL,
+				   	download INTEGER NOT NULL,
+				   	upload INTEGER NOT NULL,
+				   	deltaDown INTEGER NOT NULL,
+				   	deltaUp INTEGER NOT NULL,
+				   	totalDown INTEGER NOT NULL,
+				   	totalUp INTEGER NOT NULL,
+				   	remaining INTEGER NOT NULL,
+				   	created_at INTEGER NOT NULL
+				);
+			`);
+			this.timeseriesDB.run(`
+				CREATE TABLE IF NOT EXISTS sessions (
+					session INTEGER,
+					subscriber INTEGER NOT NULL
+				);
+			`);
+		});
 	}
 	getDVPNLogs(){
 		//get dvpn logs on init;
@@ -248,8 +271,10 @@ export class DVPNStats{
 				hasCompleted++;
 				finish(output,resolve);
 			})
-			this.getActiveSessionAnalytics().then(json=>{
-				output.activeSessions = json;
+			this.getActiveSessionAnalytics().then((d)=>{
+				output.activeSessions = d.json;
+				output.timeseries = d.timeseries;
+				console.log('timeseries data set???',typeof output.timeseries);
 				hasCompleted++;
 				finish(output,resolve);
 			}).catch(err=>{
@@ -278,7 +303,7 @@ export class DVPNStats{
 		return new Promise((resolve,reject)=>{
 			//sqlite check for active sessions
 			open({filename:process.env.HOME+'/.sentinelnode/data.db',driver:sqlite3.Database}).then(db=>{
-				console.log('db is loaded');
+				//console.log('db is loaded');
 
 				db.all('SELECT DISTINCT subscription, SUM(download) as nodeDOWN, SUM(upload) as nodeUP, MIN(available) as subscriptionAvail, group_concat(id) as sessionIDs, MAX(created_at) as latestCreated, MAX(updated_at) as latestUpdated from SESSIONS group by subscription').then(d=>{
 					//console.log('done',d);
@@ -289,7 +314,15 @@ export class DVPNStats{
 						})
 						return rec;
 					})
-					resolve(toReturn);
+					this.updateTimeSeries(toReturn).then(()=>{
+						console.log('time series was updated, now do query');
+						this.getTimeseriesChart().then(timeseries=>{
+							console.log('timeseries??????');
+							resolve({json:toReturn,timeseries:timeseries});
+							//resolve(toReturn,timeseries);
+						})
+					});
+					
 				});
 
 			}).catch(e=>{
@@ -298,6 +331,137 @@ export class DVPNStats{
 			});
 
 		});
+	}
+	updateTimeSeries(sessions){
+		return new Promise((resolve,reject)=>{
+			console.log('update time series db',sessions.length);
+			if(sessions.length == 0){
+				return;
+			}
+			
+			sessions.map(session=>{
+				const subscriber = session.subscription;
+				const sessionID = Math.max(...session.sessionIDs);
+				const remaining = session.subscriptionAvail;
+				let download = session.nodeUP;
+				let upload = session.nodeDOWN; //from the perspective of the client
+				let deltaDown = 0;
+				let deltaUp = 0;
+				let totalDown = 0;
+				let totalUp = 0;
+				let forceWrite = false;
+				const createdAt = Math.floor(new Date().getTime()/1000);
+				console.log('reqdy to insert into timeseries',subscriber,sessionID,download,upload,deltaDown,deltaUp,createdAt);
+				this.timeseriesDB.all(`SELECT * FROM subscribers WHERE subscriber = ? ORDER BY created_at DESC LIMIT 1`,[subscriber]).then((res)=>{
+					console.log('time series db query success',res);
+					if(res.length > 0){
+						deltaDown = Math.abs(download - res[0].download);
+						deltaUp = Math.abs(upload - res[0].upload);
+						totalDown = res[0].totalDown;
+						totalUp = res[0].totalUp;
+					}
+					else{
+						forceWrite = true; //make sure we capture something to start the timeseries off aka this is new
+					}
+					totalDown += deltaDown;
+					totalUp += deltaUp;
+					if(deltaDown > 0 || deltaUp > 0 || forceWrite){
+						this.timeseriesDB.run(`INSERT INTO subscribers (subscriber,session,download,upload,deltaDown,deltaUp,totalDown,totalUp,remaining,created_at) VALUES (?,?,?,?,?,?,?,?,?,strftime(?))`,[subscriber,sessionID,download,upload,deltaDown,deltaUp,totalDown,totalUp,remaining,createdAt]).then(res=>{
+							console.log('inserted into time series');
+							
+						});
+					}
+					else{
+						console.log('no insert into time series, delta is 0')
+						resolve();
+					}
+					
+				}).catch(error=>{
+					console.log('err running sqlite query',error);
+					resolve();
+				});
+
+				this.timeseriesDB.all('SELECT * FROM sessions WHERE subscriber = ? AND session = ?',[subscriber,sessionID]).then(res=>{
+					if(res.length == 0){
+						//its new
+						this.timeseriesDB.run('INSERT INTO sessions (session,subscriber) VALUES (?,?)',[sessionID,subscriber]).then(res=>{
+							console.log('inserted new session into sessions table');
+							//resolve();
+						})
+					}
+					else{
+						//resolve();
+					}
+				}).catch(error=>{	
+					console.log('error querying session table',error)
+					//resolve();
+				})
+
+				
+			})
+		})
+		
+
+	}
+	getTimeseriesChart(){
+		return new Promise((resolve,reject)=>{
+			const gte = Math.floor(new Date().getTime()/1000) - (86400*2);
+			let subs = {};
+			let timeMin = Infinity;
+			let timeMax = -Infinity;
+			console.log('get timeseries');
+			this.timeseriesDB.all(`SELECT * FROM subscribers WHERE created_at > strftime(?) ORDER BY created_at ASC`,[gte]).then((res)=>{
+				let uniqueSubs = {};
+				//console.log('subscribers timeseries data???',res.length);
+				res.map(record=>{
+					//console.log('record',record);
+					timeMax = Math.max(timeMax,record.created_at);
+					timeMin = Math.min(timeMin,record.created_at);
+					if(typeof subs[record.subscriber] == "undefined"){
+						subs[record.subscriber] = {};
+					}
+				});
+				/*let minDateMins = new Date(timeMin);
+				minDateMins = Math.floor(new Date(timeMin - (minDateMins.getSeconds()*1000)).getTime()/1000);
+				let maxDateMins = new Date(timeMax);
+				maxDateMins = Math.floor(new Date(timeMax - (maxDateMins.getSeconds()*1000)).getTime()/1000);*/
+				const minDateMins = this.getXTimestampMinute(timeMin*1000);
+				const maxDateMins = this.getXTimestampMinute(timeMax*1000);
+				//console.log('mindate mins maxdate mins',minDateMins,maxDateMins);
+				let bins = {};
+				for(let i=minDateMins;i<maxDateMins;i += 120){
+					bins[i] = {up:0,down:0,sum:0};
+				}
+				Object.keys(subs).map(id=>{
+					subs[id] = JSON.parse(JSON.stringify(bins));
+				})
+				
+
+				res.map(record=>{
+					const timestampRounded = this.getXTimestampMinute(new Date(record.created_at*1000));
+					if(typeof subs[record.subscriber][timestampRounded] != "undefined"){
+						subs[record.subscriber][timestampRounded].up = record.deltaUp;
+						subs[record.subscriber][timestampRounded].down = record.deltaDown;
+						subs[record.subscriber][timestampRounded].sum = record.deltaUp + record.deltaDown;
+					}
+				})
+				//console.log('timeseries data???',subs);
+				resolve(subs);
+
+				//round to lowest minute
+
+			}).catch(error=>{
+				console.log('error building timeseries',error);
+			})
+		}).catch(error=>{
+			console.log('error building timeseries',error);
+		})
+	}
+	getXTimestampMinute(timestamp){
+		//get timestamp in seconds rounded down to nearest minute
+		const out = new Date(timestamp);
+		return Math.floor(new Date(timestamp - (out.getSeconds()*1000)).getTime()/1000);
+			
 	}
 	modelTransactionData(output){
 		let newOutput = output;
