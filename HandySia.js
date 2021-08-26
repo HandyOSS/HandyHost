@@ -12,6 +12,7 @@ import QRCode from 'qrcode';
 export class HandySia{
 	constructor(){
 		this.siaPortsPath = process.env.HOME+'/.HandyHost/siaData/siaPorts.json';
+		this.redlistPortsPath = process.env.HOME+'/.HandyHost/ports.json';
 		this.wallet = new Wallet();
 		this.consensus = new Consensus();
 		this.host = new Host();
@@ -107,6 +108,13 @@ export class HandySia{
 			break;
 			case 'getDirList':
 				this.getDirList(path.slice(2,path.length)).then(list=>{
+					resolve(list);
+				}).catch(error=>{
+					reject(error);
+				})
+			break;
+			case 'addNewDirectory':
+				this.addNewDirectory(path.slice(2,path.length)).then(list=>{
 					resolve(list);
 				}).catch(error=>{
 					reject(error);
@@ -269,8 +277,14 @@ export class HandySia{
 		return new Promise((resolve,reject)=>{
 			let ports = {};
 			const portsFilePath = this.siaPortsPath;
+			
+			let redlist = {};
+			if(fs.existsSync(this.redlistPortsPath)){
+				redlist = JSON.parse(fs.readFileSync(this.redlistPortsPath,'utf8'));
+			}
 			if(fs.existsSync(portsFilePath)){
 				ports = JSON.parse(fs.readFileSync(portsFilePath));
+				ports.redlist = redlist;
 				resolve(ports);
 			}
 			else{
@@ -299,6 +313,7 @@ export class HandySia{
 						ipRangeOut = ipRangeOut.split(' ')[0];
 					}
 					ports.ip = ipRangeOut;
+					ports.redlist = redlist;
 					resolve(ports);
 				});
 			}
@@ -317,9 +332,70 @@ export class HandySia{
 		return new Promise((resolve,reject)=>{
 			const portsFilePath = this.siaPortsPath;
 			parsed.portsSet = true;
+			let redlist = {};
+			let didChange = false;
+			if(fs.existsSync(portsFilePath)){
+				const existingPorts = JSON.parse(fs.readFileSync(portsFilePath));
+				Object.keys(existingPorts).map(label=>{
+					if(typeof parsed[label] == "undefined"){
+						didChange = true;
+					}
+					else{
+						if(parsed[label] != existingPorts[label]){
+							didChange = true;
+						}
+					}
+				})
+			}
+			
+			if(fs.existsSync(this.redlistPortsPath)){
+				redlist = JSON.parse(fs.readFileSync(this.redlistPortsPath,'utf8'));
+				Object.keys(parsed).map(type=>{
+					if(type != "portsSet"){
+						Object.keys(redlist.custom).map(port=>{
+							const d = redlist.custom[port];
+							if(d.key == type){
+								delete redlist.custom[port];
+							}
+						});
+						redlist.custom[parsed[type]] = {
+							"description": "Sia Custom "+type+" Port",
+							"service":"SC",
+							"key":type
+						}
+					}
+				});
+				fs.writeFileSync(this.redlistPortsPath,JSON.stringify(redlist,null,2),'utf8');
+			}
 			fs.writeFileSync(portsFilePath,JSON.stringify(parsed),'utf8');
-			this.trySpawningSiad(); //todo restart siad if it's already running???
-			resolve(parsed);
+			console.log('trying siad restart');
+			if(didChange){
+				setTimeout(()=>{
+					//give the host time to announce the new ports before we restart siad
+					this.consensus.getChainStatus().then(chainD=>{
+						console.log('about to halt siad');
+						this.daemon.haltSiad().then(d=>{
+							console.log('halted siad, restarting now');
+							this.trySpawningSiad(); //todo restart siad if it's already running???
+							resolve(parsed);
+						});
+					}).catch(error=>{
+						//not running
+						console.log('siad was not running, starting siad')
+						this.trySpawningSiad(); //todo restart siad if it's already running???
+						resolve(parsed);
+						
+					});
+				},2000)
+				
+			}
+			else{
+				console.log('no ports were changed, try to spawn siad just in case..')
+				this.trySpawningSiad(); //todo restart siad if it's already running???
+				resolve(parsed);
+			}
+			
+			
 		}).catch(error=>{
 			reject(error);
 		})
@@ -704,6 +780,23 @@ export class HandySia{
   				resolve(output);
   			});
 		});
+	}
+	addNewDirectory(path){
+		return new Promise((resolve,reject)=>{
+			let dir = decodeURIComponent(path);
+
+			console.log('add new dir',dir);	
+			
+			fs.mkdirSync(dir,{recursive:true});
+
+			let output = fs.readdirSync(dir,{withFileTypes:true}).filter(d=>{
+				return d.isDirectory();
+			}).filter(d=>{
+				return d.name.indexOf('.') != 0;
+			}).map(d=>{return d.name;});
+			console.log('output',output);
+			resolve({base:dir,paths:output});
+		})
 	}
 	getDirList(path){
 		return new Promise((resolve,reject)=>{

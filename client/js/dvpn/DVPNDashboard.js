@@ -7,8 +7,8 @@ export class DVPNDashboard {
 	constructor(){
 		this.theme = new Theme();
 		this.nodeConfig = new DVPNNodeConfig();
-		this.nodeStatus = new DVPNNodeStatus();
-		this.dashboardAnalytics = new DVPNDashboardAnalytics();
+		this.nodeStatus = new DVPNNodeStatus(this);
+		this.dashboardAnalytics = new DVPNDashboardAnalytics(this);
 		fetch('./uiFragments/dvpn/dashboard.html').then(res=>res.text()).then(fragment=>{
 			$('body').append(fragment);
 			//init dashboard

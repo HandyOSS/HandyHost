@@ -267,8 +267,57 @@ export class SiaStorageConfig{
 				$li.addClass('selected');
 			})
 		})
-		$('.pathSelectUtil').html($select)
+		const $addNewFolder = $(`
+			<div id="addNewFolder" class="addButton">
+				<div class="newFolderLabel">
+					Create New Folder 
+				</div>
+				<div class="createNewData">
+					<input type="text" id="newFolderName" class="styledSelect" placeholder="NewFolderName" />
+					<div class="error">Error: set a folder name</div>
+					<div class="buttons">
+						<div id="saveNewFolder" class="newButton">Add</div>
+						<div id="cancelNewFolder" class="newButton">Cancel</div>
+					</div>
+				</div>
+				<div class="plus">+</div>
+			</div>
+		`);
+		$('.pathSelectUtil').html($select);
+		$('.pathSelectUtil').append($addNewFolder);
 		$('.pathSelectUtil').append($ul);
+
+		$addNewFolder.off('click').on('click',()=>{
+			if($addNewFolder.hasClass('expanded')){
+				return false;
+			}
+			$addNewFolder.addClass('expanded');
+			$('.createNewData',$addNewFolder).show();
+
+		})
+		$('#saveNewFolder',$addNewFolder).off('click').on('click',()=>{
+			let val = $('#newFolderName').val();
+			if(val == ''){
+				$('.createNewData .error').show();
+				return false;
+			}
+			val = $('option:selected',$select).val() + '/' + val;
+			$('.createNewData .error').hide();
+			
+			fetch('/api/sia/addNewDirectory/'+encodeURIComponent(val)).then(d=>d.json()).then(data=>{
+				this.showPathModal(data);
+			})
+		})
+		$('#cancelNewFolder',$addNewFolder).off('click').on('click',()=>{
+			console.log('cancel clicked')
+			$('.createNewData',$addNewFolder).hide();
+			$('.createNewData input').val('');
+			setTimeout(()=>{
+				$addNewFolder.removeClass('expanded');
+			},10)
+			
+		})
+
 		const $submit = $('<div class="buttons" />');
 		const $cancel = $('<div class="button cancel"><div class="foreground">cancel</div><div class="background">cancel</div></div>');
 		const $save = $('<div class="button save"><div class="foreground">select</div><div class="background">select</div></div>')

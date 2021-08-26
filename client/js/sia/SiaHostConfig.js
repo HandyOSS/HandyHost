@@ -229,7 +229,7 @@ export class SiaHostConfig {
 
 		//todo cancel hides form
 		$save.off('click').on('click',()=>{
-			this.submitForm(fields,$ports);
+			this.submitForm(fields,$ports,portsData);
 		})
 	}
 	showTooltip($element,text,label){
@@ -249,7 +249,7 @@ export class SiaHostConfig {
 	hideTooltip(){
 		$('#tooltip').hide();
 	}
-	submitForm(fields,$ports){
+	submitForm(fields,$ports,portsDataIN){
 		let formOutput = {};
 		let hasValidationErrors = false;
 		Object.keys(fields).map(fieldKey=>{
@@ -305,7 +305,75 @@ export class SiaHostConfig {
 				formElementParent.append('<div class="validation error">* invalid data</div>');
 				hasValidationErrors = true;
 			}
-		})
+		});
+		let portsDataOUT = {};
+		let portsIndex = {};
+		$('li',$ports).each(function(){
+			$('.validation.error',$(this)).remove();
+			const key = $('input',this).attr('data-key');
+			const val = $('input',this).val();
+			if(val == ''){
+				let defaultPort;
+				switch(key){
+					case 'rpc':
+						defaultPort = '9981';
+					break;
+					case 'host':
+						defaultPort = '9982';
+					break;
+					case 'mux':
+						defaultPort = '9983';
+					break;
+					case 'muxWS':
+						defaultPort = '9984';
+					break;
+				}
+
+				portsDataOUT[key] = defaultPort;
+			}
+			else{
+				portsDataOUT[key] = val;
+				portsIndex[val] = key;
+			}
+		});
+		//check ports for redlisted
+		if(typeof portsDataIN.redlist != "undefined"){
+			console.log('ports in',portsDataIN.redlist);
+			Object.keys(portsDataIN.redlist.default).map(port=>{
+				if(port.indexOf(':') == -1){
+					//not a range
+					if(typeof portsIndex[port] != "undefined"){
+						//ERROR
+						hasValidationErrors = true;
+						$('input[data-key="'+portsIndex[port]+'"]',$ports).after('<div class="validation error">* reserved port</div>')
+					}
+				}
+				else{
+					let rangeArray = port.split(':').map(v=>{
+						return parseInt(v);
+					});
+					Object.keys(portsIndex).map(p=>{
+						let targetPort = parseInt(p);
+						if(p >= rangeArray[0] && p <= rangeArray[1]){
+							//ERROR
+							hasValidationErrors = true;
+							$('input[data-key="'+portsIndex[p.toString()]+'"]',$ports).after('<div class="validation error">* reserved port ('+port+')</div>')
+						}
+					})
+				}
+			});
+			Object.keys(portsDataIN.redlist.custom).map(port=>{
+				if(portsDataIN.redlist.custom[port].service == "SC"){
+					return; //dont care about SC
+				}
+				if(typeof portsIndex[port] != "undefined"){
+					//ERROR
+					hasValidationErrors = true;
+					$('input[data-key="'+portsIndex[port]+'"]',$ports).after('<div class="validation error">* reserved port</div>')
+				}
+			})
+		}
+		
 		if(hasValidationErrors){
 			return;
 		}
@@ -327,33 +395,8 @@ export class SiaHostConfig {
 			console.log('error submitting',res)
 			this.showSaveConfirmationModal(res,true)
 		})
-		let portsData = {};
-		$('li',$ports).each(function(){
-			const key = $('input',this).attr('data-key');
-			const val = $('input',this).val();
-			if(val == ''){
-				let defaultPort;
-				switch(key){
-					case 'rpc':
-						defaultPort = '9981';
-					break;
-					case 'host':
-						defaultPort = '9982';
-					break;
-					case 'mux':
-						defaultPort = '9983';
-					break;
-					case 'muxWS':
-						defaultPort = '9984';
-					break;
-				}
-				portsData[key] = defaultPort;
-			}
-			else{
-				portsData[key] = val;
-			}
-		});
-		console.log('portsdata',portsData);
+		
+		console.log('portsdata',portsDataOUT);
 		fetch("/api/sia/setPorts",
 		{
 		    headers: {
@@ -361,7 +404,7 @@ export class SiaHostConfig {
 		      'Content-Type': 'application/json'
 		    },
 		    method: "POST",
-		    body: JSON.stringify(portsData)
+		    body: JSON.stringify(portsDataOUT)
 		})
 		.then((res)=>{ 
 			console.log('success submitting ports',res) 

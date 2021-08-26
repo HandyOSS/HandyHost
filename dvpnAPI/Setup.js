@@ -5,7 +5,8 @@ import generator from 'project-name-generator';
 
 export class DVPNSetup{
 	constructor(){
-
+		this.redlistPortsPath = process.env.HOME+'/.HandyHost/ports.json';
+		
 	}
 	
 	initWallet(pw,walletName){
@@ -232,7 +233,7 @@ export class DVPNSetup{
 				});
 				fs.writeFileSync(`${process.env.HOME}/.sentinelnode/config.toml`,tomls.node,'utf8');
 				fs.writeFileSync(`${process.env.HOME}/.sentinelnode/wireguard.toml`,tomls.wireguard,'utf8');
-				
+				this.updateRedlistPorts();
 				resolve({success:true})
 			})
 		});
@@ -244,6 +245,32 @@ export class DVPNSetup{
 			}
 			return obj.value;
 		}
+	}
+	updateRedlistPorts(){
+		if(fs.existsSync(this.redlistPortsPath)){
+			let redlist = JSON.parse(fs.readFileSync(this.redlistPortsPath,'utf8'));
+			this.getPorts().then(ports=>{
+				const node = ports.node;
+				const wg = ports.wireguard;
+				//first cleanup redlist custom ports
+				Object.keys(redlist.custom).map(port=>{
+					const d = redlist.custom[port];
+					if(d.service == 'DVPN'){
+						delete redlist.custom[port];
+					}
+				});
+				redlist.custom[node] = {
+					"description":"DVPN node port",
+					"service":"DVPN"
+				}
+				redlist.custom[wg] = {
+					"description":"DVPN wireguard port",
+					"service":"DVPN"
+				}
+				fs.writeFileSync(this.redlistPortsPath,JSON.stringify(redlist,null,2),'utf8');
+			})
+		}
+		
 	}
 	getKeyList(pw){
 		return new Promise((resolve,reject)=>{

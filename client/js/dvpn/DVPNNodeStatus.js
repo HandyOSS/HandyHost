@@ -1,5 +1,6 @@
 export class DVPNNodeStatus{
-	constructor(){
+	constructor(parentComponent){
+		this.parentComponent = parentComponent;
 		this.nodeIsActive = false;
 		this.ansi_up = new AnsiUp();
 		fetch('./uiFragments/dvpn/nodeStatus.html').then(res=>res.text()).then(fragment=>{
@@ -88,6 +89,7 @@ export class DVPNNodeStatus{
 					$('#showLaunchModal').show();
 					$('#haltDVPN').hide();
 					this.setStatus(false);
+					this.parentComponent.fetchDashboardData();
 				}
 			})
 		})

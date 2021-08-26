@@ -705,6 +705,7 @@ export class AKTMarketplace{
 
 	}
 	handleVerifyModalHide(wasError){
+		//TODO button not firing?????
 		$('#marketplaceMessageConf').off('click').on('click',()=>{
 			this.hideModal()
 			/*if(wasError){

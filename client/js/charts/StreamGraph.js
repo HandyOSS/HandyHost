@@ -13,6 +13,15 @@ export class StreamGraph{
 	}
 	render(dataIN){
 		$('.sectionTitle',this.$el).show();
+		if(Object.keys(dataIN).length == 0){
+			//no data
+			$('.sectionErrorMessage',this.$el).show();
+			$('svg',this.$el).hide();
+		}
+		else{
+			$('.sectionErrorMessage',this.$el).hide();
+			$('svg',this.$el).show();
+		}
 		this.dataset = dataIN;
 		const series = this.modelData(dataIN);
 		
@@ -32,7 +41,7 @@ export class StreamGraph{
 		    .range([height - 30, 10]);
 		const color = d3.schemeBlues[9];
 		const ticks = d3.axisBottom(x)
-			.ticks(width / 80)
+			.ticks(8)
 			.tickSizeOuter(0)
 			.tickFormat(d=>{
 				return moment(d,'X').format('MMM-DD HH:mm')
@@ -52,11 +61,16 @@ export class StreamGraph{
 					.classed('stream',true)
 					.on('mouseenter',function(d,i){
 						d3.selectAll('path.stream').transition().duration(300).style('opacity',(dd,ii)=>{
-							return (ii != i ? 0.25 : 1.0);
+							return (ii != i ? 0.25 : 0.8);
 						});
+						hover(d,d3.mouse(this));
+					})
+					.on('mousemove',function(d,i){
+						hover(d,d3.mouse(this));
 					})
 					.on('mouseleave',function(d){
 						d3.selectAll('path.stream').transition().duration(300).style('opacity',1.0);
+						unhover()
 					})
 					.transition()
 					.duration(300)
@@ -70,9 +84,69 @@ export class StreamGraph{
 				.join("g")
 				.classed('axis',true)
 				.call(xAxis);
+
+		const _this = this;
+		function hover(data,d3Mouse){
+			//console.log('hover',data,d3Elem,d3Mouse)
+			const bucketCount = Object.keys(data).length-2;
+			const bucketScale = d3.scaleLinear()
+				.domain([10,width-10])
+				.range([0,bucketCount]);
+			const bucket = Math.floor(bucketScale(d3Mouse[0]));
+			_this.showTooltip(data[bucket],data.key,d3Mouse[0]);
+				
+		}
+		function unhover(){
+			_this.hideTooltip();
+		}
+	}
+	showTooltip(d,index,xPos){
+		const {width,height} = this.getDimensions()
+		//console.log('show tooltip',data,index,xPos);
+		/*
+		<div id="streamgraphTooltip">
+			<div class="title">Subscriber: <span class="subscriberID">0</span></div>
+			<div class="time"></div>
+			<div>Bandwidth: <span class="sum"></span></div>
+			<div>Download: <span class="download"></span></div>
+			<div>Upload: <span class="upload"></span></div>
+		</div>
+		*/
+		if(typeof d == "undefined"){
+			return;
+		}
+		const data = d.data[index+'_data'];
+		
+		//console.log('data',data,index)
+		const $tooltip = $('#streamgraphTooltip');
+		const $stripe = $('.stripe');
+		$('.title .subscriberID',$tooltip).html(index);
+		$('.time',$tooltip).html(moment(d.data.time,'X').format('MMM-DD HH:mm'));
+		$('.sum',$tooltip).html(numeral(data.sum).format('0.0b'))
+		$('.download',$tooltip).html(numeral(data.down).format('0.0b'))
+		$('.upload',$tooltip).html(numeral(data.up).format('0.0b'))
+		const w = $tooltip.width();
+		const xNow = xPos + 5;
+		let x = xNow-w-2;
+		if(xNow-w < 0){
+			x = xNow+3;
+			$tooltip.addClass('right');
+		}
+		else{
+			$tooltip.removeClass('right');
+		}
+
+		$tooltip.css('left',x);
+		$stripe.css('left',x);
+		$tooltip.show();
+		$stripe.show();
+	}
+	hideTooltip(){
+		$('#streamgraphTooltip').hide();
+		$('.stripe').hide();
 	}
 	startOf(m, n, unit) {
-		//round to nearest 15 mins
+		//round to nearest n units
 		const units = [
 			'year',
 			'month',
@@ -91,31 +165,73 @@ export class StreamGraph{
 		m.set(unit, Math.floor(m.get(unit) / n) * n);
 
 		return m;
-	};
+	}
+	getMinTime(data){
+		let minTime = Infinity;
+		Object.keys(data).map(subID=>{
+			Object.keys(data[subID]).map(timestamp=>{
+				let roundMins = Object.keys(data[subID]).length <= 120 ? 2 : 15;
+				const time = parseInt(this.startOf(moment(timestamp,'X'),roundMins,'minute'));
+				if(time < minTime){
+					minTime = time;
+				}
+			})
+		});
+		return minTime;
+	}
+	prefillBins(data){
+		let bins = {}
+
+		const maxTime = parseInt(this.startOf(moment(),1,'minute').format('X'));
+		const minTime = this.getMinTime(data);//maxTime.clone().subtract(2,'days');
+		let minsPerBin = 15;
+		if(moment(maxTime).diff(moment(minTime),'minutes')/2 <= 120){
+			minsPerBin = 2;
+		} 
+		for(let i=minTime;i<=maxTime;i+=(minsPerBin*60)){
+			bins[i] = {
+				time:i
+			};
+			subscriberIDs.map(subID=>{
+				bins[i][subID] = 0;
+				bins[i][subID+'_data'] = {
+					up:0,
+					down:0,
+					sum:0
+				}
+			});
+		};
+		return bins;
+	}
 	modelData(data){
-		const rows = {};
+		const rows = this.prefillBins(data);
+		
 		Object.keys(data).map(subscriberID=>{
 			Object.keys(data[subscriberID]).map(timestamp=>{
-				let rounded = this.startOf(moment(timestamp,'X'),15,'minute').format('X');//moment(timestamp,'X').startOf('hour').format('X');
+				let roundMins = Object.keys(data[subscriberID]).length <= 120 ? 2 : 15;
+				let rounded = this.startOf(moment(timestamp,'X'),roundMins,'minute').format('X');//moment(timestamp,'X').startOf('hour').format('X');
 				if(typeof rows[rounded] == "undefined"){
 					rows[rounded] = {
 						time:rounded
 					};
+					
 					rows[rounded][subscriberID] = data[subscriberID][timestamp].sum;
-					rows[rounded][22] = Math.random() * 10000000;
-					rows[rounded][44] = Math.random() * 20000000;
-					rows[rounded][66] = Math.random() * 5000000;
 					rows[rounded][subscriberID+'_data'] = data[subscriberID][timestamp];
 				}
 				else{
-					rows[rounded][22] += Math.random() * 10000000;
-					rows[rounded][44] += Math.random() * 10000000;
-					rows[rounded][66] += Math.random() * 10000000;
-					rows[rounded][subscriberID] += data[subscriberID][timestamp].sum;
-					rows[rounded][subscriberID+'_data'].sum += data[subscriberID][timestamp].sum;
-					rows[rounded][subscriberID+'_data'].up += data[subscriberID][timestamp].up;
-					rows[rounded][subscriberID+'_data'].down += data[subscriberID][timestamp].down;
+					if(typeof rows[rounded][subscriberID] == "undefined"){
+						rows[rounded][subscriberID] = data[subscriberID][timestamp].sum;
+						rows[rounded][subscriberID+'_data'] = data[subscriberID][timestamp];
+					}
+					else{
+						rows[rounded][subscriberID] += data[subscriberID][timestamp].sum;
+						rows[rounded][subscriberID+'_data'].sum += data[subscriberID][timestamp].sum;
+						rows[rounded][subscriberID+'_data'].up += data[subscriberID][timestamp].up;
+						rows[rounded][subscriberID+'_data'].down += data[subscriberID][timestamp].down;
+					}
+					
 				}
+
 				
 			});
 		})
@@ -123,8 +239,8 @@ export class StreamGraph{
 			return rows[ts];
 		});
 		return d3.stack()
-			//.keys(Object.keys(data))
-			.keys([5,22,44,66])
+			.keys(Object.keys(data))
+			//.keys([5,22,44,66])
 			//.offset(d3.stackOffsetNone)
 			.offset(d3.stackOffsetSilhouette)
     		.order(d3.stackOrderNone)

@@ -237,6 +237,7 @@ export class DVPNStats{
 			console.log('wallet addr?',walletAddress);
 			this.getMachineStatus().then(statusData=>{
 				output.node = statusData;
+				console.log('got machine stats');
 				hasCompleted++;
 				finish(output,resolve);
 			}).catch(err=>{
@@ -251,6 +252,7 @@ export class DVPNStats{
 						address: walletAddress,
 						qr: qr
 					};
+					console.log('got wallet stats');
 					hasCompleted++;
 					finish(output,resolve);
 				})
@@ -263,6 +265,7 @@ export class DVPNStats{
 
 			this.getWalletTransactions(walletAddress).then(json=>{
 				output.txes = json;
+				console.log('got tx data');
 				hasCompleted++;
 				finish(output,resolve);
 			}).catch(err=>{
@@ -274,6 +277,8 @@ export class DVPNStats{
 			this.getActiveSessionAnalytics().then((d)=>{
 				output.activeSessions = d.json;
 				output.timeseries = d.timeseries;
+				output.sessions = d.sessions;
+				console.log('got analytcs data');
 				console.log('timeseries data set???',typeof output.timeseries);
 				hasCompleted++;
 				finish(output,resolve);
@@ -303,7 +308,7 @@ export class DVPNStats{
 		return new Promise((resolve,reject)=>{
 			//sqlite check for active sessions
 			open({filename:process.env.HOME+'/.sentinelnode/data.db',driver:sqlite3.Database}).then(db=>{
-				//console.log('db is loaded');
+				console.log('db is loaded');
 
 				db.all('SELECT DISTINCT subscription, SUM(download) as nodeDOWN, SUM(upload) as nodeUP, MIN(available) as subscriptionAvail, group_concat(id) as sessionIDs, MAX(created_at) as latestCreated, MAX(updated_at) as latestUpdated from SESSIONS group by subscription').then(d=>{
 					//console.log('done',d);
@@ -317,8 +322,11 @@ export class DVPNStats{
 					this.updateTimeSeries(toReturn).then(()=>{
 						console.log('time series was updated, now do query');
 						this.getTimeseriesChart().then(timeseries=>{
-							console.log('timeseries??????');
-							resolve({json:toReturn,timeseries:timeseries});
+							this.getSessionAnalytics().then(sessionAnalytics=>{
+								console.log('timeseries??????');
+								resolve({json:toReturn,timeseries:timeseries,sessions:sessionAnalytics});
+							})
+							
 							//resolve(toReturn,timeseries);
 						})
 					});
@@ -336,6 +344,7 @@ export class DVPNStats{
 		return new Promise((resolve,reject)=>{
 			console.log('update time series db',sessions.length);
 			if(sessions.length == 0){
+				resolve();
 				return;
 			}
 			
@@ -355,8 +364,19 @@ export class DVPNStats{
 				this.timeseriesDB.all(`SELECT * FROM subscribers WHERE subscriber = ? ORDER BY created_at DESC LIMIT 1`,[subscriber]).then((res)=>{
 					console.log('time series db query success',res);
 					if(res.length > 0){
-						deltaDown = Math.abs(download - res[0].download);
-						deltaUp = Math.abs(upload - res[0].upload);
+						if( parseInt(res[0].created_at) + 240 >= createdAt ){
+							//only set delta if this is a recent session
+							//the first instance should always be zero else the chart looks wonky 
+							//and we double add into total bandwidth served
+							deltaDown = Math.abs(download - res[0].download);
+							deltaUp = Math.abs(upload - res[0].upload);
+						}
+						else{
+							if(download > 0 && upload > 0){
+								forceWrite = true; 
+								//make sure we capture something to start the timeseries off aka this is new session
+							}
+						}
 						totalDown = res[0].totalDown;
 						totalUp = res[0].totalUp;
 					}
@@ -368,7 +388,7 @@ export class DVPNStats{
 					if(deltaDown > 0 || deltaUp > 0 || forceWrite){
 						this.timeseriesDB.run(`INSERT INTO subscribers (subscriber,session,download,upload,deltaDown,deltaUp,totalDown,totalUp,remaining,created_at) VALUES (?,?,?,?,?,?,?,?,?,strftime(?))`,[subscriber,sessionID,download,upload,deltaDown,deltaUp,totalDown,totalUp,remaining,createdAt]).then(res=>{
 							console.log('inserted into time series');
-							
+							resolve();
 						});
 					}
 					else{
@@ -402,6 +422,35 @@ export class DVPNStats{
 		})
 		
 
+	}
+	getSessionAnalytics(){
+		return new Promise((resolve,reject)=>{
+			let uniqueSubscribers = 0;
+			let sessions = 0;
+			let subscribers = {}
+			this.timeseriesDB.all(`SELECT subscriber, COUNT(session) as sessionCount FROM sessions GROUP BY subscriber`).then(res=>{
+				uniqueSubscribers = res.length;
+				res.map(row=>{
+					sessions += row.sessionCount;
+					subscribers[row.subscriber] = {
+						sessions: row.sessionCount,
+						totalDown:0,
+						totalUp:0,
+						remaining:0,
+						lastSeen:0
+					}
+				});
+				this.timeseriesDB.all(`SELECT MAX(totalDown) as down, MAX(totalUp) as up, MIN(remaining) as remains, MAX(created_at) as lastSeen, subscriber FROM subscribers GROUP BY subscriber`).then(meta=>{
+					meta.map(row=>{
+						subscribers[row.subscriber].totalDown = row.down;
+						subscribers[row.subscriber].totalUp = row.up;
+						subscribers[row.subscriber].remaining = row.remains;
+						subscribers[row.subscriber].lastSeen = row.lastSeen;
+					})
+					resolve(subscribers);
+				})
+			})
+		})
 	}
 	getTimeseriesChart(){
 		return new Promise((resolve,reject)=>{

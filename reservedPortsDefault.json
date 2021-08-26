@@ -1,0 +1,23 @@
+{
+	"default":{
+		"9980":{
+			"description":"Internal Sia RPC Port",
+			"service":"SC"
+		},
+		"8443":{
+			"description":"Akash Provider Port",
+			"service":"AKT"
+		},
+		"80":{
+			"description":"Akash Default HTTP Port",
+			"service":"AKT"
+		},
+		"30000:32767":{
+			"description":"Akash Potential Serving Ports",
+			"service":"AKT"
+		}
+	},
+	"custom":{
+
+	}
+}

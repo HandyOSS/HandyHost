@@ -9,6 +9,7 @@ import {spawn} from 'child_process';
 
 export class HandyDVPN{
 	constructor(){
+		this.redlistPortsPath = process.env.HOME+'/.HandyHost/ports.json';
 		this.daemon = new Daemon();
 		this.dvpnSetup = new DVPNSetup();
 		this.updateHelper = new UpdateHelper();
@@ -153,6 +154,13 @@ export class HandyDVPN{
 					reject(error);
 				})
 			break;
+			case 'getPortsRedlist':
+				this.getPortsRedlist().then(data=>{
+					resolve(data);
+				}).catch(error=>{
+					reject(error);
+				})
+			break;
 			case 'updateNodeConfig':
 				this.updateNodeConfig(requestBody).then(data=>{
 					resolve(data);
@@ -207,6 +215,15 @@ export class HandyDVPN{
 			break;
 		}
 		
+	}
+	getPortsRedlist(){
+		return new Promise((resolve,reject)=>{
+			let output = {default:{},custom:{}};
+			if(fs.existsSync(this.redlistPortsPath)){
+				output = JSON.parse(fs.readFileSync(this.redlistPortsPath,'utf8'));
+			}
+			resolve(output);
+		})
 	}
 	launchNode(requestBody){
 		const {parsed,err} = this.parseRequestBody(requestBody);

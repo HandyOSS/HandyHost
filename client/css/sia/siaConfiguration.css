@@ -294,3 +294,68 @@ span.info{
 	margin-left: 5px;
 }
 
+.pathSelectModal .addButton{
+	float: left;
+    margin: 5px 5px;
+    padding: 7px 5px;
+    background: rgba(0,0,0,0.1);
+    font-size: 16px;
+    cursor:pointer;
+}
+
+#pathShortcut{
+	float: left;
+    margin: 5px 5px 5px 0px;
+}
+.addButton .plus{
+	padding: 0px 3px;
+	background:rgba(0,0,0,0.2);
+	margin-left:5px;
+}
+.addButton.expanded .plus{
+	display:none;
+}
+.createNewData, .newFolderLabel, .plus{
+	float:left;
+	display:inline;
+}
+.createNewData{
+	display:none;
+	width: 200px;
+	float:left;
+}
+.createNewData.expanded .newFolderLabel{
+	line-height: 24px;
+}
+.createNewData input{
+    width: 195px;
+    font-size: 16px !important;
+    padding: 2px 5px;
+    border-radius: 4px;
+    margin-top: 0px;
+    margin-left: 5px;
+}
+.createNewData .error{
+	display:none;
+	line-height: 24px;
+    margin-top: -10px;
+    float: left;
+    font-size: 14px;
+    margin-left: 10px;
+    color: #cc0000;
+}
+.createNewData .buttons{
+	float:left;
+	width: 100%;
+}
+.newButton{
+	margin: 0 5px;
+	padding: 2px 5px;
+	font-size: 14px;
+	color:#333;
+	background:rgba(0,0,0,0.1);
+	border: 1px solid #666;
+	cursor:pointer;
+	float:right;
+}
+

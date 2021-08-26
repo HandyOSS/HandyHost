@@ -2,9 +2,11 @@ import {HandySia} from './HandySia.js';
 import {HandyDVPN} from './HandyDvpn.js';
 import {HandyAKT} from './HandyAkt.js';
 import { Server } from "socket.io";
+import fs from 'fs';
 
 export class APIHelper{
 	constructor(){
+		this.initPorts();
 		this.sia = new HandySia();
 		this.dvpn = new HandyDVPN();
 		this.akt = new HandyAKT();
@@ -62,6 +64,14 @@ export class APIHelper{
 	}
 	initAKTSockets(){
 		this.akt.addSocketNamespace(this.io.of('/akt'));
+	}
+	initPorts(){
+		//check if default ports redlist exists
+		const appPortsFile = process.env.HOME+'/.HandyHost/ports.json';
+		if(!fs.existsSync(appPortsFile)){
+			const ports = fs.readFileSync(process.env.PWD+'/reservedPortsDefault.json','utf8');
+			fs.writeFileSync(appPortsFile,ports,'utf8');
+		}
 	}
 	
 }

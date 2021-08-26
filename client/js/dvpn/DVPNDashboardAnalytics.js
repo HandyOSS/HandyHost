@@ -1,20 +1,8 @@
 import {StreamGraph} from '../charts/StreamGraph.js';
 
 export class DVPNDashboardAnalytics{
-	constructor(){
-		/*
-		<div class="dashboard">
-			<div id="nodeMeta">
-				Node metadata
-			</div>
-			<div id="sessionMeta">
-				Session Meta
-			</div>
-			<div id="txMeta">
-				TX Meta
-			</div>
-		</div>
-		*/
+	constructor(parentComponent){
+		this.parentComponent = parentComponent;
 		
 	}
 	renderAnalytics(data){
@@ -26,7 +14,7 @@ export class DVPNDashboardAnalytics{
 		if(Object.keys(data.node).length == 0){
 			node = {
 				result:{
-					moniker: '<span class="warningEmoji">⚠️</span> Node Offline',
+					moniker: '<div class="monikerWrap"><span class="warningEmoji">⚠️</span> Node Offline</div>',
 					offline:true,
 					bandwidth:{
 						upload:'---',
@@ -40,10 +28,11 @@ export class DVPNDashboardAnalytics{
 			}
 		}
 		$('.analyticsPanel').removeClass('loading');
-		this.renderNodeAnalytics(node.result,balance,analytics,addressMeta,data.activeSessions);
+		this.renderNodeAnalytics(node.result,balance,analytics,addressMeta,data.activeSessions,data.sessions);
 		this.renderSessionsRealtime(data.activeSessions);
 		this.streamGraph = new StreamGraph($('#streamgraph'));
 		this.streamGraph.render(data.timeseries);
+
 		let timeout;
 		$(window).off('resize').on('resize',()=>{
 			if(typeof timeout != "undefined"){
@@ -55,7 +44,7 @@ export class DVPNDashboardAnalytics{
 			},80)
 		})
 	}
-	renderNodeAnalytics(node,balance,analytics,addressMeta,sessionMeta){
+	renderNodeAnalytics(node,balance,analytics,addressMeta,sessionMeta,allSessionsMeta){
 		console.log('node data',node);
 		const bandwidth = node.bandwidth;
 		const moniker = node.moniker;
@@ -72,14 +61,23 @@ export class DVPNDashboardAnalytics{
 		const nodeAddress = node.address;
 		const walletAddress = node.operator;
 		let walletBalance = balance.available.amount + ' ' + balance.available.denom.toUpperCase();
+		let balanceInDVPN = 0;
 		if(balance.available.denom == 'udvpn'){
 			//make dvpn
 			walletBalance = Math.floor(balance.available.amount/10000) / 100 + ' DVPN';
+			balanceInDVPN = Math.floor(balance.available.amount/10000) / 100
 		}
 		const $el = $('#nodeMeta');
 		$el.html(`<div class="title">
 			${moniker}
 		</div>`)
+		$('.monikerWrap',$el).off('click').on('click',()=>{
+			if(node.offline){
+				this.parentComponent.nodeConfig.hide();
+				this.parentComponent.nodeStatus.show();
+				this.parentComponent.hide();
+			}
+		})
 		const $info = $('<div class="nodeInfo"></div>');
 
 		$el.append(`
@@ -88,6 +86,7 @@ export class DVPNDashboardAnalytics{
 		$el.append($info);
 		$info.append(`<div class="addr"><span>Node Address:</span> ${addressMeta.address}</div>`);
 		$info.append(`<div class="balance"><span>Wallet Balance:</span> ${walletBalance}</div>`)
+
 		$info.append(`
 			<div class="bandwidth">
 				<span>Download Speed:</span> ${numeral(node.bandwidth.download).format('0.00b').toUpperCase()}
@@ -96,23 +95,38 @@ export class DVPNDashboardAnalytics{
 		
 		$info.append(`<div class="price"><span>Price (GB):</span> ${price.toUpperCase()}</div>`);
 		$info.append(`<div class="sessions"><span>Connected Sessions:</span> ${sessions}</div>`);
-		
-		this.renderAnalyticsPanel(analytics,sessionMeta);
+		if(balanceInDVPN < 50){
+			$info.append('<div class="balanceNote">Note: You will incur regular transaction fees while keeping your dvpn-node online. We recommend keeping at least 50 DVPN in your wallet for fees.</div>')
+		}
+		this.renderAnalyticsPanel(analytics,sessionMeta,allSessionsMeta);
 	}
-	renderAnalyticsPanel(analytics,sessionMeta){
+	renderAnalyticsPanel(analytics,sessionMeta,allSessionsMeta){
 		//console.log('analytics',analytics);
 		const avgDuration = Math.floor(analytics.avgDuration*100)/100;
 		const sumDuration = Math.floor(analytics.durationSum*100)/100;
-		const sessionCount = analytics.sessionCount;
-		let totalBandwidthDown = analytics.totalBandwidthDOWN;
-		let totalBandwidthUp = analytics.totalBandwidthUP;
+		let sessionCount = 0;//analytics.sessionCount;
+		
+
+		let totalBandwidthDown = 0;//analytics.totalBandwidthDOWN;
+		let totalBandwidthUp = 0;//analytics.totalBandwidthUP;
+		let totalRemaining = 0;
 		sessionMeta.map(subscriber=>{
 			//direction is from the subscriber perspective
 			totalBandwidthDown += subscriber.nodeUP;
 			totalBandwidthUp += subscriber.nodeDOWN;
 		});
-		const subscriptionCount = Object.keys(analytics.uniqueSubscriptions).length;
-		const uniqueSubs = analytics.uniqueSubscriptions;
+		let subscriptionCount = 0;//Object.keys(analytics.uniqueSubscriptions).length;
+		const uniqueSubs = allSessionsMeta; //analytics.uniqueSubscriptions;
+
+		Object.keys(allSessionsMeta).map(sid=>{
+			const data = allSessionsMeta[sid];
+			sessionCount += data.sessions;
+			subscriptionCount += 1;
+			totalBandwidthDown += data.totalDown;
+			totalBandwidthUp += data.totalUp;
+			totalRemaining += data.remaining;
+		});
+		
 		const $nodeAnalytics = $('#nodeAnalytics');
 		$nodeAnalytics.html('<div class="sectionTitle">Session Analytics</div>')
 		const $subscriptionAnalytics = $('#subscriptionAnalytics');
@@ -125,12 +139,13 @@ export class DVPNDashboardAnalytics{
 		const $sessions = $(`
 			<div class="sessions">
 				<div class="title">
-					Analytics</small>
+					Analytics
 				</div>
 				<div class="subs"><span>Subscription Count:</span> ${subscriptionCount}</div>
 				<div class="count"><span>Completed Sessions:</span> ${sessionCount}</div>
 				<div class="totalDown"><span>Total Bandwidth Download:</span> ${numeral(totalBandwidthDown).format('0.00b').toUpperCase()}</div>
 				<div class="totalUp"><span>Total Bandwidth Upload:</span> ${numeral(totalBandwidthUp).format('0.00b').toUpperCase()}</div>
+				<div class="totalRemaining"><span>Total Contract Bandwidth Remaining:</span> ${numeral(totalRemaining).format('0.00b').toUpperCase()}</div>
 			</div>
 		`);
 		const $subs = $(`
@@ -143,12 +158,12 @@ export class DVPNDashboardAnalytics{
 			const sub = uniqueSubs[subKey];
 			const $li = $(`
 				<li>
-					<div class="id"><span>Subscription ID:</span> ${sub.id.split('_')[0]}</div>
-					<div class="address"><span>Address:</span> ${sub.address}</div>
-					<div class="sessions"><span>Sessions:</span> ${sub.sessionCount}</div>
-					<div class="mins"><span>Total Time:</span> ~${moment.duration(sub.durationSum,'minutes').humanize()}</div>
-					<div class="down"><span>Total Download:</span> ${numeral(sub.totalBandwidthDOWN).format('0.00b').toUpperCase()}</div>
-					<div class="down"><span>Total Upload:</span> ${numeral(sub.totalBandwidthUP).format('0.00b').toUpperCase()}</div>
+					<div class="id"><span>Subscription ID:</span> ${subKey}</div>
+					<div class="sessions"><span>Sessions:</span> ${sub.sessions}</div>
+					<div class="down"><span>Total Download:</span> ${numeral(sub.totalDown).format('0.00b').toUpperCase()}</div>
+					<div class="down"><span>Total Upload:</span> ${numeral(sub.totalUp).format('0.00b').toUpperCase()}</div>
+					<div class="down"><span>Total Remaining:</span> ${numeral(sub.remaining).format('0.00b').toUpperCase()}</div>
+					<div class="down"><span>Last Seen:</span> ${moment.duration(moment().diff(moment(sub.lastSeen,'X'),'minutes'),'minutes').humanize()} ago</div>
 				</li>
 			`)
 			$('ul',$subs).append($li);

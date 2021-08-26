@@ -166,4 +166,9 @@ html.darkTheme{
 .darkTheme #streamgraph path.stream{
 	filter:invert(1);
 }
-
+.darkTheme .createNewData .error{
+	filter:invert(1);
+}
+.darkTheme .validation.error{
+	filter:invert(1);
+}

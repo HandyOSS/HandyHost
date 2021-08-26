@@ -402,7 +402,6 @@ export class DVPNNodeConfig{
 				notes:"Time interval between each update_status transaction; Format: 0h0m0s"
 			}
 		}
-
 		fetch('/api/dvpn/getConfigs').then(d=>d.json()).then(data=>{
 			Object.keys(data).map(formKey=>{
 				const $ul = $('#nodeConfigInfo #'+formKey+'Configuration ul.topLevel');
@@ -422,7 +421,7 @@ export class DVPNNodeConfig{
 						$li.append('<label for="'+key+'">'+labelValues[key].label+'</label>')
 						$li.append($inputElem)
 						$li.append('<div class="notes">'+labelValues[key].notes+'</div>')
-						$ul.append($li)
+						$ul.append($li);
 					}
 					else{
 						//is section heading, recurse
@@ -502,11 +501,70 @@ export class DVPNNodeConfig{
 			this.activateSaveButton();
 		})
 	}
+	checkRedlistPorts(ports){
+		return new Promise((resolve,reject)=>{
+			const node = ports.node.replace(/"/gi,'').toString();
+			const wg = ports.wireguard.toString();
+			let portsIndex = {}
+			console.log('node wg',node,wg);
+			portsIndex[node] = "listen_on";
+			portsIndex[wg] = "listen_port";
+			console.log('ind',portsIndex);
+			let hasValidationErrors = false;
+			fetch('/api/dvpn/getPortsRedlist').then(d=>d.json()).then(redlist=>{
+				if(typeof redlist != "undefined"){
+					console.log('ports in',redlist);
+					Object.keys(redlist.default).map(port=>{
+						if(port.indexOf(':') == -1){
+							//not a range
+							if(typeof portsIndex[port] != "undefined"){
+								//ERROR
+								hasValidationErrors = true;
+								console.log('validation err',portsIndex[port],port)
+								$('#nodeConfigInfo input[data-section="'+portsIndex[port]+'"]').after('<div class="validation error">* reserved port</div>')
+								//$('input[data-key="'+portsIndex[port]+'"]',$ports).after('<div class="validation error">* reserved port</div>')
+							}
+						}
+						else{
+							let rangeArray = port.split(':').map(v=>{
+								return parseInt(v);
+							});
+							Object.keys(portsIndex).map(p=>{
+								let targetPort = parseInt(p);
+								if(p >= rangeArray[0] && p <= rangeArray[1]){
+									//ERROR
+									hasValidationErrors = true;
+									console.log('validation err',portsIndex[p],port)
+									$('#nodeConfigInfo input[data-section="'+portsIndex[p.toString()]+'"]').after('<div class="validation error">* reserved port ('+port+')</div>')
+									//$('input[data-key="'+portsIndex[p.toString()]+'"]',$ports).after('<div class="validation error">* reserved port ('+port+')</div>')
+								}
+							})
+						}
+					});
+					Object.keys(redlist.custom).map(port=>{
+						if(redlist.custom[port].service == "DVPN"){
+							return; //dont care about SC
+						}
+						if(typeof portsIndex[port] != "undefined"){
+							//ERROR
+							hasValidationErrors = true;
+							console.log('validation err',portsIndex[port],port)
+							$('#nodeConfigInfo input[data-section="'+portsIndex[port]+'"]').after('<div class="validation error">* reserved port</div>')
+							//$('input[data-key="'+portsIndex[port]+'"]',$ports).after('<div class="validation error">* reserved port</div>')
+						}
+					})
+				}
+				resolve(hasValidationErrors);
+			});
+		})
+		
+	}
 	activateSaveButton(){
 		const _this = this;
-
+		let portsData = {};
 		$('#saveNodeConfigs').off('click').on('click',()=>{
 			const output = {};
+			$('#nodeConfigInfo .validation.error').remove();
 			$('#nodeConfigInfo input').each(function(){
 				const $input = $(this);
 				const val = $input.val();
@@ -530,38 +588,51 @@ export class DVPNNodeConfig{
 				if(topLevelConfig == 'wireguard'){
 					//wg only has top level
 					output[topLevelConfig][configKey] = value;
+					if(configKey == 'listen_port'){
+						portsData.wireguard = value;
+					}
 				}
 				else{
 					if(typeof output[topLevelConfig][secondLevelConfig] == "undefined"){
 						output[topLevelConfig][secondLevelConfig] = {}
 					}
 					output[topLevelConfig][secondLevelConfig][configKey] = value;
+					if(configKey == 'listen_on'){
+						portsData.node = value.split(':');
+						portsData.node = portsData.node[portsData.node.length-1];
+					}
 				}
 			})
 			console.log('to save',output);
-			fetch("/api/dvpn/updateNodeConfig",
-			{
-			    headers: {
-			      'Accept': 'application/json',
-			      'Content-Type': 'application/json'
-			    },
-			    method: "POST",
-			    body: JSON.stringify(output)
-			})
-			.then((res)=>{ console.log('success'); return res.json(); }).then(data=>{
-				console.log('res data',data);
-				$('.walletUtil').removeClass('showing');
-				$('#walletInitModal').show();
-				this.verifyImportFromSeed('Saved Node Config!');
+			this.checkRedlistPorts(portsData).then(hasErrors=>{
+				if(hasErrors){
+					return;
+				}
+				fetch("/api/dvpn/updateNodeConfig",
+				{
+				    headers: {
+				      'Accept': 'application/json',
+				      'Content-Type': 'application/json'
+				    },
+				    method: "POST",
+				    body: JSON.stringify(output)
+				})
+				.then((res)=>{ console.log('success'); return res.json(); }).then(data=>{
+					console.log('res data',data);
+					$('.walletUtil').removeClass('showing');
+					$('#walletInitModal').show();
+					this.verifyImportFromSeed('Saved Node Config!');
 
-			})
-			.catch((res)=>{ 
-				$('.walletUtil').removeClass('showing');
-				$('#walletInitModal').show();
-				this.showErrorModal('Error: '+res); 
-				console.log('error submitting',res);
+				})
+				.catch((res)=>{ 
+					$('.walletUtil').removeClass('showing');
+					$('#walletInitModal').show();
+					this.showErrorModal('Error: '+res); 
+					console.log('error submitting',res);
 
-			});
+				});
+			})
+			
 
 		});
 		$('#nodeConfigInfo #cancel').off('click').on('click',()=>{

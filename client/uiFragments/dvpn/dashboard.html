@@ -41,8 +41,19 @@
 			
 		</div>
 		<div id="streamgraph" class="analyticsPanel">
-			<div class="sectionTitle">Realtime Bandwidth Usage</div>
+			<div class="sectionTitle">Bandwidth Usage</div>
 			<svg />
+			<div class="stripe"></div>
+			<div class="sectionErrorMessage">No Session Data in Last 48 Hours</div>
+			<div id="streamgraphTooltip">
+				<div class="message">
+					<div class="title">Subscriber: <span class="subscriberID">0</span></div>
+					<div class="time"></div>
+					<div>Bandwidth: <span class="sum"></span></div>
+					<div>Download: <span class="download"></span></div>
+					<div>Upload: <span class="upload"></span></div>
+				</div>
+			</div>
 		</div>
 		<div id="sessionMeta" class="analyticsPanel loading">
 			
