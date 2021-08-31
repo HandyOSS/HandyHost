@@ -13,7 +13,14 @@ export class StreamGraph{
 	}
 	render(dataIN){
 		$('.sectionTitle',this.$el).show();
-		if(Object.keys(dataIN).length == 0){
+		console.log('dataIN',dataIN);
+		let timestamps = 0;
+		if(Object.keys(dataIN).length > 0){
+			Object.keys(dataIN).map(subID=>{
+				timestamps += Object.keys(dataIN[subID]).length;
+			})
+		}
+		if(timestamps == 0){
 			//no data
 			$('.sectionErrorMessage',this.$el).show();
 			$('svg',this.$el).hide();
@@ -127,9 +134,11 @@ export class StreamGraph{
 		$('.upload',$tooltip).html(numeral(data.up).format('0.0b'))
 		const w = $tooltip.width();
 		const xNow = xPos + 5;
-		let x = xNow-w-2;
+		let x = xNow-w+2;
+		let stripeNow = xNow;
 		if(xNow-w < 0){
-			x = xNow+3;
+			x = xNow+7;
+			stripeNow = x;
 			$tooltip.addClass('right');
 		}
 		else{
@@ -137,7 +146,7 @@ export class StreamGraph{
 		}
 
 		$tooltip.css('left',x);
-		$stripe.css('left',x);
+		$stripe.css('left',stripeNow);
 		$tooltip.show();
 		$stripe.show();
 	}
@@ -169,9 +178,11 @@ export class StreamGraph{
 	getMinTime(data){
 		let minTime = Infinity;
 		Object.keys(data).map(subID=>{
+			console.log('data subid',subID,data[subID])
 			Object.keys(data[subID]).map(timestamp=>{
 				let roundMins = Object.keys(data[subID]).length <= 120 ? 2 : 15;
-				const time = parseInt(this.startOf(moment(timestamp,'X'),roundMins,'minute'));
+				const time = parseInt(this.startOf(moment(timestamp,'X'),roundMins,'minute').format('X'));
+				console.log('time',time,timestamp,roundMins);
 				if(time < minTime){
 					minTime = time;
 				}
@@ -183,7 +194,10 @@ export class StreamGraph{
 		let bins = {}
 
 		const maxTime = parseInt(this.startOf(moment(),1,'minute').format('X'));
-		const minTime = this.getMinTime(data);//maxTime.clone().subtract(2,'days');
+		let minTime = this.getMinTime(data);//maxTime.clone().subtract(2,'days');
+		if(moment().diff(moment(minTime,'X'),'hours') <= 2){
+			minTime = moment(maxTime,'X').subtract('48','hours');
+		}
 		let minsPerBin = 15;
 		if(moment(maxTime).diff(moment(minTime),'minutes')/2 <= 120){
 			minsPerBin = 2;
@@ -192,7 +206,7 @@ export class StreamGraph{
 			bins[i] = {
 				time:i
 			};
-			subscriberIDs.map(subID=>{
+			Object.keys(data).map(subID=>{
 				bins[i][subID] = 0;
 				bins[i][subID+'_data'] = {
 					up:0,
@@ -200,7 +214,32 @@ export class StreamGraph{
 					sum:0
 				}
 			});
+			/*const upR0 = Math.random() * 1000000;
+			const downR0 = Math.random() * 1000000;
+			const upR1 = Math.random() * 1000000;
+			const downR1 = Math.random() * 1000000;
+			const upR2 = Math.random() * 1000000;
+			const downR2 = Math.random() * 1000000;
+			bins[i][22] = upR0+downR0;
+			bins[i]['22_data'] = {
+				sum:upR0+downR0,
+				up:upR0,
+				down:downR0
+			}
+			bins[i][44] = upR1+downR1;
+			bins[i]['44_data'] = {
+				sum:upR1+downR1,
+				up:upR1,
+				down:downR1
+			}
+			bins[i][66] = upR2+downR2;
+			bins[i]['66_data'] = {
+				sum:upR2+downR2,
+				up:upR2,
+				down:downR2
+			}*/
 		};
+		console.log('bins',data,bins,minTime,maxTime);
 		return bins;
 	}
 	modelData(data){
@@ -230,16 +269,19 @@ export class StreamGraph{
 						rows[rounded][subscriberID+'_data'].down += data[subscriberID][timestamp].down;
 					}
 					
+					
 				}
 
 				
 			});
 		})
+		console.log('rows',rows);
 		const rowsArray = Object.keys(rows).map(ts=>{
 			return rows[ts];
 		});
 		return d3.stack()
 			.keys(Object.keys(data))
+			//.keys(Object.keys(data).concat([22,44,66]))
 			//.keys([5,22,44,66])
 			//.offset(d3.stackOffsetNone)
 			.offset(d3.stackOffsetSilhouette)

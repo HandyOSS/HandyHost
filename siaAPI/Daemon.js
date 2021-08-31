@@ -166,4 +166,35 @@ export class Daemon{
 		});
 		
 	}
+	haltSiad(){
+		return new Promise((resolve,reject)=>{
+			const siac = spawn('siac',['stop']);
+			siac.stdout.on('data',d=>{
+				console.log('siac stopping stdout: ',d.toString());
+			})
+			siac.stderr.on('data',d=>{
+				console.log('siac stopping stderr: ',d.toString());
+			})
+			siac.on('close',()=>{
+
+				setTimeout(()=>{
+					//sometimes siad process hangs open forever. 
+					//kill it manually then
+					const pkill = spawn('pkill',['-f','siad']);
+					pkill.stdout.on('data',d=>{
+						console.log('pkill out',d.toString());
+					});
+					pkill.stderr.on('data',d=>{
+						console.log('pkill err',d.toString());
+					})
+					pkill.on('close',()=>{
+						setTimeout(()=>{
+							resolve(); //finally done
+						},5000)
+					})
+					
+				},5000); //give it time to shut down
+			})
+		})
+	}
 }

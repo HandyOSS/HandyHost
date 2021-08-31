@@ -5,12 +5,25 @@ export class DonutChart{
 	getContainerDimensions(){
 		let w = this.$el.width();
 		let h = this.$el.height() - $('.donutTitle',this.$el).height();
-		w = Math.max(w,150);
-		h = Math.max(h,150);
-		return {
-			width:this.$el.width(),
-			height: h
+		if(!this.$el.hasClass('dvpnDonut')){
+			w = Math.max(w,150);
+			h = Math.max(h,150);
+			return {
+				width:this.$el.width(),
+				height: h
+			}
 		}
+		else{
+			w = Math.max(w,h);
+			h = w;
+			return {
+				width:w,
+				height: h
+			}
+		}
+		
+
+		
 	}
 	render(dataOG){
 		
@@ -57,12 +70,16 @@ export class DonutChart{
 				})
 
 		const percX = radius/2;
+		let format = '0.00%';
+		if(this.$el.hasClass('dvpnDonut')){
+			format = '0.0%';
+		}
 		const textPercentage = g.selectAll('text')
 			.data([data])
 			.join('text')
 				.attr('x',5)
 				.attr('text-anchor','middle')
-				.text(numeral(data[0].originalValue/data[1].originalValue).format('0.00%'))
+				.text(numeral(data[0].originalValue/data[1].originalValue).format(format))
 		textPercentage.attr('y',function(d){
 			const h = d3.select(this).node().getBoundingClientRect().height;
 			return h/2-5;
@@ -79,7 +96,10 @@ export class DonutChart{
 		const labels = labelG.selectAll('div.label')
 			.data(arcs)
 			.join('div')
-				.classed('label',true);
+				.classed('label',function(d){
+					d3.select(this).classed(d.data.name,true);
+					return true;
+				})
 
 		labels.selectAll('div.swatch')
 			.data((d,i)=>{

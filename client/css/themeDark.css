@@ -47,11 +47,16 @@ html.darkTheme{
 	border-left: 5px solid #DC248A;
 	border-left-color:#DC248A;
 }
-.darkTheme .donutChart:not(.aktDonut) g.pie path.on {
+.darkTheme .donutChart:not(.aktDonut):not(.dvpnDonut) g.pie path.on {
     fill:rgba(220,36,138,1.0) !important;
 }
 .darkTheme .aktPanel .donutChart.aktDonut g.pie path.on{
 	fill: #50E2DD !important;
+}
+.darkTheme .donutChart.dvpnDonut g.pie path.on{
+	fill: #1d9eec !important;
+	filter:invert(1);
+
 }
 .darkTheme .donutChart g.pie path:not(.on) {
     fill:rgba(161,161,161,0.4) !important;

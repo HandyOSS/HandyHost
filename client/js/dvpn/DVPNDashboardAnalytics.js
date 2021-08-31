@@ -1,4 +1,5 @@
 import {StreamGraph} from '../charts/StreamGraph.js';
+import {DonutChart} from '../charts/DonutChart.js';
 
 export class DVPNDashboardAnalytics{
 	constructor(parentComponent){
@@ -40,6 +41,7 @@ export class DVPNDashboardAnalytics{
 			}
 			timeout = setTimeout(()=>{
 				this.streamGraph.resize();
+				this.resizeDonuts();
 				delete this.timeout;
 			},80)
 		})
@@ -154,23 +156,71 @@ export class DVPNDashboardAnalytics{
 				<ul />
 			</div>
 		`);
+		let donuts = [];
 		Object.keys(uniqueSubs).map(subKey=>{
 			const sub = uniqueSubs[subKey];
 			const $li = $(`
 				<li>
-					<div class="id"><span>Subscription ID:</span> ${subKey}</div>
-					<div class="sessions"><span>Sessions:</span> ${sub.sessions}</div>
-					<div class="down"><span>Total Download:</span> ${numeral(sub.totalDown).format('0.00b').toUpperCase()}</div>
-					<div class="down"><span>Total Upload:</span> ${numeral(sub.totalUp).format('0.00b').toUpperCase()}</div>
-					<div class="down"><span>Total Remaining:</span> ${numeral(sub.remaining).format('0.00b').toUpperCase()}</div>
-					<div class="down"><span>Last Seen:</span> ${moment.duration(moment().diff(moment(sub.lastSeen,'X'),'minutes'),'minutes').humanize()} ago</div>
+					<div class="subscriberMetrics">
+						<div class="id"><span>Subscription ID:</span> ${subKey}</div>
+						<div class="sessions"><span>Sessions:</span> ${sub.sessions}</div>
+						<div class="down"><span>Total Download:</span> ${numeral(sub.totalDown).format('0.00b').toUpperCase()}</div>
+						<div class="down"><span>Total Upload:</span> ${numeral(sub.totalUp).format('0.00b').toUpperCase()}</div>
+						<div class="down"><span>Total Remaining:</span> ${numeral(sub.remaining).format('0.00b').toUpperCase()}</div>
+						<div class="down"><span>Last Seen:</span> ${moment.duration(moment().diff(moment(sub.lastSeen,'X'),'minutes'),'minutes').humanize()} ago</div>
+					</div>
+					<div class="donut donutChart dvpnDonut">
+						<div class="donutTitle">Contract</div>
+						<svg />
+					</div>
 				</li>
 			`)
 			$('ul',$subs).append($li);
+			const $donutEl = $('.donut',$li);
+			
+			const donut = new DonutChart($donutEl);
+			const totalUsed = (sub.totalDown+sub.totalUp);
+			const donutData = [
+				{name:'Bandwidth Used',value: totalUsed, formatted: numeral(totalUsed).format('0.00b').toUpperCase()},
+				{name:'Remaining',value:sub.remaining, formatted: numeral(sub.remaining).format('0.00b').toUpperCase()}
+			];
+
+			donuts.push({
+				$el:$li,
+				donut,
+				subscriberID:subKey,
+				data:donutData
+			})
 		})
+		
+		
+
 		$nodeAnalytics.html($durations)
 		$nodeAnalytics.html($sessions);
 		$subscriptionAnalytics.html($subs);
+		donuts.map(donutWidget=>{
+			const $li = donutWidget.$el;
+			const donut = donutWidget.donut;
+			const donutData = donutWidget.data;
+			const w = $('.donut',$li).width();
+			console.log('donut w',w);
+			$('.donut',$li).css('height',w); //sqaure it up
+			
+			donut.render(donutData);
+		})
+		this.donuts = donuts;
+	}
+	resizeDonuts(){
+		const donuts = this.donuts;
+		donuts.map(donutWidget=>{
+			const $li = donutWidget.$el;
+			const donut = donutWidget.donut;
+			const donutData = JSON.parse(JSON.stringify(donutWidget.data));
+			const w = $('.donut',$li).width();
+			console.log('donut w',w);
+			$('.donut',$li).css('height',w); //sqaure it up
+			donut.render(donutData);
+		})
 	}
 	renderSessionsRealtime(data){
 		const $el = $('#sessionMeta');

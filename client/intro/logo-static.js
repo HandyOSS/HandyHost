@@ -7,6 +7,9 @@ import {LogoFragmentShader} from './glsl/logo.fragment.glsl.js';
 window.THREE = THREE;
 export class TriangulatedLogo{
 	constructor(){
+		this.introFinished = false;
+		this.completeIntroCount = 0;
+		this.completeIntroTotal = 3;
 		this.meshes = {};
 		//this.loadLogo();
 		
@@ -312,12 +315,16 @@ export class TriangulatedLogo{
 			this.mouse = new THREE.Vector2(0,0);
 			
 			this.renderer.domElement.addEventListener('mousemove',(e)=>{
+				if(!this.introFinished){
+					return;
+				}
 				let x = e.offsetX;
 				let y = e.offsetY;
 				const {width,height} = this.getDimensions();
 				//normalize the mouse X and Y to [-1,1]
 				this.mouse.x = (x / width) * 2 - 1;
 				this.mouse.y = - (y / height) * 2 + 1; //invert because world space [Y=0 ===> Y=N] is up and screen is down.
+				
 				this.doRaycast(x,y);
 				this.animate();
 			});
@@ -524,6 +531,11 @@ export class TriangulatedLogo{
 				mesh.userData.box.material.opacity = 0.5;
 				_this.renderer.render(_this.scene,_this.camera);
 			}
+			this.completeIntroCount += 1;
+			if(this.completeIntroCount == this.completeIntroTotal){
+				this.introFinished = true;
+			}
+		
 			//console.log('comp',mesh.userData);
 		})
 		.start() // Start the tween immediately.	

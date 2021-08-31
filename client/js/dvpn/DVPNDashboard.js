@@ -77,7 +77,9 @@ export class DVPNDashboard {
 	}
 	initDashboard(){
 		const _this = this;
-		
+		_this.nodeStatus.hide();
+		_this.nodeConfig.hide();
+		_this.show();
 		fetch('/api/dvpn/getState').then(d=>d.json()).then(json=>{
 			console.log('state',json);
 			//json.exists = false;

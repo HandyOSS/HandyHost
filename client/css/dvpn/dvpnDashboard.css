@@ -148,6 +148,54 @@
   cursor:pointer;
 }
 
+li .subscriberMetrics{
+  float:left;
+  width: 75%;
+}
+li .dvpnDonut{
+  float:left;
+  width: 25%;
+  margin-top: 0px;
+}
+.dvpnDonut svg{
+  margin-top: -10px;
+  margin-right: -5px;
+}
+.dvpnDonut .labels{
+  float: right;
+  width: 300%;
+  margin-right: -9px;
+}
+.dvpnDonut .Remaining{
+  display:none;
+}
+
+li .dvpnDonut .donutTitle{
+  display:none;
+}
+.dvpnDonut svg{
+  float:right;
+}
+.dvpnDonut .label{
+  font-size: 12px;
+  width: auto;
+  text-align: right;
+}
+.dvpnDonut g.pie path.on{
+  fill: #1d9eec !important;
+}
+
+.dvpnDonut .swatch{
+  float: right;
+  width: 12px;
+  height: 12px;
+  margin: 1px 5px;
+  display: inline;
+}
+.dvpnDonut .swatch.on{
+  background:#1d9eec !important;
+}
+
 .lds-ripple {
   display: inline-block;
   position: relative;
