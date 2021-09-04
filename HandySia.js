@@ -38,7 +38,7 @@ export class HandySia{
 	}
 	trySpawningSiad(){
 		if(!fs.existsSync(this.siaPortsPath)){
-			console.log('sia ports are not present yet, hold...')
+			//console.log('sia ports are not present yet, hold...')
 			return false;
 		}
 		this.daemon.getVersion().then(data=>{
@@ -831,7 +831,7 @@ export class HandySia{
 	}
 	addSocketNamespace(ioNamespace){
 		
-		console.log('init sia sockets');
+		//console.log('init sia sockets');
 		this.ioNamespace = ioNamespace;
 		this.ioNamespace.adapter.on("create-room", (room) => {
 		  if(room.indexOf('sia') == 0){
@@ -853,7 +853,7 @@ export class HandySia{
 		this.ioNamespace.adapter.on("leave-room", (room, id) => {
 		  console.log(`socket ${id} has left room ${room}`);
 		});
-		console.log('setup connection events');
+		//console.log('setup connection events');
 		this.ioNamespace.on('connection',(socket)=>{
 			console.log('new connection');
 			this.addSocketConnection(socket);

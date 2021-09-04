@@ -185,5 +185,18 @@ cd $pwd/aktAPI && \
 curl https://raw.githubusercontent.com/ovrclk/akash/master/godownloader.sh | sh -s -- "v$AKASH_VERSION" && \
 sudo chown -R "$USERNAME:$USERGROUP" $pwd/aktAPI && \
 
+echo "Building HandyHost.app" && \
+cd "/Applications/HandyHost" && \
+which -s platypus
+if [[ $? != 0 ]] ; then
+	echo "Installing Platypus"
+	su - $USERNAME -c "brew install --cask platypus"
+else
+	echo "Platypus Installed. Skipping."
+fi
+platypus -P /Applications/HandyHost/HandyHost/MacOS_Resources/HandyHost.platypus HandyHost.app && \
+echo "Done Compiling HandyHost.app" && \
+
+
 node $pwd/rainbow.js && \
 exit 0

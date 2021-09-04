@@ -44,7 +44,7 @@ export class HandyAKT{
 	}
 	addSocketNamespace(ioNamespace){
 		//this.io.of('/dvpn')
-		console.log('init akt sockets');
+		//console.log('init akt sockets');
 		this.ioNamespace = ioNamespace;
 		this.ioNamespace.adapter.on("create-room", (room) => {
 		  if(room.indexOf('akt') == 0){
@@ -66,7 +66,7 @@ export class HandyAKT{
 		this.ioNamespace.adapter.on("leave-room", (room, id) => {
 		  console.log(`socket ${id} has left room ${room}`);
 		});
-		console.log('setup connection events');
+		//console.log('setup connection events');
 		this.ioNamespace.on('connection',(socket)=>{
 			console.log('new connection');
 			this.addSocketConnection(socket);

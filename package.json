@@ -8,8 +8,8 @@
     "start": "node app.js"
   },
   "author": "",
-  "license": "ISC",
   "type": "module",
+  "license": "ISC",
   "dependencies": {
     "js-yaml": "^4.1.0",
     "parse-duration": "^1.0.0",
