@@ -6,8 +6,11 @@ import {open} from 'sqlite';
 import sqlite3 from 'sqlite3';
 import QRCode from 'qrcode';
 
+import {DVPNSetup} from './Setup.js';
+
 export class DVPNStats{
 	constructor(){
+		this.dvpnSetup = new DVPNSetup();
 		open({filename:process.env.HOME+'/.HandyHost/sentinelData/sessionsTimeseries.db',driver:sqlite3.Database}).then(db=>{
 			this.timeseriesDB = db;
 			this.timeseriesDB.run(`
@@ -36,8 +39,8 @@ export class DVPNStats{
 	getDVPNLogs(){
 		//get dvpn logs on init;
 		let lastLogs = '';
-		if(fs.existsSync(`${process.env.HOME}/.HandyHost/dvpnData/hostLogs`)){
-			return fs.readFileSync(`${process.env.HOME}/.HandyHost/dvpnData/hostLogs`,'utf8');
+		if(fs.existsSync(`${process.env.HOME}/.HandyHost/sentinelData/hostLogs`)){
+			return fs.readFileSync(`${process.env.HOME}/.HandyHost/sentinelData/hostLogs`,'utf8');
 		}
 		return lastLogs;
 	}
@@ -69,49 +72,54 @@ export class DVPNStats{
 	}
 	getMachineStatus(){
 		return new Promise((resolve,reject)=>{
-			const options = {
-				host: 'localhost',
-				port:'8585',
-				path: '/status',
-				method:'GET',
-				rejectUnauthorized: false,
-				//requestCert: true,
-				agent: false
-			};
-			
-			
-			let output = '';
-			const request = http.request(options,response=>{
-				//another chunk of data has been received, so append it to `str`
+			this.dvpnSetup.getPorts().then(ports=>{
+				const options = {
+					host: 'localhost',
+					port: ports.node,
+					path: '/status',
+					method:'GET',
+					rejectUnauthorized: false,
+					//requestCert: true,
+					agent: false
+				};
 				
-				response.on('data', (chunk) => {
-					output += chunk;
+				
+				let output = '';
+				const request = http.request(options,response=>{
+					//another chunk of data has been received, so append it to `str`
+					
+					response.on('data', (chunk) => {
+						output += chunk;
+					});
+
+					//the whole response has been received, so we just print it out here
+					response.on('end', () => {
+						let json = [];
+						try{
+							json = JSON.parse(output);
+						}
+						catch(e){
+							console.log('bad json response',output.toString());
+						}
+
+						resolve(json);
+
+					});
+
+					if(response.statusCode.toString() != '200'){
+						//something went wrong
+						reject(output);
+					}
 				});
 
-				//the whole response has been received, so we just print it out here
-				response.on('end', () => {
-					let json = [];
-					try{
-						json = JSON.parse(output);
-					}
-					catch(e){
-						console.log('bad json response',output.toString());
-					}
-
-					resolve(json);
-
+				request.on('error', (err)=> {
+				    reject(err)
 				});
-
-				if(response.statusCode.toString() != '200'){
-					//something went wrong
-					reject(output);
-				}
-			});
-
-			request.on('error', (err)=> {
-			    reject(err)
-			});
-			request.end();
+				request.end();
+			}).catch(e=>{
+				reject(e);
+			})
+			
 		})
 		
 	}
@@ -217,7 +225,7 @@ export class DVPNStats{
 	}
 	getDashboardStats(){
 		//get historic transaction data
-		let toComplete = 4;
+		let toComplete = 5;
 		let hasCompleted = 0;
 		let output = {
 			node:{},
@@ -228,7 +236,7 @@ export class DVPNStats{
 		const _this = this;
 		
 		return new Promise((resolve,reject)=>{
-			let walletAddress = fs.readFileSync(`${process.env.HOME}/.HandyHost/dvpnData/.operator`,'utf8');
+			let walletAddress = fs.readFileSync(`${process.env.HOME}/.HandyHost/sentinelData/.operator`,'utf8');
 			walletAddress = walletAddress.trim().replace(/\n/,'');
 			if(typeof walletAddress == "undefined"){
 				resolve(output) //get node stats and return them here
@@ -245,17 +253,22 @@ export class DVPNStats{
 				hasCompleted++;
 				finish(output,resolve);
 			})
+			this.getQRCode(walletAddress).then((qr)=>{
+				output.wallet = {
+					address: walletAddress,
+					qr: qr
+				};
+				hasCompleted++;
+				finish(output,resolve);
+			}).catch(err=>{
+				hasCompleted++;
+				finish(output,resolve);
+			})
 			this.getWalletBalance(walletAddress).then(json=>{
 				output.balance = json;
-				this.getQRCode(walletAddress).then((qr)=>{
-					output.wallet = {
-						address: walletAddress,
-						qr: qr
-					};
-					console.log('got wallet stats');
-					hasCompleted++;
-					finish(output,resolve);
-				})
+				
+				hasCompleted++;
+				finish(output,resolve);
 				
 			}).catch(err=>{
 				console.log("err?? get wallet bal",err);
@@ -331,7 +344,10 @@ export class DVPNStats{
 						})
 					});
 					
-				});
+				}).catch(e=>{
+					console.log('error querying sessions DB',e);
+					resolve({json:[],timeseries:{},sessions:{}});
+				})
 
 			}).catch(e=>{
 				console.log('err',e);

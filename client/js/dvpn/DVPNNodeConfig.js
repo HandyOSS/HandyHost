@@ -482,6 +482,9 @@ export class DVPNNodeConfig{
 					}
 					else{
 						console.log('key',sectionKey,labelValues)
+						if(typeof labelValues[sectionKey] == "undefined"){
+							return;
+						}
 						$li.append('<label for="'+sectionKey+'">'+labelValues[sectionKey].label+'</label>')
 						$li.append($inputElem);
 						if(sectionKey == 'from'){

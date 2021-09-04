@@ -20,10 +20,12 @@ export class StreamGraph{
 				timestamps += Object.keys(dataIN[subID]).length;
 			})
 		}
+		console.log('timestamps???',timestamps)
 		if(timestamps == 0){
 			//no data
 			$('.sectionErrorMessage',this.$el).show();
 			$('svg',this.$el).hide();
+			return;
 		}
 		else{
 			$('.sectionErrorMessage',this.$el).hide();

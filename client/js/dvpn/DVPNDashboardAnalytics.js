@@ -62,7 +62,16 @@ export class DVPNDashboardAnalytics{
 		const sessions = node.peers;
 		const nodeAddress = node.address;
 		const walletAddress = node.operator;
+		if(typeof balance.available == "undefined"){
+			balance = {
+				available:{
+					denom:'udvpn',
+					amount:0
+				}
+			}
+		}	
 		let walletBalance = balance.available.amount + ' ' + balance.available.denom.toUpperCase();
+		
 		let balanceInDVPN = 0;
 		if(balance.available.denom == 'udvpn'){
 			//make dvpn
@@ -99,11 +108,24 @@ export class DVPNDashboardAnalytics{
 		$info.append(`<div class="sessions"><span>Connected Sessions:</span> ${sessions}</div>`);
 		if(balanceInDVPN < 50){
 			$info.append('<div class="balanceNote">Note: You will incur regular transaction fees while keeping your dvpn-node online. We recommend keeping at least 50 DVPN in your wallet for fees.</div>')
+			
+		}
+		if(balanceInDVPN == 0){
+			$('.balanceNote',$info).html(`
+				Warning: You must have DVPN in your wallet to cover transaction fees. 
+				<br />Please deposit at least 50DVPN in this wallet.
+				`)
 		}
 		this.renderAnalyticsPanel(analytics,sessionMeta,allSessionsMeta);
 	}
 	renderAnalyticsPanel(analytics,sessionMeta,allSessionsMeta){
 		//console.log('analytics',analytics);
+		if(typeof analytics == "undefined"){
+			analytics = {
+				avgDuration:0,
+				durationSum:0
+			}
+		}
 		const avgDuration = Math.floor(analytics.avgDuration*100)/100;
 		const sumDuration = Math.floor(analytics.durationSum*100)/100;
 		let sessionCount = 0;//analytics.sessionCount;

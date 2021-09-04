@@ -87,9 +87,9 @@ export class DVPNSetup{
 	    }
 	    if(typeof outputData.operator != "undefined"){
 	    	//write latest address to file so we can check balance later for dashboard stats
-	    	fs.writeFileSync(`${process.env.HOME}/.HandyHost/dvpnData/.operator`,data.operator,'utf8');
+	    	fs.writeFileSync(`${process.env.HOME}/.HandyHost/sentinelData/.operator`,outputData.operator,'utf8');
 	    }
-	    fs.writeFileSync(`${process.env.HOME}/.HandyHost/dvpnData/.nodeEnv`,walletName,'utf8');
+	    fs.writeFileSync(`${process.env.HOME}/.HandyHost/sentinelData/.nodeEnv`,walletName,'utf8');
 	    process.env.DVPN_ACCT_NAME = walletName;
 	    const newConfigParam = {
 	    	node:{
@@ -98,6 +98,7 @@ export class DVPNSetup{
 	    		}
 	    	}
 	    };
+	    
 	    this.updateConfigs(newConfigParam).then(d=>{
 	    	resolve(outputData);
 	    });
@@ -136,7 +137,8 @@ export class DVPNSetup{
 			    		node:{
 			    			price:'10dvpn',
 			    			remote_url:'https://0.0.0.0:8585',
-			    			moniker: generator({words: 4}).dashed
+			    			listen_on:'0.0.0.0:8585',
+			    			moniker: generator({words: 3}).dashed
 			    		}
 			    	}
 			    };
@@ -384,7 +386,7 @@ export class DVPNSetup{
 	launchDVPN(pw,socketIONamespace){
 		return new Promise((resolve,reject)=>{
 			this.getPorts().then(ports=>{
-				console.log('launchdvpn',pw,ports.node,ports.wireguard);
+				
 				const args = ['./dvpnAPI/launchdvpn.sh',pw,ports.node,ports.wireguard];
 				let output = '';
 				let lineCount = 0;
@@ -392,7 +394,7 @@ export class DVPNSetup{
 				let hasReturned = false;
 				const s = spawn('bash',args,{shell:true,env:process.env,cwd:process.env.PWD,detached:true});
 				//s.stdin.write('(echo derparoo;)');
-				fs.writeFileSync(`${process.env.HOME}/.HandyHost/dvpnData/hostLogs`,output,'utf8')
+				fs.writeFileSync(`${process.env.HOME}/.HandyHost/sentinelData/hostLogs`,output,'utf8')
 				s.stdout.on('data',d=>{
 					//console.log('stdout',d.toString());
 					socketIONamespace.to('dvpn').emit('logs',d.toString());
@@ -402,7 +404,7 @@ export class DVPNSetup{
 						//truncate
 						output = output.split('\n').slice(-20).join('\n');
 					}
-					fs.writeFileSync(`${process.env.HOME}/.HandyHost/dvpnData/hostLogs`,output,'utf8')
+					fs.writeFileSync(`${process.env.HOME}/.HandyHost/sentinelData/hostLogs`,output,'utf8')
 				})
 				s.stderr.on('data',d=>{
 					//hasFailed = true;
@@ -414,7 +416,7 @@ export class DVPNSetup{
 						//truncate
 						output = output.split('\n').slice(-20).join('\n');
 					}
-					fs.writeFileSync(`${process.env.HOME}/.HandyHost/dvpnData/hostLogs`,output,'utf8')
+					fs.writeFileSync(`${process.env.HOME}/.HandyHost/sentinelData/hostLogs`,output,'utf8')
 				    socketIONamespace.to('dvpn').emit('logs',d.toString());
 				    //reject({'error':d.toString()})
 				})

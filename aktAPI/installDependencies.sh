@@ -1,8 +1,8 @@
 #!/bin/bash
 #install deps
 echo "installing akash dependencies..." && \
-sudo apt install unzip && \
-sudo apt install libssl-dev && \
+sudo apt install -y unzip && \
+sudo apt install -y libssl-dev && \
 sudo apt install -y avahi-utils && \
 sudo apt install -y virtualenv && \
 sudo apt install -y expect && \
@@ -23,5 +23,3 @@ chmod +x ubuntu-autoinstall-generator.sh && \
 sudo apt install -y p7zip-full && \
 sudo apt install -y genisoimage && \
 sudo apt install -y whois
-
-

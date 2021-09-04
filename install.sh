@@ -1,8 +1,12 @@
 #!/bin/bash
 pwd=${PWD}
 echo "########## Installing HandyHost Dependencies... ##########"
+sudo ./elevateUserPermissions.sh && \
+sudo apt install -y git && \
+sudo apt install -y curl && \
+sudo dpkg -r nodejs-doc && \
 curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash - && \
-sudo apt-get install -y nodejs && \
+sudo apt-get --fix-broken install -y nodejs && \
 sudo apt-get install -y build-essential && \
 npm install --build-from-source --python=/usr/bin/python3 && \
 sudo npm install -g bower && \
