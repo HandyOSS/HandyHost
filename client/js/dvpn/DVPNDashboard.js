@@ -2,10 +2,12 @@ import {DVPNNodeConfig} from './DVPNNodeConfig.js';
 import {DVPNNodeStatus} from './DVPNNodeStatus.js';
 import {DVPNDashboardAnalytics} from './DVPNDashboardAnalytics.js';
 import {Theme} from '../ColorTheme.js';
+import {CommonUtils} from '../CommonUtils.js';
 
 export class DVPNDashboard {
 	constructor(){
 		this.theme = new Theme();
+		this.utils = new CommonUtils();
 		this.nodeConfig = new DVPNNodeConfig();
 		this.nodeStatus = new DVPNNodeStatus(this);
 		this.dashboardAnalytics = new DVPNDashboardAnalytics(this);
@@ -132,6 +134,10 @@ export class DVPNDashboard {
 				break;
 			}
 			
+		})
+		this.utils.getIP().then(data=>{
+			$('.options #ipDisplay').remove();
+			$('.options').append('<div id="ipDisplay">Network URL: <span>'+data.ip+':'+data.port+'</span></div>')
 		})
 	}
 	initMobileMenu(){

@@ -282,8 +282,8 @@ export class TriangulatedLogo{
 	};
 	getDimensions(){
 		return {
-			width:$(window).width(),
-			height:$(window).height()
+			width:$('#introLogo').width(),
+			height:$('#introLogo').height()
 		}
 	}
 	initLogo(logoAssets,params,isStaticJSON){
@@ -321,10 +321,10 @@ export class TriangulatedLogo{
 				let x = e.offsetX;
 				let y = e.offsetY;
 				const {width,height} = this.getDimensions();
+
 				//normalize the mouse X and Y to [-1,1]
 				this.mouse.x = (x / width) * 2 - 1;
 				this.mouse.y = - (y / height) * 2 + 1; //invert because world space [Y=0 ===> Y=N] is up and screen is down.
-				
 				this.doRaycast(x,y);
 				this.animate();
 			});

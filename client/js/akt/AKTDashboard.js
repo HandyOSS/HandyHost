@@ -2,11 +2,13 @@ import {AKTNodeConfig} from './AKTNodeConfig.js';
 import {AKTClusterStatus} from './AKTClusterStatus.js';
 import {AKTMarketplace} from './AKTMarketplace.js';
 import {Theme} from '../ColorTheme.js';
+import {CommonUtils} from '../CommonUtils.js';
 
 export class AKTDashboard {
 	constructor(){
 		this.ansi_up = new AnsiUp();
 		this.theme = new Theme();
+		this.utils = new CommonUtils();
 		this.nodeConfig = new AKTNodeConfig();
 		this.clusterStatus = new AKTClusterStatus(this);
 		this.marketplace = new AKTMarketplace(this);
@@ -228,6 +230,10 @@ export class AKTDashboard {
 				break;
 			}
 			
+		})
+		this.utils.getIP().then(data=>{
+			$('.options #ipDisplay').remove();
+			$('.options').append('<div id="ipDisplay">Network URL: <span>'+data.ip+':'+data.port+'</span></div>')
 		})
 	}
 	

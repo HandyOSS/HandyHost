@@ -5,10 +5,12 @@ import {SiaWalletInfo} from './SiaWalletInfo.js';
 import {SiaContracts} from './SiaContracts.js';
 import {HostScoreRadarChart, ContractsChart, EarningsStorageChart} from './SiaCharts.js';
 import {Theme} from '../ColorTheme.js';
+import {CommonUtils} from '../CommonUtils.js';
 
 export class SiaDashboard {
 	constructor(){
 		this.theme = new Theme();
+		this.utils = new CommonUtils();
 		fetch('./uiFragments/sia/dashboard.html').then(res=>res.text()).then(fragment=>{
 			$('body').append(fragment);
 			//init dashboard
@@ -184,6 +186,10 @@ export class SiaDashboard {
 					window.location.href = '/';
 				break;
 			}
+		})
+		this.utils.getIP().then(data=>{
+			$('.options #ipDisplay').remove();
+			$('.options').append('<div id="ipDisplay">Network URL: <span>'+data.ip+':'+data.port+'</span></div>')
 		})
 		this.initMobileMenu();
 	}

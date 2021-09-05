@@ -1,12 +1,14 @@
 import {HandySia} from './HandySia.js';
 import {HandyDVPN} from './HandyDvpn.js';
 import {HandyAKT} from './HandyAkt.js';
+import {CommonUtils} from './CommonUtils.js';
 import { Server } from "socket.io";
 import fs from 'fs';
 
 export class APIHelper{
 	constructor(){
 		this.initPorts();
+		this.utils = new CommonUtils();
 		this.sia = new HandySia();
 		this.dvpn = new HandyDVPN();
 		this.akt = new HandyAKT();
@@ -51,6 +53,13 @@ export class APIHelper{
 			break;
 			case 'akt':
 				this.akt.api(path,requestBody,resolve,reject);
+			break;
+			case 'getIP':
+				this.utils.getIPForDisplay().then(data=>{
+				  resolve(data);
+				}).catch(error=>{
+					reject(error);
+				})
 			break;
 			//todo: other services
 		}

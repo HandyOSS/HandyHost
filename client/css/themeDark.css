@@ -1,8 +1,21 @@
 html{
 	background:#fff;
 }
+/*
+note: messes up layer ordering in firefox and old chromes
 html.darkTheme{
 	filter:invert(1.0);
+}
+instead: do top level elements not parents to fixed positioned;
+*/
+html.darkTheme #nodeConfigInfo, 
+html.darkTheme .options, 
+html.darkTheme .dashboard, 
+html.darkTheme #serviceBackground,
+html.darkTheme .mainPanel,
+html.darkTheme #walletInitModal,
+html.darkTheme .modalWrap{
+	filter:invert(1);
 }
 /*body{
 	transition: filter 0.2s linear;
@@ -73,7 +86,24 @@ html.darkTheme{
 .darkTheme .sendMax{
 	filter:invert(1);
 }
-.darkTheme #siaHostInfo li input, .darkTheme #siaHostInfo li select, .darkTheme #pathShortcut, .darkTheme #encryptionPW, .darkTheme #confirmPW, .darkTheme #mnemonic, .darkTheme #mnemonicOut, .darkTheme .balanceBox, .darkTheme #walletName, .darkTheme .modalInput, .darkTheme #nodeConfigInfo input, .darkTheme #unlockPW, .darkTheme .allKeys select, .darkTheme .addDiskSelect select, .styledSelect, .darkTheme .styledInput, .darkTheme .registerProviderModal input[type="checkbox"], .setPortsModal input[type="checkbox"]{
+.darkTheme #siaHostInfo li input, 
+.darkTheme #siaHostInfo li select, 
+.darkTheme #pathShortcut, 
+.darkTheme #encryptionPW, 
+.darkTheme #confirmPW, 
+.darkTheme #mnemonic, 
+.darkTheme #mnemonicOut, 
+.darkTheme .balanceBox, 
+.darkTheme #walletName, 
+.darkTheme .modalInput, 
+.darkTheme #nodeConfigInfo input, 
+.darkTheme #unlockPW, 
+.darkTheme .allKeys select, 
+.darkTheme .addDiskSelect select, 
+.darkTheme .styledSelect, 
+.darkTheme .styledInput, 
+.darkTheme .registerProviderModal input[type="checkbox"], 
+.darkTheme .setPortsModal input[type="checkbox"]{
 	filter:invert(1);
 }
 .darkTheme .button{
@@ -83,7 +113,12 @@ html.darkTheme{
 	filter:invert(1);
 }
 
-.darkTheme #walletInitModal, .darkTheme #sendModal, .darkTheme #qrModal, .darkTheme .pathSelectModal, .darkTheme #hostInfoModal, .darkTheme .modalWrap{
+.darkTheme #walletInitModal, 
+.darkTheme #sendModal, 
+.darkTheme #qrModal, 
+.darkTheme .pathSelectModal, 
+.darkTheme #hostInfoModal, 
+.darkTheme .modalWrap{
 	background:rgba(255,255,255,0.8);
 }
 .darkTheme #walletInitModal #closeModal, .modalWrap #closeModal, .modalWrap .closeModal{
@@ -116,30 +151,40 @@ html.darkTheme{
 .darkTheme .pwErrorMessage{
 	filter:invert(1);
 }
-.darkTheme .noConfirmBadge, .darkTheme .confirmBadge{
+.darkTheme .noConfirmBadge, 
+.darkTheme .confirmBadge{
 	filter:invert(1);
 }
-.darkTheme .syncedStatus .emoji, .darkTheme .sentInfo .error{
+.darkTheme .syncedStatus .emoji, 
+.darkTheme .sentInfo .error{
 	filter:invert(1);
 }
 .darkTheme .balanceValue.hasColor{
 	filter:invert(1);
 }
-.darkTheme .aktPanel .topLevel li a, .darkTheme .aktPanel .topLevel td a, .darkTheme a.aktStatusPageLink, .darkTheme a.placeBid{
+.darkTheme .aktPanel .topLevel li a, 
+.darkTheme .aktPanel .topLevel td a, 
+.darkTheme a.aktStatusPageLink, 
+.darkTheme a.placeBid{
 	filter:invert(1);
 }
 .darkTheme .emoji{
 	filter:invert(1);
 }
 
-.darkTheme .buildABoxModal a, .darkTheme #nodeConfigInfo .buildLink, .darkTheme .advancedOptions a, .darkTheme a.getGlobalIP, .darkTheme a.getWallet{
+.darkTheme .buildABoxModal a, 
+.darkTheme #nodeConfigInfo .buildLink, 
+.darkTheme .advancedOptions a, 
+.darkTheme a.getGlobalIP, 
+.darkTheme a.getWallet{
 	filter:invert(1);
 }
 .darkTheme .buildABoxModal .step{
 	filter:invert(1);
 }
 
-.darkTheme .buildABoxModal .chooseDevice, .darkTheme .buildABoxModal .finishHost{
+.darkTheme .buildABoxModal .chooseDevice, 
+.darkTheme .buildABoxModal .finishHost{
 	filter:invert(1);
 }
 .darkTheme .providerList .errorMessage{
@@ -161,7 +206,8 @@ html.darkTheme{
 .darkTheme .ordersPanel tr.highlighted{
 	filter:invert(1);
 }
-.darkTheme .ordersPanel .mainOption.selected, .darkTheme .ordersPanel .subOption.selected{
+.darkTheme .ordersPanel .mainOption.selected, 
+.darkTheme .ordersPanel .subOption.selected{
 	filter:invert(1);
 }
 .darkTheme a.akashLink{

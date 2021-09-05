@@ -316,6 +316,21 @@ html,body{
 	bottom: 0px;
 }
 
+.options #ipDisplay{
+	position:absolute;
+	bottom: 5px;
+	left: 5px;
+	color: #666;
+    font-size: 14px;
+    font-weight:200;
+}
+#ipDisplay span{
+    clear: both;
+    display: block;
+    font-size: 16px;
+    color:#333;
+}
+
 /*loading spinner*/
 .loadingPanel{
 	float:left;

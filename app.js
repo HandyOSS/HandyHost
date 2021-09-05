@@ -4,9 +4,11 @@ import path from 'path';
 import fs from 'fs';
 import {APIHelper} from './api.js';
 import {spawn} from 'child_process';
+import {CommonUtils} from './CommonUtils.js';
 
 const api = new APIHelper();
-const port = process.env.PORT || 8008;
+const utils = new CommonUtils();
+const port = process.env.HANDYHOST_PORT || 8008;
 
 const httpServer = http.createServer(function(request, response) {
   
@@ -78,48 +80,19 @@ const httpServer = http.createServer(function(request, response) {
   });
 }).listen(parseInt(port, 10));
 api.initSocketConnection(httpServer);
-function getIPForDisplay(){
-  return new Promise((resolve,reject)=>{
-    let getIPCommand;
-    let getIPOpts;
-    let ipCommand;
-    let ipRangeOut;
-    
-    if(process.platform == 'darwin'){
-      getIPCommand = 'ipconfig';
-      getIPOpts =  ['getifaddr', 'en0'];
-    }
-    if(process.platform == 'linux'){
-      //hostname -I [0]
-      getIPCommand = 'hostname';
-      getIPOpts = ['-I'];
-    }
 
-    ipCommand = spawn(getIPCommand,getIPOpts); 
-    ipCommand.stdout.on('data',d=>{
-      ipRangeOut = d.toString('utf8').trim();
-    });
-    ipCommand.on('close',()=>{
-      if(process.platform == 'linux'){
-        ipRangeOut = ipRangeOut.split(' ')[0];
-      }
-      resolve(ipRangeOut);
-    });
-  });
-  
-}
 //console.log("NOTIFICATION: HandyHost Running at: http://localhost:" + port + "/\n");
-getIPForDisplay().then(ip=>{
-  console.log("NOTIFICATION: HandyHost Running at: http://"+ip+":" + port + "/\n");
-  console.log("HandyHost Running at: http://"+ip+":" + port + "/\n");
+utils.getIPForDisplay().then(data=>{
+  console.log("NOTIFICATION: HandyHost Running at: http://"+data.ip+":" + data.port + "/\n");
+  console.log("HandyHost Running at: http://"+data.ip+":" + data.port + "/\n");
 })
 
 
 process.on('uncaughtException', function(err) {
   if(err.code.indexOf('EADDRINUSE') >= 0){
-    getIPForDisplay().then(ip=>{
-      console.log("NOTIFICATION: HandyHost Already Running at: http://"+ip+":" + port + "/\n");
-      console.log("HandyHost Already Running at: http://"+ip+":" + port + "/\n");
+    utils.getIPForDisplay().then(data=>{
+      console.log("NOTIFICATION: HandyHost Already Running at: http://"+data.ip+":" + data.port + "/\n");
+      console.log("HandyHost Already Running at: http://"+data.ip+":" + data.port + "/\n");
       process.exit(1);
     })
   }
