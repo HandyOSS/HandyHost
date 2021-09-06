@@ -1,0 +1,193 @@
+#!/bin/bash
+pwd="/opt/handyhost"
+
+USERNAME="$SUDO_USER"
+USERHOME="/home/$SUDO_USER"
+USERGROUP="$(id -gn $USERNAME)"
+architecture=$(dpkg --print-architecture)
+
+if [[ -d /etc/init.d/handyhost ]] ; then
+  #handyhost already running, shut it down
+  echo "Stopping HandyHost" && \
+  sudo systemctl stop handyhost
+fi
+
+sudo chown -R "$USERNAME:$USERGROUP" $pwd && \
+if [[ ! -s "$USERHOME/.bash_profile" && -s "$USERHOME/.profile" ]] ; then
+  profile_file="$USERHOME/.profile"
+else
+  profile_file="$USERHOME/.bash_profile"
+fi
+source $profile_file && \
+
+##install nvm
+source $USERHOME/.bashrc && \
+if [[ ! -s "$USERHOME/.nvm" ]] ; then
+    # Install nvm
+    su - $USERNAME -c "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash"
+fi
+export NVM_DIR="$USERHOME/.nvm" && \
+NVM_DIR="$USERHOME/.nvm" && \
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+
+echo "########## Installing HandyHost Dependencies... ##########" && \
+
+cat >> /etc/sudoers << EOF
+$USERNAME ALL=(ALL) NOPASSWD:ALL
+EOF
+
+cd $pwd && \
+su - $USERNAME -c "source $USERHOME/.bashrc && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" && cd $pwd && nvm install $(cat .nvmrc) && nvm use && npm install --build-from-source --python=/usr/bin/python3" && \
+nvm use && \
+npm install -g bower && \
+cd $pwd/client && \
+su - $USERNAME -c "cd $pwd && source $USERHOME/.bashrc && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" && cd $pwd && nvm install $(cat .nvmrc) && nvm use && cd $pwd/client && bower install" && \
+mkdir -p $USERHOME/.HandyHost && \
+sudo chown -R "$USERNAME:$USERGROUP" $USERHOME/.HandyHost && \
+echo "########## Installing Sia ##########" && \
+
+cd $USERHOME/.HandyHost && \
+wget "https://golang.org/dl/go1.16.6.linux-${architecture}.tar.gz" && \
+sudo rm -rf /usr/local/go && \
+sudo tar -C /usr/local -xzf "go1.16.6.linux-${architecture}.tar.gz" && \
+export PATH=$PATH:/usr/local/go/bin && \
+if [[ ! -s "$USERHOME/.HandyHost/siaRepo" ]] ; then
+
+ 	mkdir -p $USERHOME/.HandyHost/siaRepo && \
+	git clone https://github.com/SiaFoundation/siad $USERHOME/.HandyHost/siaRepo 
+else
+	cd $USERHOME/.HandyHost/siaRepo && \
+	git fetch --all && \
+	git pull
+fi
+cd $USERHOME/.HandyHost/siaRepo && make dependencies && make && \
+if ! grep -q 'usr/local/go/bin' "${profile_file}" ; then
+  echo "###Editing ${profile_file} to add go env variables###"
+  echo "export PATH=$PATH:/usr/local/go/bin:${USERHOME}/go/bin" >> "${profile_file}"
+  source $profile_file
+fi
+
+echo "########## Installing DVPN ##########" && \
+
+cd $pwd/dvpnAPI && \
+which docker && \
+if [[ $? != 0 ]] ; then
+    # Install Docker
+    curl -fsSL get.docker.com -o ${USERHOME}/get-docker.sh && \
+    sudo sh ${USERHOME}/get-docker.sh
+  fi
+else
+  echo "Docker Already Installed. Skipping Install."
+fi
+
+echo "Setting up Docker nosudo" && \
+sudo groupadd docker || true && \
+sudo gpasswd -a $USERNAME docker || true && \
+
+dockerd-rootless-setuptool.sh install && \
+if ! grep -q 'DOCKER_HOST' "${profile_file}" ; then
+  echo "export PATH=/usr/bin:$PATH" >> "${profile_file}"
+  echo "export DOCKER_HOST=unix:///run/user/1000/docker.sock" >> "${profile_file}"
+  source $profile_file
+fi
+export PATH=/usr/bin:$PATH
+export DOCKER_HOST=unix:///run/user/1000/docker.sock
+
+source ${USERHOME}/.profile && \
+mkdir -p ${USERHOME}/.HandyHost/sentinelData && \
+if [[ ! -d ${USERHOME}/.HandyHost/sentinelData/dvpn-node ]] ; then
+	echo "installing DVPN"
+	git clone https://github.com/sentinel-official/dvpn-node.git ${USERHOME}/.HandyHost/sentinelData/dvpn-node && \
+  cd ${USERHOME}/.HandyHost/sentinelData/dvpn-node && \
+  commit=$(git rev-list --tags --max-count=1) && \
+  git checkout $(git describe --tags ${commit}) && \
+  docker build --file Dockerfile \
+  --tag sentinel-dvpn-node \
+  --force-rm \
+  --no-cache \
+  --compress .
+else 
+  echo "DVPN already installed, skipping"
+fi
+
+
+echo "########## Installing Akash ##########" && \
+
+cd $pwd/aktAPI && \
+if [[ ! -d ${USERHOME}/.HandyHost/aktData/kubespray ]] ; then
+  mkdir -p ${USERHOME}/.HandyHost/aktData/kubespray && \
+  cd ${USERHOME}/.HandyHost/aktData/kubespray && \
+  git clone https://github.com/kubernetes-sigs/kubespray.git . && \
+  virtualenv --python=python3 venv && \
+  . venv/bin/activate && \
+  pip3 install -r requirements.txt
+else
+  echo "kubespray already installed, check for updates" && \
+  cd ${USERHOME}/.HandyHost/aktData/kubespray && \
+  git fetch && \
+  LOCAL=$(git rev-parse @)
+  REMOTE=$(git rev-parse @{u})
+  BASE=$(git merge-base @ @{u})
+
+  if [ "$LOCAL"=="$REMOTE" ]; then
+    echo "Kubespray is up to date"
+  else
+    echo "kubespray is out of date, updating" && \
+    git pull origin master
+    virtualenv --python=python3 venv && \
+    . venv/bin/activate && \
+    pip3 install -r requirements.txt
+  fi
+fi
+
+if [[ ! -d ${USERHOME}/.HandyHost/aktData/ubuntu-autoinstall-generator ]] ; then
+  echo "installing ubuntu-autoinstall-generator"
+  cd ${USERHOME}/.HandyHost/aktData && \
+  git clone https://github.com/covertsh/ubuntu-autoinstall-generator.git && \
+  cd ubuntu-autoinstall-generator && \
+  chmod +x ubuntu-autoinstall-generator.sh
+else
+  echo "check for ubuntu-autoinstall-generator updates"
+  cd ${USERHOME}/.HandyHost/aktData/ubuntu-autoinstall-generator && \
+  git fetch && \
+  LOCAL=$(git rev-parse @)
+  REMOTE=$(git rev-parse @{u})
+  BASE=$(git merge-base @ @{u})
+
+  if [ "$LOCAL"=="$REMOTE" ]; then
+    echo "ubuntu-autoinstall-generator is up to date"
+  else
+    echo "ubuntu-autoinstall-generator is out of date, updating" && \
+    git pull origin master
+    chmod +x ubuntu-autoinstall-generator.sh
+  fi
+  
+fi
+
+export AKASH_NET="https://raw.githubusercontent.com/ovrclk/net/master/mainnet"
+export AKASH_VERSION="$(curl -s "$AKASH_NET/version.txt")"
+export AKASH_CHAIN_ID="$(curl -s "$AKASH_NET/chain-id.txt")"
+export AKASH_NODE="$(curl -s "$AKASH_NET/rpc-nodes.txt" | shuf -n 1)"
+
+cd ${USERHOME}/.HandyHost/aktData && \
+
+echo "installing akash software..." && \
+curl https://raw.githubusercontent.com/ovrclk/akash/master/godownloader.sh | sh -s -- "v$AKASH_VERSION"
+
+echo "########## DONE INSTALLING! ##########" && \
+cd $pwd && \
+nvm use && \
+#sudo chown "$USERNAME:$USERGROUP" /etc/init/handyhost.conf && \
+sudo chown -R "$USERNAME:$USERGROUP" $pwd && \
+sudo chown -R "$USERNAME:$USERGROUP" $USERHOME/.HandyHost && \
+
+sudo sed s"/TARGETUSERNAME/${USERNAME}/" -i /etc/init.d/handyhost && \
+sudo systemctl daemon-reload && \
+sudo update-rc.d handyhost defaults && \
+sudo systemctl start handyhost && \
+#sed s"/USERGID/${USERGROUP}/" -i /etc/init/handyhost.conf && \
+node rainbow.js && \
+echo "HandyHost is now running on: http://localhost:8008" && \
+echo "HandyHost is configured to start on machine restart" && \
+echo "Manually start|stop|restart like: sudo systemctl restart handyhost"

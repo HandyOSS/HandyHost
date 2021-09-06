@@ -1,0 +1,4 @@
+#!/bin/bash
+sudo systemctl stop handyhost
+sudo rm /etc/init.d/handyhost
+sudo systemctl daemon-refresh

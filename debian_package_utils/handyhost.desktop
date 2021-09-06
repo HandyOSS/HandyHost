@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=HandyHost
+Comment=Open HandyHost in Chrome
+Exec=firefox "http://localhost:8008"
+Terminal=false
+Type=Application
+Icon=handyhost
+Categories=Network;WebBrowser
+StartupNotify=true

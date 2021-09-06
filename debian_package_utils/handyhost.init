@@ -1,0 +1,85 @@
+#!/bin/bash
+### BEGIN INIT INFO
+# Provides: handyhost
+# description: HandyHost service
+# processname: node
+# logfile: /var/log/handyhost.log
+# Required-Start: $all
+# Required-Stop:
+# Default-Start: 2 3 4 5
+# Default-Stop: 0 1 6
+# Short-Description: HandyHost
+# Description: HandyHost
+### END INIT INFO
+
+NAME=handyhost                            
+SOURCE_DIR=/opt/handyhost
+SOURCE_NAME=app.js
+USER=TARGETUSERNAME
+USERGROUP="$(id -gn $USER)"
+NODE_ENVIROMENT=production
+
+pidfile=/var/log/$NAME.pid
+logfile=/var/log/$NAME.log
+forever=forever
+source /home/$USER/.bashrc
+export NVM_DIR="/home/$USER/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+
+doCommand(){
+    su - $USER -c "source /home/$USER/.bashrc && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" && cd $SOURCE_DIR && nvm use && $forever $1 --pidFile $pidfile -l $logfile -a $SOURCE_NAME"
+    #RETVAL=$?
+}
+start() {
+    export NODE_ENV=$NODE_ENVIROMENT
+    
+    echo "Starting $NAME node instance : "
+
+    touch $pidfile
+    chown "$USER:$USERGROUP" $pidfile
+    
+    touch $logfile
+    chown "$USER:$USERGROUP" $logfile
+
+    
+    
+
+    doCommand "start"
+
+}
+
+restart() {
+    echo -n "Restarting $NAME node instance : "
+    doCommand "restart"
+}
+
+status() {
+    echo "Status for $NAME:"
+    doCommand "list"
+}
+
+stop() {
+    echo -n "Shutting down $NAME node instance : "
+    su - $USER -c "source /home/$USER/.bashrc && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" && cd $SOURCE_DIR && nvm use && $forever stop $(cat $pidfile)"
+}
+
+case "$1" in
+    start)
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    status)
+        status
+        ;;
+    restart)
+        restart
+        ;;
+    *)
+        echo "Usage:  {start|stop|status|restart}"
+        exit 1
+        ;;
+esac
+exit $RETVAL
