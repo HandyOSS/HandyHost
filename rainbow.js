@@ -28,9 +28,9 @@ export function rainbow(){
 	console.log('           \x1b[33m_oOoOoOo_\x1b[0m                    \x1b[92mTHE\x1b[0m ')
 	console.log('          (\x1b[33moOoOoOoOo\x1b[0m)                \x1b[92mHANDSHAKE\x1b[0m')
 	console.log('           )\`"""""\`(                 \x1b[92mCOMMUNITY\x1b[0m')
-	console.log('          /         \\              ')   
-	console.log('         |    \x1b[92mHNS\x1b[0m    |              ')
-	console.log('         \\           /              ')
+	console.log('          /   \x1b[92mAKT\x1b[0m   \\              ')   
+	console.log('         |  \x1b[92mHNS  SC\x1b[0m  |              ')
+	console.log('         \\    \x1b[92mDVPN\x1b[0m   /              ')
 	console.log('          \`=========\`')
 	console.log('')
 	console.log(padding);

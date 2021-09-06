@@ -38,19 +38,26 @@ $USERNAME ALL=(ALL) NOPASSWD:ALL
 EOF
 
 cd $pwd && \
-su - $USERNAME -c "source $USERHOME/.bashrc && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" && cd $pwd && nvm install $(cat .nvmrc) && nvm use && npm install --build-from-source --python=/usr/bin/python3" && \
+su - $USERNAME -c "source $USERHOME/.bashrc && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" && cd $pwd && nvm install $(cat $pwd/.nvmrc) && nvm use && npm install --build-from-source --python=/usr/bin/python3" && \
 nvm use && \
 npm install -g bower && \
 cd $pwd/client && \
-su - $USERNAME -c "cd $pwd && source $USERHOME/.bashrc && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" && cd $pwd && nvm install $(cat .nvmrc) && nvm use && cd $pwd/client && bower install" && \
+su - $USERNAME -c "cd $pwd && source $USERHOME/.bashrc && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" && cd $pwd && nvm install $(cat $pwd/.nvmrc) && nvm use && cd $pwd/client && bower install" && \
 mkdir -p $USERHOME/.HandyHost && \
 sudo chown -R "$USERNAME:$USERGROUP" $USERHOME/.HandyHost && \
 echo "########## Installing Sia ##########" && \
 
+
 cd $USERHOME/.HandyHost && \
-wget "https://golang.org/dl/go1.16.6.linux-${architecture}.tar.gz" && \
-sudo rm -rf /usr/local/go && \
-sudo tar -C /usr/local -xzf "go1.16.6.linux-${architecture}.tar.gz" && \
+if [[ ! -s "/usr/local/go" ]] ; then
+  echo "Installing Go"
+  wget "https://golang.org/dl/go1.16.6.linux-${architecture}.tar.gz" && \
+  sudo rm -rf /usr/local/go && \
+  sudo tar -C /usr/local -xzf "go1.16.6.linux-${architecture}.tar.gz" && \
+  sudo rm "go1.16.6.linux-${architecture}.tar.gz"
+else
+  echo "Go already installed"
+fi
 export PATH=$PATH:/usr/local/go/bin && \
 if [[ ! -s "$USERHOME/.HandyHost/siaRepo" ]] ; then
 
@@ -71,21 +78,18 @@ fi
 echo "########## Installing DVPN ##########" && \
 
 cd $pwd/dvpnAPI && \
-which docker && \
-if [[ $? != 0 ]] ; then
+if ! command -v docker &> /dev/null 
+then
     # Install Docker
     curl -fsSL get.docker.com -o ${USERHOME}/get-docker.sh && \
     sudo sh ${USERHOME}/get-docker.sh
-  fi
-else
-  echo "Docker Already Installed. Skipping Install."
 fi
 
 echo "Setting up Docker nosudo" && \
 sudo groupadd docker || true && \
 sudo gpasswd -a $USERNAME docker || true && \
 
-dockerd-rootless-setuptool.sh install && \
+su - $USERNAME -c "dockerd-rootless-setuptool.sh install --force" && \
 if ! grep -q 'DOCKER_HOST' "${profile_file}" ; then
   echo "export PATH=/usr/bin:$PATH" >> "${profile_file}"
   echo "export DOCKER_HOST=unix:///run/user/1000/docker.sock" >> "${profile_file}"
