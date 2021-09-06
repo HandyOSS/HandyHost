@@ -32,6 +32,8 @@ cp ./handyhost.png $SYSROOT/usr/share/icons/hicolor/48x48/apps/handyhost.png && 
 cp ./control $DEBIAN/control
 cp -r ../ $SYSROOT/opt/handyhost && \
 rm -rf $SYSROOT/opt/handyhost/node_modules && \
+rm -rf $SYSROOT/opt/handyhost/client/bower_components && \
+rm -rf $SYSROOT/opt/handyhost/.git && \
 SIZE=`du -s ${SYSROOT} | sed s'/\s\+.*//'`+8 && \
 architecture=$(dpkg --print-architecture)
 
