@@ -6,12 +6,6 @@ USERHOME="/home/$SUDO_USER"
 USERGROUP="$(id -gn $USERNAME)"
 architecture=$(dpkg --print-architecture)
 
-if [[ -d /etc/init.d/handyhost ]] ; then
-  #handyhost already running, shut it down
-  echo "Stopping HandyHost" && \
-  sudo systemctl stop handyhost
-fi
-
 sudo chown -R "$USERNAME:$USERGROUP" $pwd && \
 if [[ ! -s "$USERHOME/.bash_profile" && -s "$USERHOME/.profile" ]] ; then
   profile_file="$USERHOME/.profile"
@@ -31,11 +25,19 @@ NVM_DIR="$USERHOME/.nvm" && \
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
 
-echo "########## Installing HandyHost Dependencies... ##########" && \
+echo -e "########## \x1b[92mInstalling HandyHost Dependencies...\x1b[0m ##########" && \
 
+if [[ -d "/etc/sudoers.d" ]] ; then
+  echo "generating sudoers.d entry"
+  echo "$USERNAME ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/handyhost$USERNAME
+else
+echo "no dir /etc/sudoers.d, appending to /etc/sudoers"
 cat >> /etc/sudoers << EOF
 $USERNAME ALL=(ALL) NOPASSWD:ALL
 EOF
+
+fi
+
 
 cd $pwd && \
 su - $USERNAME -c "source $USERHOME/.bashrc && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" && cd $pwd && nvm install $(cat $pwd/.nvmrc) && nvm use && npm install --build-from-source --python=/usr/bin/python3" && \
@@ -46,7 +48,7 @@ cd $pwd/client && \
 su - $USERNAME -c "cd $pwd && source $USERHOME/.bashrc && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" && cd $pwd && nvm install $(cat $pwd/.nvmrc) && nvm use && cd $pwd/client && bower install" && \
 mkdir -p $USERHOME/.HandyHost && \
 sudo chown -R "$USERNAME:$USERGROUP" $USERHOME/.HandyHost && \
-echo "########## Installing Sia ##########" && \
+echo -e "########## \x1b[92mInstalling Sia\x1b[0m ##########" && \
 
 
 cd $USERHOME/.HandyHost && \
@@ -60,7 +62,7 @@ else
   echo "Go already installed"
 fi
 export PATH=$PATH:/usr/local/go/bin && \
-if [[ ! -s "$USERHOME/.HandyHost/siaRepo" ]] ; then
+if [[ ! -d "$USERHOME/.HandyHost/siaRepo" ]] ; then
 
  	mkdir -p $USERHOME/.HandyHost/siaRepo && \
 	git clone https://github.com/SiaFoundation/siad $USERHOME/.HandyHost/siaRepo 
@@ -76,7 +78,7 @@ if ! grep -q 'usr/local/go/bin' "${profile_file}" ; then
   source $profile_file
 fi
 
-echo "########## Installing DVPN ##########" && \
+echo -e "########## \x1b[92mInstalling DVPN\x1b[0m ##########" && \
 
 cd $pwd/dvpnAPI && \
 # if ! command -v docker &> /dev/null 
@@ -85,21 +87,30 @@ cd $pwd/dvpnAPI && \
 #     curl -fsSL get.docker.com -o ${USERHOME}/get-docker.sh && \
 #     sudo sh ${USERHOME}/get-docker.sh
 # fi
+export HOME=$USERHOME
+echo "Setting up Docker nosudo" && \
+sudo groupadd docker || true && \
+sudo gpasswd -a $USERNAME docker || true && \
 
-# echo "Setting up Docker nosudo" && \
-# sudo groupadd docker || true && \
-# sudo gpasswd -a $USERNAME docker || true && \
+sudo machinectl shell --uid=$USERNAME .host $(which dockerd-rootless-setuptool.sh) install --force | echo "$(grep 'export DOCKER_HOST')" >> ${profile_file} && \
 
-# su - $USERNAME -c "dockerd-rootless-setuptool.sh install --force" && \
-# if ! grep -q 'DOCKER_HOST' "${profile_file}" ; then
-#   echo "export PATH=/usr/bin:$PATH" >> "${profile_file}"
+if ! grep -q 'PATH=/usr/bin' "${profile_file}" ; then
+#   ##echo "export XDG_RUNTIME_DIR=${USERHOME}/.docker/run" >> "${profile_file}"
+  echo "export PATH=/usr/bin:$PATH" >> "${profile_file}"
 #   echo "export DOCKER_HOST=unix:///run/user/1000/docker.sock" >> "${profile_file}"
 #   source $profile_file
-# fi
+#   sudo machinectl shell --uid=$USERNAME .host $(which systemctl) --user enable docker && \
+#   sudo machinectl shell --uid=$USERNAME .host $(which loginctl) enable-linger $USERNAME
+#   #sudo machinectl shell --uid=$USERNAME .host $(which systemctl) --user start docker
+fi
+# #export XDG_RUNTIME_DIR=${USERHOME}/.docker/run
 # export PATH=/usr/bin:$PATH
 # export DOCKER_HOST=unix:///run/user/1000/docker.sock
+sudo machinectl shell --uid=$USERNAME .host $(which systemctl) --user enable docker && \
+sudo machinectl shell --uid=$USERNAME .host $(which loginctl) enable-linger $USERNAME
 
 source ${USERHOME}/.profile && \
+echo "DOCKER HOST: ${DOCKER_HOST}" && \
 mkdir -p ${USERHOME}/.HandyHost/sentinelData && \
 if [[ ! -d ${USERHOME}/.HandyHost/sentinelData/dvpn-node ]] ; then
 	echo "installing DVPN"
@@ -107,17 +118,18 @@ if [[ ! -d ${USERHOME}/.HandyHost/sentinelData/dvpn-node ]] ; then
   cd ${USERHOME}/.HandyHost/sentinelData/dvpn-node && \
   commit=$(git rev-list --tags --max-count=1) && \
   git checkout $(git describe --tags ${commit}) && \
-  docker build --file Dockerfile \
+  sudo chown -R "$USERNAME:$USERGROUP" $USERHOME/.HandyHost/sentinelData && \
+  sudo machinectl shell --uid=$USERNAME --setenv="DOCKER_HOST=${DOCKER_HOST}" .host $(which docker) build --file ${USERHOME}/.HandyHost/sentinelData/dvpn-node/Dockerfile \
   --tag sentinel-dvpn-node \
   --force-rm \
   --no-cache \
-  --compress .
+  --compress ${USERHOME}/.HandyHost/sentinelData/dvpn-node/
 else 
   echo "DVPN already installed, skipping"
 fi
 
 
-echo "########## Installing Akash ##########" && \
+echo -e "########## \x1b[92mInstalling Akash\x1b[0m ##########" && \
 
 cd $pwd/aktAPI && \
 if [[ ! -d ${USERHOME}/.HandyHost/aktData/kubespray ]] ; then
@@ -180,19 +192,19 @@ cd ${USERHOME}/.HandyHost/aktData && \
 echo "installing akash software..." && \
 curl https://raw.githubusercontent.com/ovrclk/akash/master/godownloader.sh | sh -s -- "v$AKASH_VERSION"
 
-echo "########## DONE INSTALLING! ##########" && \
+echo -e "########## \x1b[92mDONE INSTALLING!\x1b[0m ##########" && \
 cd $pwd && \
 nvm use && \
 #sudo chown "$USERNAME:$USERGROUP" /etc/init/handyhost.conf && \
 sudo chown -R "$USERNAME:$USERGROUP" $pwd && \
 sudo chown -R "$USERNAME:$USERGROUP" $USERHOME/.HandyHost && \
-
+sudo chown -R "$USERNAME:$USERGROUP" $USERHOME/.akash && \
 sudo sed s"/TARGETUSERNAME/${USERNAME}/" -i /etc/init.d/handyhost && \
 sudo systemctl daemon-reload && \
 sudo update-rc.d handyhost defaults && \
 sudo systemctl start handyhost && \
 #sed s"/USERGID/${USERGROUP}/" -i /etc/init/handyhost.conf && \
 node rainbow.js && \
-echo "HandyHost is now running on: http://localhost:8008" && \
+echo -e "\x1b[92mHandyHost is now running on: http://localhost:8008\x1b[0m" && \
 echo "HandyHost is configured to start on machine restart" && \
 echo "Manually start|stop|restart like: sudo systemctl restart handyhost"
