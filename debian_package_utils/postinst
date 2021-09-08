@@ -78,25 +78,25 @@ fi
 echo "########## Installing DVPN ##########" && \
 
 cd $pwd/dvpnAPI && \
-if ! command -v docker &> /dev/null 
-then
-    # Install Docker
-    curl -fsSL get.docker.com -o ${USERHOME}/get-docker.sh && \
-    sudo sh ${USERHOME}/get-docker.sh
-fi
+# if ! command -v docker &> /dev/null 
+# then
+#     # Install Docker
+#     curl -fsSL get.docker.com -o ${USERHOME}/get-docker.sh && \
+#     sudo sh ${USERHOME}/get-docker.sh
+# fi
 
-echo "Setting up Docker nosudo" && \
-sudo groupadd docker || true && \
-sudo gpasswd -a $USERNAME docker || true && \
+# echo "Setting up Docker nosudo" && \
+# sudo groupadd docker || true && \
+# sudo gpasswd -a $USERNAME docker || true && \
 
-su - $USERNAME -c "dockerd-rootless-setuptool.sh install --force" && \
-if ! grep -q 'DOCKER_HOST' "${profile_file}" ; then
-  echo "export PATH=/usr/bin:$PATH" >> "${profile_file}"
-  echo "export DOCKER_HOST=unix:///run/user/1000/docker.sock" >> "${profile_file}"
-  source $profile_file
-fi
-export PATH=/usr/bin:$PATH
-export DOCKER_HOST=unix:///run/user/1000/docker.sock
+# su - $USERNAME -c "dockerd-rootless-setuptool.sh install --force" && \
+# if ! grep -q 'DOCKER_HOST' "${profile_file}" ; then
+#   echo "export PATH=/usr/bin:$PATH" >> "${profile_file}"
+#   echo "export DOCKER_HOST=unix:///run/user/1000/docker.sock" >> "${profile_file}"
+#   source $profile_file
+# fi
+# export PATH=/usr/bin:$PATH
+# export DOCKER_HOST=unix:///run/user/1000/docker.sock
 
 source ${USERHOME}/.profile && \
 mkdir -p ${USERHOME}/.HandyHost/sentinelData && \
