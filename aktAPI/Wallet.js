@@ -67,7 +67,7 @@ export class Wallet{
 					const moniker = generator({words: 4}).dashed;
 					process.env.AKASH_MONIKER = moniker;
 					fs.writeFileSync(`${process.env.HOME}/.HandyHost/aktData/moniker`,moniker,'utf8');
-					const s = spawn('./bin/akash',['init','--chain-id',CHAIN_ID,moniker],{env:process.env,cwd:process.env.PWD+'/aktAPI'});
+					const s = spawn('./bin/akash',['init','--chain-id',CHAIN_ID,moniker],{env:process.env,cwd:process.env.HOME+'/.HandyHost/aktData'});
 					console.log('init akt chain id',CHAIN_ID,moniker);
 					/*s.stdout.on('data',d=>{
 						console.log('stdout',d.toString());

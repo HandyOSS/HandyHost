@@ -12,7 +12,7 @@ export class Marketplace{
 			if(typeof params.page != "undefined"){
 				args.push('--page',params.page)
 			}
-			const s = spawn('./bin/akash',args,{shell:true,env:process.env,cwd:process.env.PWD+'/aktAPI'});
+			const s = spawn('./bin/akash',args,{shell:true,env:process.env,cwd:process.env.HOME+'/.HandyHost/aktData'});
 			let output = '';
 			let errOut = '';
 			s.stdout.on('data',d=>{
@@ -46,7 +46,7 @@ export class Marketplace{
 			console.log('get order params',params);
 			let args = ['query', 'market', 'order', 'get', '--owner', params.owner, '--dseq', params.dseq, '--gseq', params.gseq, '--oseq', params.oseq, '--output','json'];
 			
-			const s = spawn('./bin/akash',args,{shell:true,env:process.env,cwd:process.env.PWD+'/aktAPI'});
+			const s = spawn('./bin/akash',args,{shell:true,env:process.env,cwd:process.env.HOME+'/.HandyHost/aktData'});
 			let output = '';
 			let errOut = '';
 			s.stdout.on('data',d=>{
@@ -87,7 +87,7 @@ export class Marketplace{
 			if(typeof params.state != "undefined"){
 				args.push('--state',params.state);
 			}
-			const s = spawn('./bin/akash',args,{shell:true,env:process.env,cwd:process.env.PWD+'/aktAPI'});
+			const s = spawn('./bin/akash',args,{shell:true,env:process.env,cwd:process.env.HOME+'/.HandyHost/aktData'});
 			let output = '';
 			let errOut = '';
 			s.stdout.on('data',d=>{
@@ -127,7 +127,7 @@ export class Marketplace{
 			if(typeof params.state != "undefined"){
 				args.push('--state',params.state);
 			}
-			const s = spawn('./bin/akash',args,{shell:true,env:process.env,cwd:process.env.PWD+'/aktAPI'});
+			const s = spawn('./bin/akash',args,{shell:true,env:process.env,cwd:process.env.HOME+'/.HandyHost/aktData'});
 			let output = '';
 			let errOut = '';
 			s.stdout.on('data',d=>{
@@ -217,7 +217,7 @@ export class Marketplace{
 			let output = '';
 			let errOut = '';
 			
-			const s = spawn('./bin/akash',args,{shell:true,env:process.env,cwd:process.env.PWD+'/aktAPI'});
+			const s = spawn('./bin/akash',args,{shell:true,env:process.env,cwd:process.env.HOME+'/.HandyHost/aktData'});
 			s.stdout.on('data',d=>{
 				output += d.toString();
 			})
@@ -248,7 +248,7 @@ export class Marketplace{
 	getCurrentChainHeight(){
 		return new Promise((resolve,reject)=>{
 			let output = '';
-			const p = spawn('./bin/akash',['status'],{shell:true,env:process.env,cwd:process.env.PWD+'/aktAPI'})
+			const p = spawn('./bin/akash',['status'],{shell:true,env:process.env,cwd:process.env.HOME+'/.HandyHost/aktData'})
 			p.stdout.on('data',d=>{
 				output += d.toString();
 			})
@@ -449,7 +449,7 @@ export class Marketplace{
 			if(typeof params.page != "undefined"){
 				args.push('--page',params.page)
 			}
-			const s = spawn('./bin/akash',args,{shell:true,env:process.env,cwd:process.env.PWD+'/aktAPI'});
+			const s = spawn('./bin/akash',args,{shell:true,env:process.env,cwd:process.env.HOME+'/.HandyHost/aktData'});
 			let output = '';
 			let errOut = '';
 			s.stdout.on('data',d=>{

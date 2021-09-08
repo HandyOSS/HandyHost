@@ -1,7 +1,7 @@
 #!/bin/bash
 #params.pw,params.walletName,params.serverHost
 #$1=walletName, $2 serverHost, $3 = cpuPrice, $4 = txFees
-./bin/akash provider run \
+$HOME/.HandyHost/aktData/bin/akash provider run \
 --home $HOME/.akash \
 --chain-id $AKASH_CHAIN_ID \
 --node $AKASH_NODE \

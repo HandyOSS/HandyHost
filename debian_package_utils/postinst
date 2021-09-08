@@ -41,6 +41,7 @@ cd $pwd && \
 su - $USERNAME -c "source $USERHOME/.bashrc && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" && cd $pwd && nvm install $(cat $pwd/.nvmrc) && nvm use && npm install --build-from-source --python=/usr/bin/python3" && \
 nvm use && \
 npm install -g bower && \
+npm install -g forever && \
 cd $pwd/client && \
 su - $USERNAME -c "cd $pwd && source $USERHOME/.bashrc && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" && cd $pwd && nvm install $(cat $pwd/.nvmrc) && nvm use && cd $pwd/client && bower install" && \
 mkdir -p $USERHOME/.HandyHost && \

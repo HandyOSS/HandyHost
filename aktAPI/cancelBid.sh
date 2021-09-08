@@ -1,6 +1,6 @@
 #!/bin/bash
 
-(echo "$1";) | ./bin/akash tx market bid close \
+(echo "$1";) | $HOME/.HandyHost/aktData/bin/akash tx market bid close \
 --dseq $2 \
 --gseq $3 \
 --oseq $4 \

@@ -517,7 +517,7 @@ export class AKTUtils{
 	getCurrentAkashVersion(){
 		return new Promise((resolve,reject)=>{
 			const args = ['version'];
-			const getVersion = spawn('./bin/akash',args,{shell:true,env:process.env,cwd:process.env.PWD+'/aktAPI'});
+			const getVersion = spawn('./bin/akash',args,{shell:true,env:process.env,cwd:process.env.HOME+'/.HandyHost/aktData'});
 			let output = '';
 			getVersion.stdout.on('data',d=>{
 				output += d.toString();

@@ -7,7 +7,7 @@ export AKASH_CHAIN_ID="$(curl -s "$AKASH_NET/chain-id.txt")"
 export AKASH_NODE="$(curl -s "$AKASH_NET/rpc-nodes.txt" | shuf -n 1)"
 export AKASH_MONIKER="$(cat $HOME/.HandyHost/aktData/moniker)"
 
-./bin/akash tx cert create server $2 \
+$HOME/.HandyHost/aktData/bin/akash tx cert create server $2 \
 --chain-id $AKASH_CHAIN_ID \
 --keyring-backend file \
 --from $1 \

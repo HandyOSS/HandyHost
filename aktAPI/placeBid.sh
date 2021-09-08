@@ -5,7 +5,7 @@ if [ "${10}" ]
 	P10="--timeout-height ${10}"
 fi
 
-(echo "$1";) | ./bin/akash tx market bid create \
+(echo "$1";) | $HOME/.HandyHost/aktData/bin/akash tx market bid create \
 --deposit $2 \
 --price $3 \
 --dseq $4 \
