@@ -5,6 +5,7 @@ import {Daemon} from './dvpnAPI/Daemon.js';
 import {DVPNSetup} from './dvpnAPI/Setup.js';
 import {UpdateHelper} from './dvpnAPI/UpdateHelper.js';
 import {DVPNStats} from './dvpnAPI/Stats.js';
+import {CommonUtils} from './CommonUtils.js';
 import {spawn} from 'child_process';
 
 export class HandyDVPN{
@@ -14,6 +15,7 @@ export class HandyDVPN{
 		this.dvpnSetup = new DVPNSetup();
 		this.updateHelper = new UpdateHelper();
 		this.dvpnStats = new DVPNStats();
+		this.handyUtils = new CommonUtils();
 		try{
 			fs.mkdirSync(`${process.env.HOME}/.HandyHost/sentinelData`,{recursive:true})
 		}
@@ -84,6 +86,17 @@ export class HandyDVPN{
 				}
 			}
 		})
+		this.handyUtils.checkForUpdates().then(data=>{
+			console.log('versionData',data,process.argv);
+			if(!data.isUpToDate){
+				this.ioNamespace.to('dvpn').emit('HandyHostUpdatesAvailable',data);
+			}
+			else{
+				this.ioNamespace.to('dvpn').emit('HandyHostIsUpToDate',data);
+			}
+		}).catch(error=>{
+			console.log('error checking for handyhost updates',error);
+		})
 		//this.ioNamespace.to('dvpn').emit('updatesAvailable',data);
 	}
 	retrieveAnalytics(){
@@ -148,11 +161,11 @@ export class HandyDVPN{
 				})
 			break;
 			case 'getConfigs':
-				this.dvpnSetup.getConfigs(true).then(data=>{
+				this.getConfigs().then(data=>{
 					resolve(data);
 				}).catch(error=>{
 					reject(error);
-				})
+				});
 			break;
 			case 'getPortsRedlist':
 				this.getPortsRedlist().then(data=>{
@@ -216,6 +229,21 @@ export class HandyDVPN{
 		}
 		
 	}
+	getConfigs(){
+		return new Promise((resolve,reject)=>{
+			let operator = '';
+			const operatorPath = `${process.env.HOME}/.HandyHost/sentinelData/.operator`;
+			if(fs.existsSync(operatorPath)){
+				operator = fs.readFileSync(operatorPath,'utf8');
+			}
+			this.dvpnSetup.getConfigs(true).then(data=>{
+				resolve({operator,config:data});
+			}).catch(error=>{
+				reject(error);
+			});
+			
+		})
+	}
 	getPortsRedlist(){
 		return new Promise((resolve,reject)=>{
 			let output = {default:{},custom:{}};
@@ -250,7 +278,10 @@ export class HandyDVPN{
 				reject(err);
 			})
 		}
-		return this.dvpnSetup.updateConfigs(parsed)
+		if(typeof parsed.operator != "undefined"){
+			fs.writeFileSync(`${process.env.HOME}/.HandyHost/sentinelData/.operator`,parsed.operator,'utf8');
+		}
+		return this.dvpnSetup.updateConfigs(parsed.config)
 	}
 	initWallet(requestBody){
 		const {parsed,err} = this.parseRequestBody(requestBody);

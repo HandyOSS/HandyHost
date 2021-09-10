@@ -2,6 +2,7 @@ import {Wallet} from './siaAPI/Wallet.js';
 import {Consensus} from './siaAPI/Consensus.js';
 import {Host} from './siaAPI/Host.js';
 import {Daemon} from './siaAPI/Daemon.js';
+import {CommonUtils} from './CommonUtils.js';
 
 import fs from 'fs';
 import path from 'path';
@@ -17,6 +18,7 @@ export class HandySia{
 		this.consensus = new Consensus();
 		this.host = new Host();
 		this.daemon = new Daemon();
+		this.handyUtils = new CommonUtils();
 		try{
 			fs.mkdirSync(`${process.env.HOME}/.HandyHost/siaData`,{recursive:true})
 		}

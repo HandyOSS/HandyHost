@@ -181,9 +181,10 @@ export AKASH_CHAIN_ID="$(curl -s "$AKASH_NET/chain-id.txt")"
 export AKASH_NODE="$(curl -s "$AKASH_NET/rpc-nodes.txt" | shuf -n 1)"
 
 echo "installing akash software..." && \
-cd $pwd/aktAPI && \
+cd $HOME/.HandyHost/aktData && \
 curl https://raw.githubusercontent.com/ovrclk/akash/master/godownloader.sh | sh -s -- "v$AKASH_VERSION" && \
 sudo chown -R "$USERNAME:$USERGROUP" $pwd/aktAPI && \
+sudo chown -R "$USERNAME:$USERGROUP" $HOME/.HandyHost/aktData && \
 
 echo "Building HandyHost.app" && \
 cd "/Applications/HandyHost" && \

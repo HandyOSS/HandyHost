@@ -15,6 +15,10 @@
 		"30000:32767":{
 			"description":"Akash Potential Serving Ports",
 			"service":"AKT"
+		},
+		"8008":{
+			"description":"HandyHost Port",
+			"service":"HandyHost"
 		}
 	},
 	"custom":{

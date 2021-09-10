@@ -184,14 +184,14 @@ export class DVPNSetup{
 				let updatedConfig = configJSON;
 				Object.keys(newConfigData).map(tlKey=>{
 					let ogItem = updatedConfig[tlKey];
-					console.log('ogItem',tlKey,ogItem,newConfigData[tlKey]);
+					//console.log('ogItem',tlKey,ogItem,newConfigData[tlKey]);
 					if(ogItem.leaf){
 						//update the value then
 						updatedConfig[tlKey].value = newConfigData[tlKey];
 					}
 					else{
 						Object.keys(newConfigData[tlKey]).map(secondLevelKey=>{
-							console.log("L2 KEY",secondLevelKey);
+							//console.log("L2 KEY",secondLevelKey);
 							if(typeof updatedConfig[tlKey][secondLevelKey] != "undefined"){
 								if(updatedConfig[tlKey][secondLevelKey].leaf){
 									//is leaf
@@ -199,7 +199,7 @@ export class DVPNSetup{
 								}
 								else{
 									Object.keys(newConfigData[tlKey][secondLevelKey]).map(key=>{
-										console.log('L3 KEY',key);
+										//console.log('L3 KEY',key);
 										if(typeof updatedConfig[tlKey][secondLevelKey][key] != "undefined"){
 											updatedConfig[tlKey][secondLevelKey][key].value = newConfigData[tlKey][secondLevelKey][key];
 										}
@@ -217,7 +217,7 @@ export class DVPNSetup{
 					node:'',
 					wireguard:''
 				}
-				console.log('did update?',JSON.stringify(updatedConfig,null,2));
+				//console.log('did update?',JSON.stringify(updatedConfig,null,2));
 				Object.keys(updatedConfig).map(fileKey=>{
 					Object.keys(updatedConfig[fileKey]).map(key=>{
 						if(updatedConfig[fileKey][key].leaf){

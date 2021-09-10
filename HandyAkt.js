@@ -8,6 +8,7 @@ import {DiskUtils} from './aktAPI/DiskUtils.js';
 import {K8sUtils} from './aktAPI/K8sUtils.js';
 import {Wallet} from './aktAPI/Wallet.js';
 import {Marketplace} from './aktAPI/Marketplace.js';
+import {CommonUtils} from './CommonUtils.js';
 
 export class HandyAKT{
 	constructor(){
@@ -30,6 +31,7 @@ export class HandyAKT{
 			//try startup here since we have already inited
 		}
 		this.checkClusterConfigExistence();
+		this.handyUtils = new CommonUtils();
 		this.utils = new AKTUtils(this.clusterConfigFilePath);
 		this.diskUtils = new DiskUtils();
 		this.k8sUtils = new K8sUtils(this.clusterConfigFilePath);

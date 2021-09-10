@@ -62,3 +62,15 @@ li.hasInput label{
 .validation.error{
 	color:#cc0000;
 }
+.getMyIP, #showAdvancedSettings{
+	cursor:pointer;
+	color:#142d50;
+	margin-right: 0px !important;
+}
+.myIPValue{
+	font-size: 16px;
+	color:#142d50;
+}
+.advanced:not(.showAdvanced){
+	display:none;
+}

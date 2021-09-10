@@ -159,6 +159,40 @@ export class DVPNNodeStatus{
 		$ul.append('<li>Latest: '+nextTag+'</li>')
 		$('#updateDVPNModal .updateInfo').html($ul);
 	}
+	prepareHandyHostUpdatesPanel(updatesData){
+		const currentTag = updatesData.local;
+		const nextTag = updatesData.latest;
+		const $ul = $('<ul />')
+		$ul.append('<div class="updateTitle">Update HandyHost</div>')
+		$ul.append('<li>Current: '+currentTag+'</li>')
+		$ul.append('<li>Latest: '+nextTag+'</li>')
+		$('#updateHandyHostModal .updateInfo').html($ul);
+	}
+	showHandyHostUpdateModal(){
+		//show the modal
+		$('#updateHandyHostModal').show();
+		$('#updateHandyHostModal .modalContent').addClass('showing');
+		$('#updateHandyHostModal #closeModal').off('click').on('click',()=>{
+			$('#updateHandyHostModal').hide();
+		});
+		$('#updateHandyHostModal #updateHandyHost.save').off('click').on('click',()=>{
+
+			//hide this, start the update, on finish hide the update button in the dashboard
+			//this.updateLogs('\nStarting DVPN Node Update...\n')
+			//$('#updateHandyHostModal').hide();
+			$('#updateHandyHostModal #updateHandyHost').removeClass('save').addClass('cancel');
+			$('#updateHandyHostModal #updateHandyHost .foreground, #updateHandyHostModal #updateHandyHost .background').html('Updating...');
+			fetch('/api/updateHandyHost').then(d=>d.json()).then(json=>{
+				console.log('done with update???',json);
+				$('#dvpnMain .options li#handyhostUpdatesWarning').hide();
+				$('#updateHandyHostModal').hide();
+			})
+		});
+		$('#updateHandyHostModal #cancelHandyHostUpdate').off('click').on('click',()=>{
+			$('#updateHandyHostModal').hide();
+		})
+		
+	}
 	showDVPNUpdateModal(){
 		//show the modal
 		$('#updateDVPNModal').show();
@@ -184,9 +218,5 @@ export class DVPNNodeStatus{
 		})
 		
 	}
-	/*
-	$('#dvpnMain .options li#dvpnUpdatesWarning').show();
-		this.nodeStatus.prepareUpdatesPanel(data);
-		showDVPNUpdateModal()
-	*/
+	
 }

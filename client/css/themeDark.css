@@ -144,7 +144,11 @@ html.darkTheme .modalWrap{
 .darkTheme .warningEmoji{
 	filter:invert(1);
 }
-.darkTheme .showAllKeys{
+.darkTheme .showAllKeys,
+.darkTheme .getMyIP,
+.darkTheme .myIPValue,
+.darkTheme #showAdvancedSettings
+{
 	filter:invert(1);
 	color:#1c9fea;
 }

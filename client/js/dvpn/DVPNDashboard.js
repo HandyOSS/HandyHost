@@ -51,12 +51,31 @@ export class DVPNDashboard {
 			console.log('session analytics realtime update',data);
 			this.dashboardAnalytics.renderSessionsRealtime(data);
 		})
+		this.socket.on('HandyHostUpdatesAvailable',data=>{
+			console.log('handyhost updates are available',data);
+			this.notifyHandyHostUpdates(data);
+		})
+		this.socket.on('HandyHostIsUpToDate',data=>{
+			$('#dvpnMain .options li#handyhostUpdatesWarning').hide();
+		})
+		/*
+		if(!data.isUpToDate){
+			this.ioNamespace.to('dvpn').emit('HandyHostUpdatesAvailable',data);
+		}
+		else{
+			this.ioNamespace.to('dvpn').emit('HandyHostIsUpToDate',data);
+		}
+		*/
 		
 	}
 	notifyUpdates(data){
 		//notify via UI of updates
 		$('#dvpnMain .options li#dvpnUpdatesWarning').show();
 		this.nodeStatus.prepareUpdatesPanel(data);
+	}
+	notifyHandyHostUpdates(data){
+		$('#dvpnMain .options li#handyhostUpdatesWarning').show();
+		this.nodeStatus.prepareHandyHostUpdatesPanel(data);
 	}
 	show(){
 		this.fetchDashboardData();
@@ -128,6 +147,9 @@ export class DVPNDashboard {
 					_this.nodeConfig.hide();
 					_this.nodeStatus.show();
 					_this.nodeStatus.showDVPNUpdateModal()
+				break;
+				case 'handyhostUpdatesWarning':
+					_this.nodeStatus.showHandyHostUpdateModal();
 				break;
 				case 'allServices':
 					window.location.href = '/';

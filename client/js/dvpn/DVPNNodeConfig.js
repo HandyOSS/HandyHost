@@ -1,6 +1,8 @@
+import {CommonUtils} from '../CommonUtils.js';
 
 export class DVPNNodeConfig{
 	constructor(){
+		this.utils = new CommonUtils();
 		fetch('./uiFragments/dvpn/nodeConfig.html').then(res=>res.text()).then(fragment=>{
 			$('body').append(fragment);
 			//this.initWallet();
@@ -259,7 +261,9 @@ export class DVPNNodeConfig{
 		$('#getKeys').off('click').on('click',()=>{
 			if($('#getKeys').hasClass('selectWallet')){
 				const wallet = $('.getKeysModal .allKeys select option:selected').val();
+				const address = $('.getKeysModal .allKeys select option:selected').attr('data-addr');
 				$('#nodeConfigInfo input#from').val(wallet);
+				$('#nodeConfigInfo input#operatorAddress').val(address);
 				$('.getKeysModal .allKeys').hide();
 				$('.getKeysModal .allKeys select').html('');
 				$('#unlockPW').val('');
@@ -297,7 +301,7 @@ export class DVPNNodeConfig{
 		Object.keys(data).map(key=>{
 			const addr = data[key];
 			const isSelected = currentlySelected == key ? ' selected="selected"' : '';
-			$select.append(`<option${isSelected} value="${key}">${key} | ${addr}</option>`)
+			$select.append(`<option${isSelected} value="${key}" data-addr="${addr}">${key} | ${addr}</option>`)
 		});
 		$('.getKeysModal .allKeys').show();
 
@@ -343,80 +347,100 @@ export class DVPNNodeConfig{
 		const labelValues = {
 			gas_adjustment: {
 				label:'Gas Adjustment',
-				notes:'Gas adjustment factor'
+				notes:'Gas adjustment factor',
+				type:'advanced'
 			},
 			gas_prices:{
 				label:'Gas Price',
-				notes:'Gas prices to determine the transaction fee'
+				notes:'Gas prices to determine the transaction fee',
+				type:'advanced'
 			},
 			gas: {
 				label:'Gas',
-				notes:'Gas limit to set per transaction'
+				notes:'Gas limit to set per transaction',
+				type:'advanced'
 			},
 			id:{
 				label:'Network ID',
-				notes:'Example: sentinel-turing-4, or sentinelhub-1'
+				notes:'Example: sentinel-turing-4, or sentinelhub-2',
+				type:'advanced'
 			},
 			rpc_address:{
 				label:'RPC Address',
-				notes:''
+				notes:'',
+				type:'advanced'
 			},
 			simulate_and_execute:{
 				label:'Simulate and Execute',
-				notes:'Calculate the approx gas units before broadcast'
+				notes:'Calculate the approx gas units before broadcast',
+				type:'advanced'
+
 			},
 			from: {
 				label:'Wallet Name',
-				notes:''
+				notes:'',
+				type:'all'
 			},
 			listen_on: {
-				label:'Listen IP:PORT',
-				notes:'example: 0.0.0.0:8585. Open this port on your network router.'
+				label:'Listen PORT',
+				notes:'example: 8585. Open this port (TCP) <span class="myLocalIP"></span> on your network router.',
+				type:'all'
 			},
 			moniker:{
 				label:'Moniker',
-				notes:'example: feisty-penguin-bicycle-4'
+				notes:'example: feisty-penguin-bicycle-4',
+				type:'all'
 			},
 			price:{
 				label:'Price',
-				notes:'Per Gigabyte price to charge against the provided bandwidth'
+				notes:'Per Gigabyte price to charge against the provided bandwidth',
+				type:'all'
 			},
 			remote_url:{
 				label:'Host Remote URL',
-				notes:'Your global IP:PORT, example: https://1.23.45.67:8585 <a href="https://www.myglobalip.com/" target="_blank">Find My Global IP</a>'
+				notes:'Your global address, example: sentinel.hopto.org, or 1.23.45.67 <a class="getMyIP">Get My Global IP Address</a> <span class="myIPValue"></span>',
+				type:'all'
 			},
 			listen_port:{
 				label:'Listen Port',
-				notes: 'Wireguard Port. Open this port on your network router.'
+				notes: 'Wireguard Port. Open this port (UDP) <span class="myLocalIP"></span> on your network router.',
+				type:'all'
 			},
 			interval_set_sessions:{
 				label: "Set Sessions Interval ",
-				notes: "Time interval between each set_sessions operation; Format: 0h0m0s"
+				notes: "Time interval between each set_sessions operation; Format: 0h0m0s",
+				type:'advanced'
 			},
 			interval_update_sessions:{
 				label:'Update Sessions Interval',
-				notes:"Time interval between each update_sessions transaction; Format: 0h0m0s"
+				notes:"Time interval between each update_sessions transaction; Format: 0h0m0s",
+				type:'advanced'
 			},
 			interval_update_status:{
 				label: 'Update Status Interval',
-				notes:"Time interval between each update_status transaction; Format: 0h0m0s"
+				notes:"Time interval between each update_status transaction; Format: 0h0m0s",
+				type:'advanced'
 			}
 		}
-		fetch('/api/dvpn/getConfigs').then(d=>d.json()).then(data=>{
+		fetch('/api/dvpn/getConfigs').then(d=>d.json()).then(config=>{
+			const operator = config.operator;
+			const data = config.config;
 			Object.keys(data).map(formKey=>{
 				const $ul = $('#nodeConfigInfo #'+formKey+'Configuration ul.topLevel');
 				$ul.html('');
-			
 				Object.keys(data[formKey]).map(key=>{
 				
 				//Object.keys(data.node).map(key=>{
-				
+					
 					let sectionData = data[formKey][key];
+					
 					if(sectionData.leaf){
 						
 						//is top level data
 						const strlen = sectionData.value.length == 0 ? 40 : sectionData.value.length;
+						
 						let $inputElem = $('<input data-config="'+formKey+'" data-section="'+key+'" id="'+key+'" size="'+(strlen+2)+'" data-type="'+sectionData.type+'" type="'+sectionData.type+'" value="'+sectionData.value+'" />');
+
 						const $li = $('<li class="hasInput"></li>')
 						$li.append('<label for="'+key+'">'+labelValues[key].label+'</label>')
 						$li.append($inputElem)
@@ -425,14 +449,32 @@ export class DVPNNodeConfig{
 					}
 					else{
 						//is section heading, recurse
-						const $heading = $('<li class="title">'+sectionValues[key]+'</li>');
+						if(typeof sectionValues[key] == "undefined"){
+							return;
+						}
+						let titleClass = 'all';
+						if(sectionValues[key] == 'Chain Settings'){
+							titleClass = "advanced";
+						}
+						const $heading = $('<li class="title '+titleClass+'">'+sectionValues[key]+'</li>');
 						const $li = $('<li><ul /></li>');
 						recurse(sectionData,key,formKey,$li);
 						$ul.append($heading);
 						$ul.append($li);
 					}
 				})
+				$('.getMyIP',$ul).off('click').on('click',()=>{
+					fetch('/api/akt/getGlobalIP').then(d=>d.json()).then(d=>{
+						const ip = d.global_ip;
+						$('.myIPValue').html(': '+ip);
+					})	
+				});
+				this.utils.getIP().then(data=>{
+					$('.myLocalIP',$ul).html(' for IP: '+data.ip);
+				})
+
 			});
+
 
 			function recurse(sectionData,key,parentKey,$parentLi){
 				const $ul = $('ul',$parentLi);
@@ -446,8 +488,18 @@ export class DVPNNodeConfig{
 					if(typeof data.value != "boolean"){
 						strlen = data.value.length == 0 ? 40 : data.value.length;
 					}
+					if(sectionKey == 'listen_on'){
+						data.value = data.value.split(':');
+						data.value = data.value[data.value.length - 1];
+					}
+					if(sectionKey == 'remote_url'){
+						//strip protocol and port
+						data.value = data.value.split('://')[1].split(':')[0];
+					}
+					
 					let $inputElem = $('<input data-config="'+parentKey+'" data-section="'+key+'" id="'+sectionKey+'" size="'+(strlen+2)+'" data-type="'+inputType+'" type="'+inputType+'" value="'+data.value+'" />');
-					const $li = $('<li class="hasInput" />');
+					const $li = $('<li class="hasInput '+labelValues[sectionKey].type+'" />');
+					
 					if(data.type == 'boolean'){
 						let selectedClass = '';
 						let value = data.value == 'true' ? true : false;
@@ -457,6 +509,8 @@ export class DVPNNodeConfig{
 						if(!value){
 							selectedClass = ' isFalse'
 						}
+
+						
 						$inputElem = $(`
 						<div class="toggle${selectedClass}">
 							<div class="toggleSlider"></div>
@@ -499,8 +553,13 @@ export class DVPNNodeConfig{
 						}
 					}
 					$ul.append($li)
+
 				})
+				$ul.append('<input type="hidden" value="'+operator+'" id="operatorAddress" />');
 			}
+			$('#showAdvancedSettings').off('click').on('click',()=>{
+				$('.advanced').toggleClass('showAdvanced');
+			})
 			this.activateSaveButton();
 		})
 	}
@@ -568,7 +627,7 @@ export class DVPNNodeConfig{
 		$('#saveNodeConfigs').off('click').on('click',()=>{
 			const output = {};
 			$('#nodeConfigInfo .validation.error').remove();
-			$('#nodeConfigInfo input').each(function(){
+			$('#nodeConfigInfo input:not(#operatorAddress)').each(function(){
 				const $input = $(this);
 				const val = $input.val();
 				const topLevelConfig = $input.attr('data-config');
@@ -584,6 +643,14 @@ export class DVPNNodeConfig{
 				}
 				if(type == 'boolean'){
 					value = value == 'true' ? true : false;
+				}
+				if(configKey == 'listen_on'){
+					console.log('value',value);
+					value = '0.0.0.0:'+val;
+				}
+				if(configKey == 'remote_url'){
+
+					value = 'https://'+val+':'+(portsData.node.replace(/"/gi,''));
 				}
 				if(typeof output[topLevelConfig] == "undefined"){
 					output[topLevelConfig] = {};
@@ -606,7 +673,8 @@ export class DVPNNodeConfig{
 					}
 				}
 			})
-			console.log('to save',output);
+			const operator = $('#nodeConfigInfo #operatorAddress').val();
+			
 			this.checkRedlistPorts(portsData).then(hasErrors=>{
 				if(hasErrors){
 					return;
@@ -618,7 +686,7 @@ export class DVPNNodeConfig{
 				      'Content-Type': 'application/json'
 				    },
 				    method: "POST",
-				    body: JSON.stringify(output)
+				    body: JSON.stringify({config:output,operator})
 				})
 				.then((res)=>{ console.log('success'); return res.json(); }).then(data=>{
 					console.log('res data',data);

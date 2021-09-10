@@ -18,5 +18,6 @@ export AKASH_NODE="$(curl -s "$AKASH_NET/rpc-nodes.txt" | shuf -n 1)"
 # curl -s "$AKASH_NET/rpc-nodes.txt" > rpc-nodes.txt
 
 echo "installing akash software..." && \
+cd $HOME/.HandyHost/aktData && \
 curl https://raw.githubusercontent.com/ovrclk/akash/master/godownloader.sh | sh -s -- "v$AKASH_VERSION"
 
