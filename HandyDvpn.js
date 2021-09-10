@@ -87,7 +87,7 @@ export class HandyDVPN{
 			}
 		})
 		this.handyUtils.checkForUpdates().then(data=>{
-			console.log('versionData',data,process.argv);
+			console.log('HandyHost versionData',data);
 			if(!data.isUpToDate){
 				this.ioNamespace.to('dvpn').emit('HandyHostUpdatesAvailable',data);
 			}

@@ -196,6 +196,9 @@ li .dvpnDonut .donutTitle{
 .dvpnDonut .swatch.on{
   background:#1d9eec !important;
 }
+#handyhostUpdatesWarning{
+  display:none;
+}
 
 .lds-ripple {
   display: inline-block;

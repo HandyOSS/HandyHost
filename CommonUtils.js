@@ -60,9 +60,12 @@ export class CommonUtils{
 		return new Promise((resolve,reject)=>{
 			this.checkForUpdates().then(updateData=>{
 				const target = updateData.latest;
-				const update = spawn('./update.sh',[target,process.argv.join(' '),process.pid],{env:process.env});
+				const update = spawn('./update.sh',[target,process.argv.join(' '),process.pid],{env:process.env,detached:true});
 				update.stdout.on('data',(d)=>{
 					console.log('update stdout',d.toString());
+					if(d.toString().trim() == 'restarting handyhost'){
+						resolve(true);
+					}
 				})
 				update.stderr.on('data',(d)=>{
 					console.log('update stderr',d.toString());

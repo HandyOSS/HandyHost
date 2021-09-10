@@ -23,10 +23,12 @@ if [[ -s "$USERHOME/.nvm" ]] ; then
 	nvm use
 fi
 npm install --build-from-source --python=/usr/bin/python3 && \
-cd client && bower install && \
+cd client && bower install && cd .. \
 cp -r ./ $HANDYHOST_DIR && \
-cd $HANDYHOST_DIR && \
 rm -rf $HOME/.HandyHost/HandyHostUpdate && \
+cd $HANDYHOST_DIR && \
+echo "restarting handyhost" && \
+sleep 2 && \
 
 if type forever > /dev/null 2>&1; then
   	#forever exists, kill with forever
@@ -35,5 +37,5 @@ else
 	kill $HANDYHOST_PID
 fi
 
-sleep 2 && \
-sh -c "$2"
+sh -c "$2" && \
+exit 0
