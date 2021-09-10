@@ -330,6 +330,9 @@ html,body{
     font-size: 16px;
     color:#333;
 }
+#handyhostUpdatesWarning{
+  display:none;
+}
 
 /*loading spinner*/
 .loadingPanel{

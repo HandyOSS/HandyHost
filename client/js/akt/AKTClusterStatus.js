@@ -413,9 +413,16 @@ export class AKTClusterStatus{
 
 		let qr = balanceData.qr;
 		const $balance = $('.accountBalance',$el);
+		let img;
+		if(typeof qr != "undefined"){
+			img = `<img src="${qr}" />`;
+		}
+		else{
+			img = '';
+		}
 		$balance.html(`
 			<div class="qrWrap">
-				<img src="${qr}" />
+				${img}
 			</div>
 			<div class="balanceMeta">
 				<div class="address">Address: <input type="text" readonly class="walletAddress" value="${address}" size="46" /></div>

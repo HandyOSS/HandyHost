@@ -875,8 +875,23 @@ export class HandySia{
 			//spin up an interval to send out stats
 			this.socketRoomInterval = setInterval(()=>{
 				this.sendSocketUpdates();
+				this.checkForUpdates();
 			},60000);
+			this.checkForUpdates(); //check right away
 		}
+	}
+	checkForUpdates(){
+		this.handyUtils.checkForUpdates().then(data=>{
+			//console.log('HandyHost versionData',data);
+			if(!data.isUpToDate){
+				this.ioNamespace.to('sia').emit('HandyHostUpdatesAvailable',data);
+			}
+			else{
+				this.ioNamespace.to('sia').emit('HandyHostIsUpToDate',data);
+			}
+		}).catch(error=>{
+			console.log('error checking for handyhost updates',error);
+		})
 	}
 	removeSocketListener(room){
 		//everybody left the room, kill the update interval

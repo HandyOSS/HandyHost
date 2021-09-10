@@ -60,8 +60,16 @@ export class AKTDashboard {
 		this.socket.on('akashInstallLogs',data=>{
 			$('#updateAKTModal .updateInfo').html('Log: '+data);
 		})
+		this.socket.on('HandyHostUpdatesAvailable',data=>{
+			console.log('handyhost updates are available',data);
+			this.notifyHandyHostUpdates(data);
+		})
+		this.socket.on('HandyHostIsUpToDate',data=>{
+			$('.options li#handyhostUpdatesWarning').hide();
+		})
 		
 	}
+	
 	show(){
 		//$('.dashboard').show();
 		this.nodeConfig.hide();
@@ -155,6 +163,44 @@ export class AKTDashboard {
 			$('#updateAKTModal').hide()//.removeClass('showing');
 		});
 	}
+	notifyHandyHostUpdates(data){
+		$('.options li#handyhostUpdatesWarning').show();
+		this.prepareHandyHostUpdatesPanel(data);
+	}
+	prepareHandyHostUpdatesPanel(updatesData){
+		const currentTag = updatesData.local;
+		const nextTag = updatesData.latest;
+		const $ul = $('<ul />')
+		$ul.append('<div class="updateTitle">Update HandyHost</div>')
+		$ul.append('<li>Current: '+currentTag+'</li>')
+		$ul.append('<li>Latest: '+nextTag+'</li>')
+		$('#updateHandyHostModal .updateInfo').html($ul);
+	}
+	showHandyHostUpdateModal(){
+		//show the modal
+		$('#updateHandyHostModal').show();
+		$('#updateHandyHostModal .modalContent').addClass('showing');
+		$('#updateHandyHostModal #closeModal').off('click').on('click',()=>{
+			$('#updateHandyHostModal').hide();
+		});
+		$('#updateHandyHostModal #updateHandyHost.save').off('click').on('click',()=>{
+
+			//hide this, start the update, on finish hide the update button in the dashboard
+			//this.updateLogs('\nStarting DVPN Node Update...\n')
+			//$('#updateHandyHostModal').hide();
+			$('#updateHandyHostModal #updateHandyHost').removeClass('save').addClass('cancel');
+			$('#updateHandyHostModal #updateHandyHost .foreground, #updateHandyHostModal #updateHandyHost .background').html('Updating...');
+			fetch('/api/updateHandyHost').then(d=>d.json()).then(json=>{
+				console.log('done with update???',json);
+				$('#dvpnMain .options li#handyhostUpdatesWarning').hide();
+				$('#updateHandyHostModal').hide();
+			})
+		});
+		$('#updateHandyHostModal #cancelHandyHostUpdate').off('click').on('click',()=>{
+			$('#updateHandyHostModal').hide();
+		})
+		
+	}
 	initDashboard(){
 		const _this = this;
 		fetch('/api/akt/getState').then(d=>d.json()).then(json=>{
@@ -227,6 +273,9 @@ export class AKTDashboard {
 				break;
 				case 'providerLogs':
 					_this.showProviderLogsModal();
+				break;
+				case 'handyhostUpdatesWarning':
+					_this.showHandyHostUpdateModal();
 				break;
 			}
 			
