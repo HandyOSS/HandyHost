@@ -1,5 +1,6 @@
 #!/bin/bash
 HANDYHOST_DIR=$PWD
+UPDATED_DIR=$HOME/.HandyHost/HandyHostUpdate
 HANDYHOST_PID=$3
 if [[ -s /var/log/handyhost.pid ]]; then
 	HANDYHOST_PID=$(cat /var/log/handyhost.pid)
@@ -10,8 +11,8 @@ if [[ ! -z $HANDYHOST_PRIVATE_REPO_TOKEN ]]; then
 else 
 	URL="https://$HANDYHOST_PRIVATE_REPO_TOKEN@github.com/HandyMiner/HandyHost"
 fi
-mkdir -p $HOME/.HandyHost/HandyHostUpdate && \
-cd $HOME/.HandyHost/HandyHostUpdate && \
+mkdir -p $UPDATED_DIR && \
+cd $UPDATED_DIR && \
 git clone $URL . && \
 git checkout "$1" && \
 #skip rebuilding sqlite3 if we can.....
@@ -19,12 +20,12 @@ cp -r $HANDYHOST_DIR/node_modules ./node_modules && \
 source $USERHOME/.bashrc && \
 if [[ -s "$USERHOME/.nvm" ]] ; then
 	#has nvm
-	nvm install $(cat $HOME/.HandyHost/HandyHostUpdate/.nvmrc) && \
+	nvm install $(cat $UPDATED_DIR/.nvmrc) && \
 	nvm use
 fi
 npm install --build-from-source --python=/usr/bin/python3 && \
-cd client && bower install && cd .. \
-cp -r ./ $HANDYHOST_DIR && \
+cd client && bower install && cd $UPDATED_DIR && \
+cp -r $UPDATED_DIR/* $HANDYHOST_DIR && \
 rm -rf $HOME/.HandyHost/HandyHostUpdate && \
 cd $HANDYHOST_DIR && \
 echo "restarting handyhost" && \
@@ -37,5 +38,5 @@ else
 	kill $HANDYHOST_PID
 fi
 
-sh -c "$2" && \
+sh -c "$2" & \
 exit 0
