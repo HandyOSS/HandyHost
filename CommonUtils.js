@@ -44,12 +44,14 @@ export class CommonUtils{
 			}
 			const path = '/HandyMiner/HandyHost/master/VERSION';
 			return this.queryHTTPSResponse(host,path).then(versionRepo=>{
-				const localVersion = fs.readFileSync("./VERSION",'utf8');
+				const localVersion = fs.readFileSync("./VERSION",'utf8').trim();
 				resolve({
 					latest:versionRepo,
 					local:localVersion,
 					isUpToDate: (localVersion == versionRepo)
 				});
+			}).catch(error=>{
+				console.log('error checking for handyhost updates',error);
 			})
 		})
 		
@@ -58,7 +60,7 @@ export class CommonUtils{
 		return new Promise((resolve,reject)=>{
 			this.checkForUpdates().then(updateData=>{
 				const target = updateData.latest;
-				const update = spawn('./update.sh',[target,process.argv.join(' ')],{env:process.env});
+				const update = spawn('./update.sh',[target,process.argv.join(' '),process.pid],{env:process.env});
 				update.stdout.on('data',(d)=>{
 					console.log('update stdout',d.toString());
 				})

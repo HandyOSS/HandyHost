@@ -1,6 +1,6 @@
 #!/bin/bash
 HANDYHOST_DIR=$PWD
-HANDYHOST_PID=$(cat $PWD/pid)
+HANDYHOST_PID=$3
 if [[ -s /var/log/handyhost.pid ]]; then
 	HANDYHOST_PID=$(cat /var/log/handyhost.pid)
 fi
@@ -15,7 +15,7 @@ cd $HOME/.HandyHost/HandyHostUpdate && \
 git clone $URL . && \
 git checkout "$1" && \
 #skip rebuilding sqlite3 if we can.....
-cp -r HANDYHOST_DIR/node_modules ./node_modules && \
+cp -r $HANDYHOST_DIR/node_modules ./node_modules && \
 source $USERHOME/.bashrc && \
 if [[ -s "$USERHOME/.nvm" ]] ; then
 	#has nvm
@@ -24,8 +24,11 @@ if [[ -s "$USERHOME/.nvm" ]] ; then
 fi
 npm install --build-from-source --python=/usr/bin/python3 && \
 cd client && bower install && \
+cp -r ./ $HANDYHOST_DIR && \
 cd $HANDYHOST_DIR && \
-if type forever > /dev/null; then
+rm -rf $HOME/.HandyHost/HandyHostUpdate && \
+
+if type forever > /dev/null 2>&1; then
   	#forever exists, kill with forever
   	forever stop $HANDYHOST_PID
 else
