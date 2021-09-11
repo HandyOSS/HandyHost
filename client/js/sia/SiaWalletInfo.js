@@ -59,11 +59,21 @@ export class SiaWalletInfo{
 			</div>`)
 		$('#siaWalletInfo .walletOptions').html($warningMessage);
 	}
-	setSyncedStatus(walletHeight,chainHeight){
+	setSyncedStatus(walletHeight,chainHeight,isChainSynced){
 		const isWalletSynced = chainHeight == walletHeight;
-		const $synced = $('<div class="syncedStatus">Synced: <span class="emoji">'+(isWalletSynced ? '✅' : '😞')+'</span> <small>['+walletHeight+' / '+chainHeight+']</small></div>')
+		let $synced;
+		if(isChainSynced){
+			$synced = $('<div class="syncedStatus">Synced: <span class="emoji">'+(isWalletSynced ? '✅' : '😞')+'</span> <small>[ '+walletHeight+' / '+chainHeight+' ]</small></div>')
+		}
+		else{
+			$synced = $('<div class="syncedStatus">Synced: <span class="emoji">'+(isChainSynced ? '✅' : '😞')+'</span> <small>[ '+chainHeight+' ]</small></div>')
+		}
+		console.log('set synced status',chainHeight,isChainSynced);
+		
 		$('#siaWalletInfo .syncedStatus').remove();
-		$('#siaWalletInfo').append($synced)
+		$('#siaWalletInfo').append($synced);
+		$('#siaMain .syncedStatus').remove();
+		$('#siaMain').append($synced.clone());
 	}
 	populateUI(walletData,address,chainData,lockedBalance){
 		console.log('populate',walletData,address,chainData);
@@ -101,7 +111,7 @@ export class SiaWalletInfo{
 		$balanceArea.append($unconfirmed);
 		$balanceArea.append($lockedCollateralBalance);
 
-		this.setSyncedStatus(walletData.height,chainData.height);
+		this.setSyncedStatus(walletData.height,chainData.height,isChainSynced);
 
 		$('#siaWalletInfo .walletOptions').html($ul);
 		$('#siaWalletInfo .walletOptions').append($balanceArea);

@@ -60,6 +60,7 @@ export class CommonUtils{
 		return new Promise((resolve,reject)=>{
 			this.checkForUpdates().then(updateData=>{
 				const target = updateData.latest;
+				console.log('starting updater','pid',process.pid,'path',process.argv.join(' '))
 				const update = spawn('./update.sh',[target,process.argv.join(' '),process.pid],{env:process.env,detached:true});
 				update.stdout.on('data',(d)=>{
 					console.log('update stdout',d.toString());

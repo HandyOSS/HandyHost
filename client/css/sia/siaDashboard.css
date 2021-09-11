@@ -255,3 +255,8 @@
 .warningsInfo ul li{
 	padding: 5px 0px;
 }
+#siaMain .syncedStatus{
+	z-index: 2;
+	right:  15px;
+	top:  10px;
+}

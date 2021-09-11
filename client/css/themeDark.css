@@ -227,3 +227,7 @@ html.darkTheme .modalWrap{
 .darkTheme .validation.error{
 	filter:invert(1);
 }
+
+.darkTheme #siaMain .syncedStatus{
+	filter: invert(1);
+}

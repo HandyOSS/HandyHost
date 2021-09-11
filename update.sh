@@ -2,10 +2,11 @@
 HANDYHOST_DIR=$PWD
 UPDATED_DIR=$HOME/.HandyHost/HandyHostUpdate
 HANDYHOST_PID=$3
+source $HOME/.profile && \
 if [[ -s /var/log/handyhost.pid ]]; then
 	HANDYHOST_PID=$(cat /var/log/handyhost.pid)
 fi
-if [[ ! -z $HANDYHOST_PRIVATE_REPO_TOKEN ]]; then
+if [[ -z "${HANDYHOST_PRIVATE_REPO_TOKEN+x}" ]]; then
 	#not a private repo anymore yay
 	URL="https://github.com/HandyMiner/HandyHost"
 else 

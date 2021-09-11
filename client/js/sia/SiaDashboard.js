@@ -70,8 +70,8 @@ export class SiaDashboard {
 			this.enableUpdateModal(updateData,data.daemon);
 		}
 		this.enableWarningsModal(data.config);
-		this.walletInfo.setSyncedStatus(walletData.height,chainData.height);
-	}
+		this.walletInfo.setSyncedStatus(walletData.height,chainData.height,chainData.synced);
+	}	
 	enableUpdateModal(updateData,versionCurrentData){
 		
 		const installed = versionCurrentData.version;
