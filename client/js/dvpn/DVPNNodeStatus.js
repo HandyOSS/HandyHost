@@ -185,7 +185,10 @@ export class DVPNNodeStatus{
 			fetch('/api/updateHandyHost').then(d=>d.json()).then(json=>{
 				console.log('done with update???',json);
 				$('#dvpnMain .options li#handyhostUpdatesWarning').hide();
-				$('#updateHandyHostModal').hide();
+				$('#updateHandyHostModal .updateInfo').html("Update Complete! Reloading in 5s...")
+				setTimeout(()=>{
+					window.location.reload();
+				},5000);
 			})
 		});
 		$('#updateHandyHostModal #cancelHandyHostUpdate').off('click').on('click',()=>{
