@@ -151,6 +151,10 @@ a.getGlobalIP{
 	width: 100%;
 	margin: 5px 0;
 }
+.buildABoxModal .confirmation.bigger{
+	font-size: 24px;
+    font-weight: 200;
+}
 .buildABoxModal .chooseDevice, .buildABoxModal .finishHost{
 	float:none;
 	color:#fff;
