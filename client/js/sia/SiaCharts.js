@@ -9,6 +9,7 @@ export class HostScoreRadarChart{
 		
 	}
 	render(data){
+		console.log('host score data',data);
 		$('#hostScoreLoader').remove();
 		console.log('render charts',data);
 		const $chartEl = $('<div class="radarChart" id="hostScoreChart"><svg /></div>');
@@ -68,10 +69,13 @@ export class HostScoreRadarChart{
 				}
 				else{
 					//TODO: notify/warnings
+					console.log('no host stats')
+					$('#hostScoreLoader .lds-roller').hide();
+					$('#hostScoreLoader .loadingMessage').html('No Host Score Found')
 				}
 			})
 		}).catch(e=>{
-			console.log('error',e);
+			console.log('error loading host stats',e);
 		})
 	}
 }
@@ -100,6 +104,11 @@ export class ContractsChart{
 		let completedRevenue = 0;
 		let potentialAccountFunding = 0;
 		let completedStorageSize = 0;
+		if(data.contracts == null){
+			$('#beeswarmLoading .lds-roller').hide();
+			$('#beeswarmLoading .loadingMessage').html('No Contracts Found');
+			return;
+		}
 		data.contracts.map(contract=>{
 			
 				let collateral = contract.lockedcollateral;
@@ -236,6 +245,12 @@ export class EarningsStorageChart{
 		
 	}
 	renderStoragePanel(data){
+		
+		if(data.storagemetrics.folders == null){
+			//not set yet
+			return;
+		}
+
 		const registryTotal = data.registryentriestotal;
 		const registryUsed = data.registryentriestotal - data.registryentriesleft;
 		let storageTotal = 0;

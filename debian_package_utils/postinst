@@ -202,7 +202,7 @@ sudo chown -R "$USERNAME:$USERGROUP" $USERHOME/.HandyHost && \
 sudo sed s"/TARGETUSERNAME/${USERNAME}/" -i /etc/init.d/handyhost && \
 sudo systemctl daemon-reload && \
 sudo update-rc.d handyhost defaults && \
-sudo systemctl start handyhost && \
+sudo systemctl restart handyhost && \
 #sed s"/USERGID/${USERGROUP}/" -i /etc/init/handyhost.conf && \
 node rainbow.js && \
 echo -e "\x1b[92mHandyHost is now running on: http://localhost:8008\x1b[0m" && \

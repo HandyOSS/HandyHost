@@ -34,8 +34,9 @@ export class SiaWalletConfig{
 					const chain = result.chain;
 					if(!wallet.encrypted && !wallet.unlocked && !wallet.rescanning){
 						//is a new install, we need to make a wallet
+						console.log('wallet chain',wallet,chain);
 						console.log('time for new wallet creation');
-						this.showInitModal();
+						this.showInitModal(chain.synced);
 					}
 					else{
 						$('#walletInitModal').hide();
@@ -163,7 +164,7 @@ export class SiaWalletConfig{
 		}
 	
 	}
-	showInitModal(){
+	showInitModal(chainIsSynced){
 		$('.walletUtil').addClass('showing');
 		$('.noConfirmBadge').hide();
 		$('.confirmBadge').hide();
@@ -171,6 +172,15 @@ export class SiaWalletConfig{
 		$('#walletInitModal').show();
 		$('.walletUtil #importWallet').removeClass('canSave');
 		$('.walletUtil #importWallet .foreground, .walletUtil #importWallet .background').html('Import Wallet');
+		if(!chainIsSynced){
+			$('.importNote').remove();
+			$('.walletUtil #importWallet').after('<div class="importNote">Note: You cannot import a wallet during chain sync.</div>')
+			$('.walletUtil #importWallet').removeClass('save').addClass('cancel');
+		}
+		else{	
+			$('.importNote').remove();
+			$('.walletUtil #importWallet').addClass('save').removeClass('cancel');
+		}
 		$('.walletUtil #createNewWallet').removeClass('isSubmitting');
 		$('.walletUtil #createNewWallet .foreground, .walletUtil #createNewWallet .background').html('Create New Wallet');
 		$('#confirmPW').off('change').on('change',()=>{
@@ -216,6 +226,9 @@ export class SiaWalletConfig{
 		});
 		$('.walletUtil #importWallet').off('click').on('click',()=>{
 			//show mnemonic textarea
+			if(!isWalletSynced){
+				return;
+			}
 			const pwMatch = this.checkPWMatch();
 			if(!pwMatch){
 				return;

@@ -1,6 +1,6 @@
 #siaWalletInfo{
 	float:left;
-	width: calc(80% - 20px);
+	width: calc(80% - 40px);
 	position:absolute;
 	top:10px;
 	left:calc(20% + 10px);
@@ -82,7 +82,7 @@ li span.balanceLabel{
 }
 .syncedStatus{
 	position:absolute;
-	top: 5px;
+	top: 0px;
 	right:10px;
 	float:left;
 	font-size: 14px;
