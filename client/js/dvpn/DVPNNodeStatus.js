@@ -28,7 +28,7 @@ export class DVPNNodeStatus{
 			      'Content-Type': 'application/json'
 			    },
 			    method: "POST",
-			    body: JSON.stringify({pw:$('#launchPW').val()})
+			    body: JSON.stringify({pw:$('#launchPW').val(),autostart:$('#autostart').is(':checked')})
 			})
 			.then((res)=>{ console.log('success'); return res.json(); }).then(data=>{
 				console.log('res data',data);

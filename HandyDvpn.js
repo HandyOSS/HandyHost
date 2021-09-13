@@ -39,6 +39,7 @@ export class HandyDVPN{
 		//this.io.of('/dvpn')
 		//console.log('init dvpn sockets');
 		this.ioNamespace = ioNamespace;
+		this.dvpnSetup.autostartDVPN(this.ioNamespace); //make sure io exists before we autostart
 		this.ioNamespace.adapter.on("create-room", (room) => {
 		  if(room.indexOf('dvpn') == 0){
 		  	//start a Socket listener for this room
@@ -260,6 +261,7 @@ export class HandyDVPN{
 				reject(err);
 			})
 		}
+		this.dvpnSetup.configureAutostart(parsed);
 		return this.dvpnSetup.launchDVPN(parsed.pw,this.ioNamespace);
 	}
 	getWallets(requestBody){

@@ -1,4 +1,5 @@
 import http from 'http';
+import https from 'https';
 import url from 'url';
 import path from 'path';
 import fs from 'fs';
@@ -9,14 +10,61 @@ import {CommonUtils} from './CommonUtils.js';
 const api = new APIHelper();
 const utils = new CommonUtils();
 const port = process.env.HANDYHOST_PORT || 8008;
+const httpsPort = process.env.HANDYHOST_SSL_PORT || 58008;
 
-const httpServer = http.createServer(function(request, response) {
-  
+if(!fs.existsSync('./handyhost_server.key')){
+  //generate certs
+  utils.getIPForDisplay().then(ipData=>{
+    const args = [
+      'req',
+      '-x509', 
+      '-out', 
+      'handyhost_server.crt',
+      '-keyout', 
+      'handyhost_server.key',
+      '-newkey',
+      'rsa:2048', 
+      '-nodes', 
+      '-sha256',
+      '-extensions',
+      'EXT',
+      '-subj',
+      '/CN=HandyHost',
+      '-config',
+      'handyhost_server.cnf'
+    ];
+    const gencert = spawn('openssl',args)
+    gencert.on('close',()=>{
+      startHttpsServer();
+    })
+  });
+}
+else{
+  //start ssl server
+  startHttpsServer();
+}
+
+const httpServer = http.createServer(function(request, response) { 
+  handleServerRequest(request,response);
+}).listen(parseInt(port, 10));
+
+
+api.initSocketConnection(httpServer);
+function startHttpsServer(){
+  const options = {
+    key: fs.readFileSync('handyhost_server.key'),
+    cert: fs.readFileSync('handyhost_server.crt')
+  };
+  const httpsServer = https.createServer(options,function(request, response) { 
+    handleServerRequest(request,response);
+  }).listen(parseInt(httpsPort, 10));
+  api.initSocketConnection(httpsServer);
+}
+
+function handleServerRequest(request,response){
   const unsafe = url.parse(request.url).pathname;
   const safe = path.normalize(unsafe).replace(/^(\.\.(\/|\\|$))+/, '');
-  
   let filename = path.resolve()+'/client'+safe;
-  
   const contentTypesByExtension = {
     //whitelist things here
     '.html': "text/html",
@@ -55,13 +103,9 @@ const httpServer = http.createServer(function(request, response) {
           response.end();
         });
       });
-
-      
       return;
     }
-
     if (fs.statSync(filename).isDirectory()) filename += '/index.html';
-
     fs.readFile(filename, "binary", function(err, file) {
       if(err) {        
         response.writeHead(500, {"Content-Type": "text/plain"});
@@ -69,7 +113,6 @@ const httpServer = http.createServer(function(request, response) {
         response.end();
         return;
       }
-
       const headers = {};
       const contentType = contentTypesByExtension[path.extname(filename)];
       if (contentType) headers["Content-Type"] = contentType;
@@ -78,21 +121,26 @@ const httpServer = http.createServer(function(request, response) {
       response.end();
     });
   });
-}).listen(parseInt(port, 10));
-api.initSocketConnection(httpServer);
+}
+
 
 //console.log("NOTIFICATION: HandyHost Running at: http://localhost:" + port + "/\n");
 utils.getIPForDisplay().then(data=>{
-  console.log("NOTIFICATION: HandyHost Running at: http://"+data.ip+":" + data.port + "/\n");
-  console.log("HandyHost Running at: http://"+data.ip+":" + data.port + "/\n");
+  if(process.platform == 'darwin'){
+    console.log("NOTIFICATION: HandyHost Running at: http://"+data.ip+":" + data.port + "/\n, and https://"+data.ip+":"+httpsPort+' (self-signed cert)');
+  }
+  
+  console.log("HandyHost Running at: http://"+data.ip+":" + data.port + "/\n, and https://"+data.ip+":"+httpsPort+' (self-signed cert)');
 })
 
 
 process.on('uncaughtException', function(err) {
   if(err.code.indexOf('EADDRINUSE') >= 0){
     utils.getIPForDisplay().then(data=>{
-      console.log("NOTIFICATION: HandyHost Already Running at: http://"+data.ip+":" + data.port + "/\n");
-      console.log("HandyHost Already Running at: http://"+data.ip+":" + data.port + "/\n");
+      if(process.platform == 'darwin'){
+        console.log("NOTIFICATION: HandyHost Already Running at: http://"+data.ip+":" + data.port + "/\n and https://"+data.ip+":"+httpsPort+' (self-signed cert)');
+      }
+      console.log("HandyHost Already Running at: http://"+data.ip+":" + data.port + "/\n and https://"+data.ip+":"+httpsPort+' (self-signed cert)');
       process.exit(1);
     })
   }

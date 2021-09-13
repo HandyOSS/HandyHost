@@ -488,6 +488,24 @@ export class Wallet{
 			request.end();
 		});
 	}
+	autostartProvider(){
+		const autostartFile = process.env.HOME+'/.HandyHost/aktData/autostart.json';
+		
+		if(fs.existsSync(autostartFile)){
+			const params = JSON.parse(fs.readFileSync(autostartFile,'utf8'));
+			this.startProvider(params);
+		}
+	}
+	setupProviderAutostart(params,doAutostart){
+		//auto start provider on app startup
+		const autostartFile = process.env.HOME+'/.HandyHost/aktData/autostart.json';
+		if(doAutostart){
+			fs.writeFileSync(autostartFile,JSON.stringify(params),'utf8');
+		}
+		else{
+			fs.unlinkSync(autostartFile);
+		}
+	}
 	startProvider(params){
 		//params = walletName,serverHost,prob password????
 		return new Promise((resolve,reject)=>{

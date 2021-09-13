@@ -37,6 +37,7 @@ export class HandyAKT{
 		this.k8sUtils = new K8sUtils(this.clusterConfigFilePath);
 		this.wallet = new Wallet();
 		this.market = new Marketplace();
+		this.wallet.autostartProvider();
 	}
 	checkClusterConfigExistence(){
 		if(!fs.existsSync(this.clusterConfigFilePath)){
@@ -465,7 +466,7 @@ export class HandyAKT{
 							cpuPrice:parsed.cpu,
 							fees:parsed.fees
 						}
-						
+						this.wallet.setupProviderAutostart(params,parsed.autostart);
 						this.wallet.startProvider(params).then(response=>{
 							if(response.success){
 								resolve({active:true});

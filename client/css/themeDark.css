@@ -231,3 +231,6 @@ html.darkTheme .modalWrap{
 .darkTheme #siaMain .syncedStatus{
 	filter: invert(1);
 }
+.darkTheme input#autostart{
+	filter:invert(1);
+}

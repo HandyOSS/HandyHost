@@ -35,14 +35,6 @@ else
 	su - $USERNAME -c "brew update"
 fi
 
-# which -s nodejs
-# if [[ $? != 0 ]] ; then
-# 	echo "Installing Node.js"
-# 	su - $USERNAME -c "brew install node"
-# else
-# 	echo "nodejs Installed. Skipping."
-# fi
-
 if [[ ! -d "/usr/local/opt/nvm" ]] ; then
     # Install nvm
     echo "installing nvm" && \
@@ -60,6 +52,7 @@ echo "NPM VERSION TO INSTALL ${NPMVERSION}" && \
 cd $pwd && \
 nvm install $NPMVERSION && \
 nvm use && \
+sudo chown -R "$USERNAME:$USERGROUP" $pwd && \
 su - $USERNAME -c "cd $pwd && npm install --build-from-source --python=/usr/bin/python3" && \
 sudo chown -R "$USERNAME:$USERGROUP" ./node_modules && \
 sudo npm install -g bower && \
@@ -217,38 +210,8 @@ else
   fi
   
 fi
-# if [[ ! -d ${HOME}/.HandyHost/aktData/kubespray ]] ; then
-# 	echo "installing kubespray"
-# 	mkdir -p ~/.HandyHost/aktData/kubespray && \
-# 	cd $HOME/.HandyHost/aktData/kubespray && \
-# 	git clone https://github.com/kubernetes-sigs/kubespray.git .
-# else
-# 	echo "kubespray exists, check up to date."
-# 	cd $HOME/.HandyHost/aktData/kubespray && \
-# 	git fetch --all && \
-# 	git pull
-# fi
-
-# sudo chown -R "$USERNAME:$USERGROUP" $HOME/.HandyHost/aktData && \
-
-# virtualenv --python=python3 venv && \
-# . venv/bin/activate && \
-# pip3 install -r requirements.txt && \
 
 cd $HOME/.HandyHost/aktData && \
-# if [[ ! -d ${HOME}/.HandyHost/aktData/ubuntu-autoinstall-generator ]] ; then
-# 	echo "installing ubuntu-autoinstall-generator"
-# 	git clone https://github.com/covertsh/ubuntu-autoinstall-generator.git && \
-# 	cd ubuntu-autoinstall-generator && \
-# 	chmod +x ubuntu-autoinstall-generator.sh && \
-# 	sudo chown -R "$USERNAME:$USERGROUP" $HOME/.HandyHost/aktData/ubuntu-autoinstall-generator
-# else
-# 	echo "updating ubuntu-autoinstall-generator"
-# 	cd ubuntu-autoinstall-generator && \
-# 	git fetch --all && \
-# 	git pull && 
-# 	chmod +x ubuntu-autoinstall-generator.sh
-# fi
 
 su - $USERNAME -c "brew install cdrtools" && \
 su - $USERNAME -c "brew install p7zip" && \
@@ -271,7 +234,10 @@ cd "/Applications/HandyHost" && \
 which -s platypus
 if [[ $? != 0 ]] ; then
 	echo "Installing Platypus"
-	su - $USERNAME -c "brew install --cask platypus"
+	su - $USERNAME -c "brew install --cask platypus" && \
+	xattr -d -r com.apple.quarantine /Applications/Platypus.app && \
+	su - $USERNAME -c "brew install platypus" && \
+	su - $USERNAME -c "brew link platypus"
 else
 	echo "Platypus Installed. Skipping."
 fi

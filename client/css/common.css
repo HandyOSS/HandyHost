@@ -327,7 +327,7 @@ html,body{
 #ipDisplay span{
     clear: both;
     display: block;
-    font-size: 16px;
+    font-size: 12px;
     color:#333;
 }
 #handyhostUpdatesWarning{

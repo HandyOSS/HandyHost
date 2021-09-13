@@ -38,6 +38,9 @@ export class DVPNDashboard {
 			const isConnected = status == 'disconnected' ? false : true;
 			this.nodeStatus.setStatus(isConnected)
 		})
+		this.socket.on('launched'()=>{
+			this.nodeStatus.setStatus(true);
+		})
 		this.socket.on('updatesAvailable',updateData=>{
 			//dvpn node has updates via github.
 			console.log('socket node udpates updatesAvailable',updateData)
@@ -159,7 +162,13 @@ export class DVPNDashboard {
 		})
 		this.utils.getIP().then(data=>{
 			$('.options #ipDisplay').remove();
-			$('.options').append('<div id="ipDisplay">Network URL: <span>'+data.ip+':'+data.port+'</span></div>')
+			$('.options').append(`
+				<div id="ipDisplay">
+					Network URL: 
+					<span>http://${data.ip}:${data.port}</span>
+					<span>https://${data.ip}:${data.sslPort}</span>
+				</div>
+			`);
 		})
 	}
 	initMobileMenu(){

@@ -382,7 +382,22 @@ export class DVPNSetup{
 		});
 		return output;
 	}
-	
+	autostartDVPN(socketIONamespace){
+		const autostartFile = process.env.HOME+'/.HandyHost/sentinelData/autostart.json';
+		if(fs.existsSync(autostartFile)){
+			const params = JSON.parse(fs.readFileSync(autostartFile,'utf8'));
+			this.launchDVPN(params.pw,socketIONamespace);
+		}
+	}
+	configureAutostart(params){
+		const autostartFile = process.env.HOME+'/.HandyHost/sentinelData/autostart.json';
+		if(params.autostart){
+			fs.writeFileSync(autostartFile,JSON.stringify(params),'utf8');
+		}
+		else{
+			fs.unlinkSync(autostartFile);
+		}
+	}
 	launchDVPN(pw,socketIONamespace){
 		return new Promise((resolve,reject)=>{
 			this.getPorts().then(ports=>{
@@ -433,6 +448,7 @@ export class DVPNSetup{
 					//will pipe output to socket.io before this may fire
 					if(!hasFailed){
 						hasReturned = true;
+						socketIONamespace.to('dvpn').emit('launched');
 						resolve({status:'launched'});
 					}
 				},1000)

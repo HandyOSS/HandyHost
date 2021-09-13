@@ -627,6 +627,7 @@ export class DVPNNodeConfig{
 		$('#saveNodeConfigs').off('click').on('click',()=>{
 			const output = {};
 			$('#nodeConfigInfo .validation.error').remove();
+			let remoteURLVal;
 			$('#nodeConfigInfo input:not(#operatorAddress)').each(function(){
 				const $input = $(this);
 				const val = $input.val();
@@ -649,7 +650,7 @@ export class DVPNNodeConfig{
 					value = '0.0.0.0:'+val;
 				}
 				if(configKey == 'remote_url'){
-
+					remoteURLVal = val;
 					value = 'https://'+val+':'+(portsData.node.replace(/"/gi,''));
 				}
 				if(typeof output[topLevelConfig] == "undefined"){
@@ -674,40 +675,62 @@ export class DVPNNodeConfig{
 				}
 			})
 			const operator = $('#nodeConfigInfo #operatorAddress').val();
+			this.checkHostURL(output,remoteURLVal,portsData).then(()=>{
+				this.checkRedlistPorts(portsData).then(hasErrors=>{
+					if(hasErrors){
+						return;
+					}
+					fetch("/api/dvpn/updateNodeConfig",
+					{
+					    headers: {
+					      'Accept': 'application/json',
+					      'Content-Type': 'application/json'
+					    },
+					    method: "POST",
+					    body: JSON.stringify({config:output,operator})
+					})
+					.then((res)=>{ console.log('success'); return res.json(); }).then(data=>{
+						console.log('res data',data);
+						$('.walletUtil').removeClass('showing');
+						$('#walletInitModal').show();
+						this.verifyImportFromSeed('Saved Node Config!');
+
+					})
+					.catch((res)=>{ 
+						$('.walletUtil').removeClass('showing');
+						$('#walletInitModal').show();
+						this.showErrorModal('Error: '+res); 
+						console.log('error submitting',res);
+
+					});
+				})
+			});
 			
-			this.checkRedlistPorts(portsData).then(hasErrors=>{
-				if(hasErrors){
-					return;
-				}
-				fetch("/api/dvpn/updateNodeConfig",
-				{
-				    headers: {
-				      'Accept': 'application/json',
-				      'Content-Type': 'application/json'
-				    },
-				    method: "POST",
-				    body: JSON.stringify({config:output,operator})
-				})
-				.then((res)=>{ console.log('success'); return res.json(); }).then(data=>{
-					console.log('res data',data);
-					$('.walletUtil').removeClass('showing');
-					$('#walletInitModal').show();
-					this.verifyImportFromSeed('Saved Node Config!');
-
-				})
-				.catch((res)=>{ 
-					$('.walletUtil').removeClass('showing');
-					$('#walletInitModal').show();
-					this.showErrorModal('Error: '+res); 
-					console.log('error submitting',res);
-
-				});
-			})
 			
 
 		});
 		$('#nodeConfigInfo #cancel').off('click').on('click',()=>{
 			this.getNodeConfigData();
 		})
+	}
+	checkHostURL(output,remoteURLVal,portsData){
+		//make sure the remote URL isnt 0.0.0.0 else they wont be publically visible
+		return new Promise((resolve,reject)=>{
+			if(remoteURLVal == '0.0.0.0'){
+				this.utils.getIP().then(data=>{
+					console.log('got ip, output isset',output);
+					if(typeof output.node.node != "undefined"){
+						if(typeof output.node.node.remote_url != "undefined"){
+							output.node.node.remote_url = 'https://'+data.ip+':'+(portsData.node.replace(/"/gi,''));
+						}
+					}
+					resolve();
+				})
+			}
+			else{
+				resolve();
+			}
+		})
+		
 	}
 }

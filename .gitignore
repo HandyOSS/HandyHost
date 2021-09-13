@@ -2,3 +2,5 @@ node_modules/
 bower_components/
 .DS_Store
 package-lock.json
+handyhost_server.crt
+handyhost_server.key

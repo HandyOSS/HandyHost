@@ -5,6 +5,7 @@ import https from 'https';
 export class CommonUtils{
 	constructor(){
 		this.port = process.env.HANDYHOST_PORT || 8008;
+		this.sslPort = process.env.HANDYHOST_SSL_PORT || 58008;
 	}
 	getIPForDisplay(){
 		return new Promise((resolve,reject)=>{
@@ -31,7 +32,7 @@ export class CommonUtils{
 			  if(process.platform == 'linux'){
 			    ipOut = ipOut.split(' ')[0];
 			  }
-			  resolve({ip:ipOut,port:this.port});
+			  resolve({ip:ipOut,port:this.port,sslPort:this.sslPort});
 			});
 		});
 

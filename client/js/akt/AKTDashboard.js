@@ -393,13 +393,15 @@ export class AKTDashboard {
 		$('#runSave').off('click').on('click',()=>{
 			const fees = $('#runFees').val() == '' ? 10000 : parseInt($('#runFees').val());
 			const cpu = $('#cpuPrice').val() == '' ? 10 : parseInt($('#cpuPrice').val());
+			const autostart = $('#autostart').is(':checked');
 			$('#runSave .foreground').html('Starting Up...');
 			$('#runSave .background').html('Starting Up...');
 			
 			const runProviderData = {
 				pw:$('#unlockRunPW').val(),
 				fees,
-				cpu
+				cpu,
+				autostart
 			};
 			fetch("/api/akt/runProvider",
 			{
