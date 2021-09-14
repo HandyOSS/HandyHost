@@ -2,8 +2,8 @@
 #mac installer
 USERNAME="$(stat -f '%Su' $HOME)"
 USERGROUP="$(id -gn $USERNAME)"
-
-echo "USER ${USERNAME}, GROUP ${USERGROUP}"
+USERHOME="$HOME"
+echo "USER ${USERNAME}, GROUP ${USERGROUP}, HOME ${USERHOME}"
 
 PYTHON="$(which python3)"
 
@@ -23,20 +23,21 @@ pwd="/Applications/HandyHost/HandyHost" #set to applications dir
 echo "PWD: ${PWD}"
 echo "########## Installing HandyHost Dependencies... ##########"
 
-xcode-select --install > /dev/null 2>&1
-if [ 0 == $? ]; then
-    sleep 1
-    osascript <<EOD
-tell application "System Events"
-    tell process "Install Command Line Developer Tools"
-        keystroke return
-        click button "Agree" of window "License Agreement"
-    end tell
-end tell
-EOD
-else
-    echo "Command Line Developer Tools are already installed!"
-fi
+#NOTE: just have mac users install this themselves...
+# xcode-select --install > /dev/null 2>&1
+# if [ 0 == $? ]; then
+#     sleep 1
+#     osascript <<EOD
+# tell application "System Events"
+#     tell process "Install Command Line Developer Tools"
+#         keystroke return
+#         click button "Agree" of window "License Agreement"
+#     end tell
+# end tell
+# EOD
+# else
+#     echo "Command Line Developer Tools are already installed!"
+# fi
 
 which -s brew
 if [[ $? != 0 ]] ; then
@@ -83,7 +84,7 @@ sudo chown -R "$USERNAME:$USERGROUP" ./node_modules && \
 sudo npm install -g bower && \
 su - $USERNAME && \
 cd $pwd/client && \
-su - $USERNAME -c "cd $pwd/client && bower install" && \
+su - $USERNAME -c "[ -s \"/usr/local/opt/nvm/nvm.sh\" ] && \. \"/usr/local/opt/nvm/nvm.sh\" && cd $pwd && nvm install $NPMVERSION && nvm use && cd $pwd/client && bower install" && \
 mkdir -p $HOME/.HandyHost && \
 sudo chown -R "$USERNAME:$USERGROUP" $HOME/.HandyHost && \
 
@@ -111,21 +112,21 @@ fi
 
 #export PATH=$PATH:/usr/local/go/bin && \
 
-if [[ ! -s "$HOME/.HandyHost/siaRepo" ]] ; then
+if [[ ! -d "$USERHOME/.HandyHost/siaRepo" ]] ; then
 
-	mkdir -p $HOME/.HandyHost/siaRepo && \
-	git clone https://github.com/SiaFoundation/siad $HOME/.HandyHost/siaRepo 
-	sudo chown -R "$USERNAME:$USERGROUP" $HOME/.HandyHost/siaRepo
+	mkdir -p $USERHOME/.HandyHost/siaRepo && \
+	git clone https://github.com/SiaFoundation/siad $USERHOME/.HandyHost/siaRepo 
+	sudo chown -R "$USERNAME:$USERGROUP" $USERHOME/.HandyHost/siaRepo
 else
-	cd $HOME/.HandyHost/siaRepo && \
+	cd $USERHOME/.HandyHost/siaRepo && \
 	git fetch --all && \
 	git pull
 fi
 
-cd $HOME/.HandyHost/siaRepo && make dependencies && make && \
-if ! grep -q '${HOME}/go/bin' "${profile_file}" ; then
+cd $USERHOME/.HandyHost/siaRepo && make dependencies && make && \
+if ! grep -q '${USERHOME}/go/bin' "${profile_file}" ; then
   echo "###Editing ${profile_file} to add go env variables###"
-  echo "export PATH=$PATH:${HOME}/go/bin" >> "${profile_file}"
+  echo "export PATH=$PATH:${USERHOME}/go/bin" >> "${profile_file}"
   source $profile_file
 fi
 
@@ -189,6 +190,7 @@ else
 	echo "kubectl Already Installed. Skipping."
 fi
 
+mkdir -p ${HOME}/.HandyHost/aktData && \
 if [[ ! -d ${HOME}/.HandyHost/aktData/kubespray ]] ; then
   mkdir -p ${HOME}/.HandyHost/aktData/kubespray && \
   cd ${HOME}/.HandyHost/aktData/kubespray && \
@@ -203,7 +205,7 @@ else
   LOCAL=$(git rev-parse @)
   REMOTE=$(git rev-parse @{u})
   BASE=$(git merge-base @ @{u})
-
+  echo "LOCAL: ${LOCAL}, REMOTE: ${REMOTE}"
   if [ "$LOCAL"=="$REMOTE" ]; then
     echo "Kubespray is up to date"
   else
@@ -270,6 +272,11 @@ if [[ $? != 0 ]] ; then
 else
 	echo "Platypus Installed. Skipping."
 fi
+if [[ -d "/Applications/HandyHost/HandyHost.app" ]] ; then
+	echo "removing old HandyHost App Build" && \
+	rm -rf "/Applications/HandyHost/HandyHost.app"
+fi
+
 platypus -P /Applications/HandyHost/HandyHost/MacOS_Resources/HandyHost.platypus HandyHost.app && \
 echo "Done Compiling HandyHost.app" && \
 

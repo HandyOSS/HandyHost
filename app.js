@@ -11,17 +11,17 @@ const api = new APIHelper();
 const utils = new CommonUtils();
 const port = process.env.HANDYHOST_PORT || 8008;
 const httpsPort = process.env.HANDYHOST_SSL_PORT || 58008;
-
-if(!fs.existsSync('./handyhost_server.key')){
+fs.writeFileSync(process.env.HOME+'/.HandyHost/handyhost.pid',process.pid.toString(),'utf8');
+if(!fs.existsSync(process.env.HOME+'/.HandyHost/handyhost_server.key')){
   //generate certs
   utils.getIPForDisplay().then(ipData=>{
     const args = [
       'req',
       '-x509', 
       '-out', 
-      'handyhost_server.crt',
+      process.env.HOME+'/.HandyHost/handyhost_server.crt',
       '-keyout', 
-      'handyhost_server.key',
+      process.env.HOME+'/.HandyHost/handyhost_server.key',
       '-newkey',
       'rsa:2048', 
       '-nodes', 
@@ -52,8 +52,8 @@ const httpServer = http.createServer(function(request, response) {
 api.initSocketConnection(httpServer);
 function startHttpsServer(){
   const options = {
-    key: fs.readFileSync('handyhost_server.key'),
-    cert: fs.readFileSync('handyhost_server.crt')
+    key: fs.readFileSync(process.env.HOME+'/.HandyHost/handyhost_server.key'),
+    cert: fs.readFileSync(process.env.HOME+'/.HandyHost/handyhost_server.crt')
   };
   const httpsServer = https.createServer(options,function(request, response) { 
     handleServerRequest(request,response);
@@ -127,10 +127,12 @@ function handleServerRequest(request,response){
 //console.log("NOTIFICATION: HandyHost Running at: http://localhost:" + port + "/\n");
 utils.getIPForDisplay().then(data=>{
   if(process.platform == 'darwin'){
-    console.log("NOTIFICATION: HandyHost Running at: http://"+data.ip+":" + data.port + "/\n, and https://"+data.ip+":"+httpsPort+' (self-signed cert)');
+    console.log("NOTIFICATION: HandyHost Daemon is Running at: http://"+data.ip+":" + data.port + "/, and https://"+data.ip+":"+httpsPort+'/ (self-signed cert)');
+    console.log('To stop the daemon, open a terminal and run: ')
+    console.log('kill '+fs.readFileSync(process.env.HOME+'/.HandyHost/handyhost.pid','utf8'))
   }
   
-  console.log("HandyHost Running at: http://"+data.ip+":" + data.port + "/\n, and https://"+data.ip+":"+httpsPort+' (self-signed cert)');
+  console.log("HandyHost Daemon Running at: http://"+data.ip+":" + data.port + "/, and https://"+data.ip+":"+httpsPort+'/ (self-signed cert)');
 })
 
 
@@ -138,9 +140,11 @@ process.on('uncaughtException', function(err) {
   if(err.code.indexOf('EADDRINUSE') >= 0){
     utils.getIPForDisplay().then(data=>{
       if(process.platform == 'darwin'){
-        console.log("NOTIFICATION: HandyHost Already Running at: http://"+data.ip+":" + data.port + "/\n and https://"+data.ip+":"+httpsPort+' (self-signed cert)');
+        console.log("NOTIFICATION: HandyHost Daemon Already Running at: http://"+data.ip+":" + data.port + "/ and https://"+data.ip+":"+httpsPort+' (self-signed cert)');
+        console.log('To stop the daemon, open a terminal and run: ')
+        console.log('kill '+fs.readFileSync(process.env.HOME+'/.HandyHost/handyhost.pid','utf8'))
       }
-      console.log("HandyHost Already Running at: http://"+data.ip+":" + data.port + "/\n and https://"+data.ip+":"+httpsPort+' (self-signed cert)');
+      console.log("HandyHost Daemon Already Running at: http://"+data.ip+":" + data.port + "/ and https://"+data.ip+":"+httpsPort+' (self-signed cert)');
       process.exit(1);
     })
   }

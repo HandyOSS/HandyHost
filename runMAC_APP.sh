@@ -12,6 +12,7 @@ source $profile_file
 export NVM_DIR=$HOME/.nvm && \
 [ -s "/usr/local/opt/nvm/nvm.sh" ] && \. "/usr/local/opt/nvm/nvm.sh" && \
 [ -s "/usr/local/opt/nvm/etc/bash_completion.d/nvm" ] && \. "/usr/local/opt/nvm/etc/bash_completion.d/nvm" && \
+echo -n > "$HOME/.HandyHost/handyhost.log" && \
 cd $PWD/HandyHost && \
 nvm use && \
 nohup node app.js > $HOME/.HandyHost/handyhost.log 2>&1 & \
