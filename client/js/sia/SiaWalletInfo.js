@@ -66,7 +66,7 @@ export class SiaWalletInfo{
 			$synced = $('<div class="syncedStatus">Synced: <span class="emoji">'+(isWalletSynced ? '✅' : '😞')+'</span> <small>[ '+walletHeight+' / '+chainHeight+' ]</small></div>')
 		}
 		else{
-			$synced = $('<div class="syncedStatus">Synced: <span class="emoji">'+(isChainSynced ? '✅' : '😞')+'</span> <small>[ '+chainHeight+' ]</small></div>')
+			$synced = $('<div class="syncedStatus">Synced: <span class="emoji">'+(isChainSynced ? '✅' : '😞')+'</span> <small>[ '+chainHeight+' / <span class="chainH">------</span> ]</small></div>')
 		}
 		console.log('set synced status',chainHeight,isChainSynced);
 		
@@ -74,6 +74,31 @@ export class SiaWalletInfo{
 		$('#siaWalletInfo').append($synced);
 		$('#siaMain .syncedStatus').remove();
 		$('#siaMain').append($synced.clone());
+		if(!isChainSynced){
+			if(typeof this.lastUpdateCount == "undefined"){
+				this.lastUpdateCount = 0;
+				updateHeight();
+			}
+			this.lastUpdateCount += 1;
+			if(this.lastUpdateCount == 10){
+				updateHeight();
+				this.lastUpdateCount = 1;
+			}
+			else{
+				if(typeof this.consensusHeight != "undefined"){
+					$('.syncedStatus .chainH').html(this.consensusHeight);
+				}
+			}
+		}
+		const _this = this;
+		function updateHeight(){
+			const url = 'https://siastats.info:3500/navigator-api/status';
+			fetch(url).then(d=>d.json()).then(data=>{
+				const height = data[0].consensusblock;
+				_this.consensusHeight = height;
+				$('.syncedStatus .chainH').html(height);
+			})
+		}
 	}
 	populateUI(walletData,address,chainData,lockedBalance){
 		console.log('populate',walletData,address,chainData);

@@ -33,13 +33,15 @@ export class HandyDVPN{
 			//try startup here since we have already inited
 		}
 		this.dvpnSetup.initConfigs(); //check if dvpn configs exist, create them if not.
-		
+		setTimeout(()=>{
+			//give some time to spin up before autostarting
+			this.dvpnSetup.autostartDVPN(this.ioNamespace); //make sure io exists before we autostart
+		},5000);
 	}
 	addSocketNamespace(ioNamespace){
 		//this.io.of('/dvpn')
 		//console.log('init dvpn sockets');
 		this.ioNamespace = ioNamespace;
-		this.dvpnSetup.autostartDVPN(this.ioNamespace); //make sure io exists before we autostart
 		this.ioNamespace.adapter.on("create-room", (room) => {
 		  if(room.indexOf('dvpn') == 0){
 		  	//start a Socket listener for this room
