@@ -35,10 +35,11 @@ export class DVPNDashboard {
 			this.nodeStatus.updateLogs(data);
 		})
 		this.socket.on('status',status=>{
+			console.log('status update',status);
 			const isConnected = status == 'disconnected' ? false : true;
 			this.nodeStatus.setStatus(isConnected)
 		})
-		this.socket.on('launched'()=>{
+		this.socket.on('launched',()=>{
 			this.nodeStatus.setStatus(true);
 		})
 		this.socket.on('updatesAvailable',updateData=>{
