@@ -35,6 +35,7 @@ export class DVPNDashboard {
 			this.nodeStatus.updateLogs(data);
 		})
 		this.socket.on('status',status=>{
+			console.log('status update',status);
 			const isConnected = status == 'disconnected' ? false : true;
 			this.nodeStatus.setStatus(isConnected)
 		})
