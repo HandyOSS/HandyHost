@@ -16,9 +16,9 @@
 		    // Windows Phone must come first because its UA also contains "Android"
 		    
 
-		    if (/android/i.test(userAgent)) {
+		    /*if (/android/i.test(userAgent)) {
 		        return false;
-		    }
+		    }*/
 		    if(/Linux aarch64/i.test(userAgent) && !(/Chrome/i.test(userAgent))){
 		    	return false
 		    }

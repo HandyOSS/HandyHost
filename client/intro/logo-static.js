@@ -286,19 +286,31 @@ export class TriangulatedLogo{
 			height:$('#introLogo').height()
 		}
 	}
+	checkIsAndroid() {
+	    const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+
+	    if (/android/i.test(userAgent)) {
+	        return true;
+	    }
+	    return false;
+	}
 	initLogo(logoAssets,params,isStaticJSON){
 		
 		this.shouldRenderLogo = true;
 		if(typeof this.scene == "undefined"){
+			let pixelRatio = window.devicePixelRatio;
+			if(this.checkIsAndroid()){
+				pixelRatio = 1;
+			}
 			this.scene = new THREE.Scene();
 			this.camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 100000 );
 			this.shouldAnimate = true;
 			this.renderer = new THREE.WebGLRenderer({
 				antialias: true,
-				devicePixelRatio: window.devicePixelRatio,
+				devicePixelRatio: pixelRatio,
 				alpha:true
 			})
-			this.renderer.setPixelRatio(window.devicePixelRatio);
+			this.renderer.setPixelRatio(pixelRatio);
 			this.renderer.setClearColor(0x111111, 0.0)
 			this.camera.position.z = 100;
 			this.camera.lookAt(new THREE.Vector3(0,0,0));
