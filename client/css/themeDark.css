@@ -234,3 +234,6 @@ html.darkTheme .modalWrap{
 .darkTheme input#autostart{
 	filter:invert(1);
 }
+.darkTheme .isActiveBadge .badgeWrap{
+	filter:invert(1);
+}

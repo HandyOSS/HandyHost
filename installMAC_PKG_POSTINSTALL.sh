@@ -5,6 +5,8 @@ USERGROUP="$(id -gn $USERNAME)"
 
 echo "USER ${USERNAME}, GROUP ${USERGROUP}"
 
+PYTHON="$(which python3)"
+
 if [[ ! -s "$HOME/.bash_profile" && -s "$HOME/.profile" ]] ; then
   profile_file="$HOME/.profile"
 else
@@ -20,6 +22,22 @@ pwd="/Applications/HandyHost/HandyHost" #set to applications dir
 
 echo "PWD: ${PWD}"
 echo "########## Installing HandyHost Dependencies... ##########"
+
+xcode-select --install > /dev/null 2>&1
+if [ 0 == $? ]; then
+    sleep 1
+    osascript <<EOD
+tell application "System Events"
+    tell process "Install Command Line Developer Tools"
+        keystroke return
+        click button "Agree" of window "License Agreement"
+    end tell
+end tell
+EOD
+else
+    echo "Command Line Developer Tools are already installed!"
+fi
+
 which -s brew
 if [[ $? != 0 ]] ; then
     # Install Homebrew
@@ -33,6 +51,12 @@ else
 	echo "Homebrew Already Installed. Skipping Install."
 	echo "Updating Homebrew..."
 	su - $USERNAME -c "brew update"
+fi
+
+which -s python3
+if [[ $? != 0 ]] ; then
+	su - $USERNAME -c "brew install python@3.9" && \
+	PYTHON="$(which python3)"
 fi
 
 if [[ ! -d "/usr/local/opt/nvm" ]] ; then
@@ -49,11 +73,12 @@ export NVM_DIR=$HOME/.nvm && \
 
 NPMVERSION="$(cat $pwd/.nvmrc)"
 echo "NPM VERSION TO INSTALL ${NPMVERSION}" && \
+echo "PYTHON VERSION IS ${PYTHON}" && \
 cd $pwd && \
 nvm install $NPMVERSION && \
 nvm use && \
 sudo chown -R "$USERNAME:$USERGROUP" $pwd && \
-su - $USERNAME -c "cd $pwd && npm install --build-from-source --python=/usr/bin/python3" && \
+su - $USERNAME -c "npm config set python $PYTHON && cd $pwd && npm install --build-from-source --python=$PYTHON" && \
 sudo chown -R "$USERNAME:$USERGROUP" ./node_modules && \
 sudo npm install -g bower && \
 su - $USERNAME && \
@@ -75,13 +100,16 @@ fi
 which -s go
 if [[ $? != 0 ]] ; then
 	echo "installing golang"
-	wget "https://golang.org/dl/go1.17.darwin-${arch_name}.pkg" && \
-	sudo rm -rf /usr/local/go && \
-	sudo tar -C /usr/local -xzf "go1.17.darwin-${arch_name}.pkg"
-	sudo chown -R "$USERNAME:$USERGROUP" /usr/local/go
+	su - $USERNAME -c "brew install go"
+	# wget "https://golang.org/dl/go1.17.darwin-${arch_name}.pkg" && \
+	# sudo rm -rf /usr/local/go && \
+	# sudo tar -C /usr/local -xzf "go1.17.darwin-${arch_name}.pkg"
+	# sudo chown -R "$USERNAME:$USERGROUP" /usr/local/go
+else
+	echo "golang already present"
 fi
 
-export PATH=$PATH:/usr/local/go/bin && \
+#export PATH=$PATH:/usr/local/go/bin && \
 
 if [[ ! -s "$HOME/.HandyHost/siaRepo" ]] ; then
 
@@ -95,9 +123,9 @@ else
 fi
 
 cd $HOME/.HandyHost/siaRepo && make dependencies && make && \
-if ! grep -q 'usr/local/go/bin' "${profile_file}" ; then
+if ! grep -q '${HOME}/go/bin' "${profile_file}" ; then
   echo "###Editing ${profile_file} to add go env variables###"
-  echo "export PATH=$PATH:/usr/local/go/bin:${HOME}/go/bin" >> "${profile_file}"
+  echo "export PATH=$PATH:${HOME}/go/bin" >> "${profile_file}"
   source $profile_file
 fi
 
@@ -216,12 +244,13 @@ cd $HOME/.HandyHost/aktData && \
 su - $USERNAME -c "brew install cdrtools" && \
 su - $USERNAME -c "brew install p7zip" && \
 su - $USERNAME -c "brew install whois" && \
+su - $USERNAME -c "brew install coreutils" && \
 echo "Finished Installing Akash Dependencies" && \
 
 export AKASH_NET="https://raw.githubusercontent.com/ovrclk/net/master/mainnet"
 export AKASH_VERSION="$(curl -s "$AKASH_NET/version.txt")"
 export AKASH_CHAIN_ID="$(curl -s "$AKASH_NET/chain-id.txt")"
-export AKASH_NODE="$(curl -s "$AKASH_NET/rpc-nodes.txt" | shuf -n 1)"
+export AKASH_NODE="$(curl -s "$AKASH_NET/rpc-nodes.txt" | gshuf -n 1)"
 
 echo "installing akash software..." && \
 cd $HOME/.HandyHost/aktData && \

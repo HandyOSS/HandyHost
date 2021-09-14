@@ -12,7 +12,9 @@ export class DVPNDashboardAnalytics{
 		const addressMeta = data.wallet;
 		let node = data.node;
 		console.log('data IN',data);
+		let isConnected = true;
 		if(Object.keys(data.node).length == 0){
+			isConnected = false;
 			node = {
 				result:{
 					moniker: '<div class="monikerWrap"><span class="warningEmoji">⚠️</span> Node Offline</div>',
@@ -28,6 +30,7 @@ export class DVPNDashboardAnalytics{
 				}
 			}
 		}
+		this.parentComponent.nodeStatus.setStatus(isConnected);
 		$('.analyticsPanel').removeClass('loading');
 		this.renderNodeAnalytics(node.result,balance,analytics,addressMeta,data.activeSessions,data.sessions);
 		this.renderSessionsRealtime(data.activeSessions);

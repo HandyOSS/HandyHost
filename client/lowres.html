@@ -1,0 +1,102 @@
+<html>
+<head>
+	<meta charset="UTF-8">
+	<script src="bower_components/jquery/dist/jquery.min.js"></script>
+	<title>HandyHost</title>
+	<style>
+		body,html{
+			background:#111;
+			padding:0;
+			margin:0;
+		}
+		#handyhost{
+			float:left;
+			width: 100%;
+			height: 80%;
+			text-align: center;
+		}
+		#handyhost img{
+			height: 80%;
+		}
+		#icons{
+			float:left;
+			width: 100%;
+			height: 20%;
+		}
+		#icons a{
+			float:left;
+			width: 33%;
+			height: 100%;
+			text-align:center;
+		}
+		.sia img{
+			max-width: 90%;
+			max-height: 60%;
+		}
+		.dvpn img{
+			max-width: 80%;
+			max-height: 90%;
+		}
+		.akt img{
+			max-width:80%;
+			height: 50%;
+		}
+		#icons a:hover{
+			background:rgba(200,200,200,0.1);
+		}
+		@media (orientation: portrait) {
+			#handyhost{
+				height: 60%;
+			}
+			#icons{
+				height: 40%;
+			}
+			#icons a{
+				width: 100%;
+				height: 33%;
+			}
+		}
+	</style>
+	
+</head>
+<body>
+	<div id="handyhost">
+		<img src="./intro/svg/HandyHost.svg" />
+	</div>
+	<div id="icons">
+		<a class="dvpn" href="./dvpn.html">
+			<img src="./intro/svg/sentinel.svg" />
+		</a>
+		<a class="akt" href="./akt.html">
+			<img src="./intro/svg/akash.svg" />
+		</a>
+		<a class="sia" href="./sia.html">
+			<img src="./intro/svg/sia.svg" />
+		</a>
+
+	</div>
+	<script>
+		function doResize($this,target){
+			const h = $(target).height();
+			const imgH = $this.height();
+			const marginTop = Math.abs(h - imgH);
+			$this.css('margin-top',marginTop / 2);
+		}
+		
+		$('#icons img').on('load',function(){
+			doResize($(this),'#icons a');
+		})
+		$('#handyhost img').on('load',function(){
+			doResize($(this),'#handyhost');
+			
+		})
+		$(window).on('resize',()=>{
+			$('#icons img').each(function(){
+				doResize($(this),'#icons a');
+			})
+			doResize($('#handyhost img'),'#handyhost');
+		})
+		
+	</script>
+</body>
+</html>

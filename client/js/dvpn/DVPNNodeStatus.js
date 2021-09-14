@@ -129,12 +129,14 @@ export class DVPNNodeStatus{
 			$('#haltDVPN').show();
 			$('.statusBubble .label').html('Active');
 			$('.statusBubble .bubble').addClass('active').removeClass('inactive');
+			$('.isActiveBadge').show();
 		}
 		else{
 			$('#showLaunchModal').show();
 			$('#haltDVPN').hide();
 			$('.statusBubble .label').html('Not Active');
 			$('.statusBubble .bubble').removeClass('active').addClass('inactive');
+			$('.isActiveBadge').hide();
 		}
 	}
 	addBulkLogs(logBulk){

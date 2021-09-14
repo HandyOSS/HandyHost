@@ -1,5 +1,6 @@
 <html>
 <head>
+	<meta charset="UTF-8">
 	<title>HandyHost</title>
 	<link rel="stylesheet" type="text/css" href="./intro/css/main.css" />
 	<script src="./external/Tween.js"></script>
@@ -8,6 +9,36 @@
 <body>
 	<div id="introLogo"></div>
 	<script type="module">
+		import {WEBGL} from './external/WEBGL.js';
+		function checkUserAgent() {
+		    const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+
+		    // Windows Phone must come first because its UA also contains "Android"
+		    
+
+		    if (/android/i.test(userAgent)) {
+		        return false;
+		    }
+		    if(/Linux aarch64/i.test(userAgent) && !(/Chrome/i.test(userAgent))){
+		    	return false
+		    }
+		    if(/X11/i.test(userAgent)){
+		    	return false
+		    }
+
+		    
+		    return true;
+		}
+		if ( ! WEBGL.isWebGLAvailable() ) {
+			console.log("NO WEBGL")
+			window.location.href = './lowres.html'
+		}
+		else{
+			console.log('has webgl support');
+		}
+		if(!checkUserAgent()){
+			window.location.href='./lowres.html';
+		}
 		const logoAkash = './intro/svg/akash.svg';
 		const logoSentinel = './intro/svg/sentinel.svg';
 		const logoSia = './intro/svg/sia.svg';

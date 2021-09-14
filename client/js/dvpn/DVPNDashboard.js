@@ -38,8 +38,9 @@ export class DVPNDashboard {
 			const isConnected = status == 'disconnected' ? false : true;
 			this.nodeStatus.setStatus(isConnected)
 		})
-		this.socket.on('launched'()=>{
+		this.socket.on('launched',()=>{
 			this.nodeStatus.setStatus(true);
+			$('.isActiveBadge').show();
 		})
 		this.socket.on('updatesAvailable',updateData=>{
 			//dvpn node has updates via github.

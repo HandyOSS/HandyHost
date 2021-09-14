@@ -234,7 +234,7 @@ export class SiaDashboard {
 					window.location.href = '/';
 				break;
 				case 'handyhostUpdatesWarning':
-					_this.nodeStatus.showHandyHostUpdateModal();
+					_this.showHandyHostUpdateModal();
 				break;
 			}
 		})

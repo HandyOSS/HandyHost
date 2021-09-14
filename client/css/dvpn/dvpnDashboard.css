@@ -200,6 +200,44 @@ li .dvpnDonut .donutTitle{
   display:none;
 }
 
+.isActiveBadge{
+  position:absolute;
+  top: 5px;
+  right: 5px;
+  z-index:1;
+  font-size: 14px;
+  color:#333;
+  line-height: 29px;
+  display:none;
+}
+.isActiveBadge .badgeWrap{
+  float:right;
+  width: 25px;
+  height: 25px;
+  padding: 5px;
+}
+.isActiveBadge .badgeLabel{
+  float:left;
+}
+.isActiveBadge:hover .badgeInfo{
+  display:block;
+}
+.badgeWrap .miniHNS{
+  width: 20px;
+  filter: invert(42%) sepia(80%) saturate(1554%) hue-rotate(88deg) brightness(107%) contrast(113%);
+}
+.isActiveBadge .badgeInfo{
+  display:none;
+  float:right;
+  background:rgba(220,220,220,0.8);
+  padding: 10px;
+  width: 200px;
+  position:absolute;
+  top: 30px;
+  right: 0px;
+  line-height: 18px;
+}
+
 .lds-ripple {
   display: inline-block;
   position: relative;
