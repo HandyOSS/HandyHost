@@ -82,9 +82,9 @@ sudo chown -R "$USERNAME:$USERGROUP" $pwd && \
 su - $USERNAME -c "npm config set python $PYTHON && cd $pwd && npm install --build-from-source --python=$PYTHON" && \
 sudo chown -R "$USERNAME:$USERGROUP" ./node_modules && \
 sudo npm install -g bower && \
-su - $USERNAME && \
-cd $pwd/client && \
-su - $USERNAME -c "[ -s \"/usr/local/opt/nvm/nvm.sh\" ] && \. \"/usr/local/opt/nvm/nvm.sh\" && cd $pwd && nvm install $NPMVERSION && nvm use && cd $pwd/client && bower install" && \
+BOWER=$(which bower) && \
+echo "Bower: $BOWER" && \
+su - $USERNAME -c "[ -s \"/usr/local/opt/nvm/nvm.sh\" ] && \. \"/usr/local/opt/nvm/nvm.sh\" && cd $pwd && nvm install $NPMVERSION && nvm use && cd $pwd/client && $BOWER install" && \
 mkdir -p $HOME/.HandyHost && \
 sudo chown -R "$USERNAME:$USERGROUP" $HOME/.HandyHost && \
 

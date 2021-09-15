@@ -401,7 +401,7 @@ export class DVPNSetup{
 	launchDVPN(pw,socketIONamespace){
 		return new Promise((resolve,reject)=>{
 			this.getPorts().then(ports=>{
-				console.log('should start dvpn')
+				console.log('should start dvpn',ports)
 				const args = ['./dvpnAPI/launchdvpn.sh',pw,ports.node,ports.wireguard];
 				let output = '';
 				let lineCount = 0;

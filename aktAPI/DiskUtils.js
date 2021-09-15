@@ -493,6 +493,77 @@ export class DiskUtils{
 			
 		});
 	}
+	getUSBFromDiskUtil(){
+		//macos
+		return new Promise((resolve,reject)=>{
+			import {spawn} from 'child_process';
+			const disksOut = [];
+			let out = '';
+			const diskutil = spawn('diskutil',['list']);
+			diskutil.stdout.on('data',d=>{
+				out += d.toString();
+			})
+			diskutil.stderr.on('data',d=>{
+				console.log('diskutil parsing error',d.toString());
+			})
+			const disks = [];
+			diskutil.on('close',()=>{
+				
+				const lines = out.split('\n');
+				let disk = {};
+				let lineI = 0;
+				lines.map(line=>{
+					if(line.trim() == ''){
+						console.log('empty line');
+						disks.push(disk);
+						disk = {};
+						lineI = 0;
+					}
+					else{
+						if(lineI == 0){
+							console.log('line',line);
+							let parts = line.split(':')[0];
+							parts = parts.split('(');
+							parts[0] = parts[0].trim();
+							parts[1] = parts[1].replace(')','');
+							disk.path = parts[0];
+							disk.type = parts[1];
+						}
+						
+						lineI++;
+					}
+				});
+				console.log('disks',disks);
+				let jsonOut = ''
+				const jsonDiskList = spawn('bash',['./getUSB_MAC.sh'])
+				jsonDiskList.stdout.on('data',d=>{
+					jsonOut += d.toString();
+				})
+				jsonDiskList.on('close',()=>{
+					console.log('json list',jsonOut);
+					console.log('disks',disks)
+					const json = JSON.parse(jsonOut);
+					disks.filter(d=>{
+						return Object.keys(d) > 0;
+					}).filter(disk=>{
+						return disk.type.indexOf('external') >= 0 && disk.type.indexOf('physical') >= 0;
+					}).map(disk=>{
+
+						let id = disk.path.split('/');
+						id = id[id.length-1];
+						console.log('disk to parse',disk,id);
+						const meta = jsonOut.AllDisksAndPartitions.find(d=>{
+							return d.DeviceIdentifier == id;
+						})
+						console.log('external drive',meta);
+						disksOut.push(id);
+					})
+					console.log('disks out',disksOut);
+				})
+			});
+
+		});
+	}
 	getUSBFromLSBLK(){
 		return new Promise((resolve,reject)=>{
 			let lsblkOut = '';
