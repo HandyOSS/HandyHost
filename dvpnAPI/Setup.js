@@ -1,6 +1,7 @@
 import fs from 'fs';
 import {spawn} from 'child_process';
 import https from 'https';
+import http from 'http';
 import generator from 'project-name-generator';
 
 export class DVPNSetup{
@@ -43,10 +44,10 @@ export class DVPNSetup{
 			//s.stdin.write('(echo derparoo;)');
 			s.stdout.on('data',d=>{
 				output += d.toString();
-			    console.log('stdout',d.toString());
+			    //console.log('stdout',d.toString());
 			})
 			s.stderr.on('data',d=>{
-			    console.log('stderr',d.toString());
+			    //console.log('stderr',d.toString());
 			    stderrOutput += d.toString();
 			    //reject({'error':d.toString()})
 			})
@@ -117,14 +118,14 @@ export class DVPNSetup{
 			//s.stdin.write('(echo derparoo;)');
 			s.stdout.on('data',d=>{
 				output += d.toString();
-			    console.log('stdout',d.toString());
+			    //console.log('stdout',d.toString());
 			})
 			s.stderr.on('data',d=>{
-			    console.log('stderr',d.toString());
+			    //console.log('stderr',d.toString());
 			    reject({'error':d.toString()})
 			})
 			s.on('close',d=>{
-			    console.log('spawn closed',d);
+			    //console.log('spawn closed',d);
 			    //1.1.0rc0 dvpn-node requires from and price to be set in order to init wallets now.
 			    const newConfigParam = {
 			    	node:{
@@ -152,10 +153,10 @@ export class DVPNSetup{
 		return new Promise((resolve,reject)=>{
 			const nodeConfig = fs.readFileSync(`${process.env.HOME}/.sentinelnode/config.toml`,'utf8');
 			const wgConfig = fs.readFileSync(`${process.env.HOME}/.sentinelnode/wireguard.toml`,'utf8');
-			console.log('config',wgConfig);
+			//console.log('config',wgConfig);
 			const nodeParsed = this.parseConfigFile(nodeConfig,filterConfig);
 			const wgParsed = this.parseConfigFile(wgConfig,filterConfig);
-			console.log('parsed',wgParsed);
+			//console.log('parsed',wgParsed);
 			resolve({
 				node:nodeParsed,
 				wireguard:wgParsed
@@ -382,11 +383,77 @@ export class DVPNSetup{
 		});
 		return output;
 	}
+	checkMachineStatus(){
+		return new Promise((resolve,reject)=>{
+			console.log('check machine status dvpn')
+			this.getPorts().then(ports=>{
+				console.log('node port',ports.node);
+				const options = {
+					host: 'localhost',
+					port: ports.node,
+					path: '/status',
+					method:'GET',
+					rejectUnauthorized: false,
+					//requestCert: true,
+					agent: false
+				};
+				
+				
+				let output = '';
+				const request = http.request(options,response=>{
+					//another chunk of data has been received, so append it to `str`
+					
+					response.on('data', (chunk) => {
+						output += chunk;
+					});
+
+					//the whole response has been received, so we just print it out here
+					response.on('end', () => {
+						let json = [];
+						try{
+							json = JSON.parse(output);
+						}
+						catch(e){
+							console.log('bad json response',output.toString());
+						}
+
+						resolve(true);
+
+					});
+
+					if(response.statusCode.toString() != '200'){
+						//something went wrong
+						reject(output);
+					}
+				});
+
+				request.on('error', (err)=> {
+				    reject(err)
+				});
+				request.end();
+			}).catch(e=>{
+				console.log('ports err',e);
+				resolve(false);
+			})
+		})
+	}
 	autostartDVPN(socketIONamespace){
 		const autostartFile = process.env.HOME+'/.HandyHost/sentinelData/autostart.json';
 		if(fs.existsSync(autostartFile)){
-			const params = JSON.parse(fs.readFileSync(autostartFile,'utf8'));
-			this.launchDVPN(params.pw,socketIONamespace);
+			this.checkMachineStatus().then(running=>{
+				console.log('is dvpn running ??',running);
+				if(!running){
+					const params = JSON.parse(fs.readFileSync(autostartFile,'utf8'));
+					this.launchDVPN(params.pw,socketIONamespace);
+				}
+				else{
+					console.log('autostart: dvpn is already running')
+				}
+			}).catch(e=>{
+				const params = JSON.parse(fs.readFileSync(autostartFile,'utf8'));
+				this.launchDVPN(params.pw,socketIONamespace);
+			})
+			
 		}
 	}
 	configureAutostart(params){
