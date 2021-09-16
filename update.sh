@@ -2,6 +2,9 @@
 HANDYHOST_DIR=$PWD
 UPDATED_DIR=$HOME/.HandyHost/HandyHostUpdate
 HANDYHOST_PID=$3
+if [[ -s "$HOME/.bash_profile" ]] ; then
+	source "$HOME/.bash_profile"
+fi
 source $HOME/.profile && \
 if [[ -s /var/log/handyhost.pid ]]; then
 	HANDYHOST_PID=$(cat /var/log/handyhost.pid)
@@ -19,7 +22,7 @@ git checkout "$1" && \
 #skip rebuilding sqlite3 if we can.....
 cp -r $HANDYHOST_DIR/node_modules ./node_modules && \
 source $USERHOME/.bashrc && \
-if [[ -s "$USERHOME/.nvm" ]] ; then
+if [[ -d "$USERHOME/.nvm" ]] ; then
 	#has nvm
 	nvm install $(cat $UPDATED_DIR/.nvmrc) && \
 	nvm use
@@ -32,12 +35,13 @@ cd $HANDYHOST_DIR && \
 echo "restarting handyhost" && \
 sleep 2 && \
 
-if type forever > /dev/null 2>&1; then
-  	#forever exists, kill with forever
-  	forever stop $HANDYHOST_PID
+if [[ -s "/etc/init.d/handyhost" ]]
+	sudo systemctl restart handyhost
+	#if type forever > /dev/null 2>&1; then
+  		#forever exists, kill with forever
+  		#forever stop $HANDYHOST_PID
 else
-	kill $HANDYHOST_PID
+	kill $HANDYHOST_PID && \
+	sh -c "$2 > $USERHOME/.HandyHost/handyhost.log" &
 fi
-
-sh -c "$2" & \
 exit 0
