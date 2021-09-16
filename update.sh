@@ -35,7 +35,7 @@ cd $HANDYHOST_DIR && \
 echo "restarting handyhost" && \
 sleep 2 && \
 
-if [[ -s "/etc/init.d/handyhost" ]]
+if [[ -s "/etc/init.d/handyhost" ]] ; then
 	sudo systemctl restart handyhost
 	#if type forever > /dev/null 2>&1; then
   		#forever exists, kill with forever

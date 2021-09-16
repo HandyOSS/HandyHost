@@ -187,8 +187,8 @@ export class DVPNNodeStatus{
 			fetch('/api/updateHandyHost').then(d=>d.json()).then(json=>{
 				console.log('done with update???',json);
 				$('#dvpnMain .options li#handyhostUpdatesWarning').hide();
-				$('#updateHandyHostModal .updateInfo').html("Update Complete! Reloading in <span class=\"secVal\">5</span>s...")
-				let i = 10;
+				$('#updateHandyHostModal .updateInfo').html("Update Complete! Reloading in <span class=\"secVal\">20</span>s...")
+				let i = 20;
 				const reloadInterval = setInterval(()=>{
 					i = i-1 <= 0 ? 0 : i-1;
 					$('#updateHandyHostModal .secVal').html(i);
@@ -196,7 +196,7 @@ export class DVPNNodeStatus{
 				setTimeout(()=>{
 					clearInterval(reloadInterval);
 					window.location.reload();
-				},10000);
+				},20000);
 			})
 		});
 		$('#updateHandyHostModal #cancelHandyHostUpdate').off('click').on('click',()=>{
