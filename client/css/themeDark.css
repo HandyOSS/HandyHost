@@ -14,6 +14,7 @@ html.darkTheme .dashboard,
 html.darkTheme #serviceBackground,
 html.darkTheme .mainPanel,
 html.darkTheme #walletInitModal,
+html.darkTheme .pathSelectModal,
 html.darkTheme .modalWrap{
 	filter:invert(1);
 }
@@ -103,7 +104,8 @@ html.darkTheme .modalWrap{
 .darkTheme .styledSelect, 
 .darkTheme .styledInput, 
 .darkTheme .registerProviderModal input[type="checkbox"], 
-.darkTheme .setPortsModal input[type="checkbox"]{
+.darkTheme .setPortsModal input[type="checkbox"],
+.darkTheme #siaStorageInfo .range input{
 	filter:invert(1);
 }
 .darkTheme .button{
