@@ -143,8 +143,25 @@ export class AKTClusterConfig{
 			}
 		})
 		const modified = configData.nodes.map(node=>{
+			let myRole;
 			if(typeof node.kubernetes == "undefined"){
-				let myRole = 'none';
+				myRole = 'none';
+				if(!hasMaster){
+					myRole = 'master';
+					hasMaster = true;
+				}
+				if(myRole == 'none' && !hasEtcd){
+					myRole = 'etcd';
+					hasEtcd = true;
+				}
+				node.kubernetes = {
+					role:myRole,
+					isCompute:true,
+					name:node.hostname.replace('.local','')
+				}
+			}
+			else{
+				myRole = node.kubernetes.role;
 				if(!hasMaster){
 					myRole = 'master';
 					hasMaster = true;
@@ -161,6 +178,7 @@ export class AKTClusterConfig{
 			}
 			return node;
 		});
+		console.log('autconfigd cluster',modified);
 		return modified;
 	}
 	showQuestionPopup(questionID){
@@ -216,6 +234,7 @@ export class AKTClusterConfig{
 				return;
 			}
 			if(typeof node.kubernetes != "undefined"){
+				
 				let k8sName = node.kubernetes.name;
 				let k8sRole = node.kubernetes.role;
 				if(k8sRole == 'master'){
@@ -226,6 +245,7 @@ export class AKTClusterConfig{
 				}
 			}
 		})
+
 		configData.nodes.map(node=>{
 			if(!node.selected){
 				return;
@@ -256,6 +276,11 @@ export class AKTClusterConfig{
 				if(isCompute){
 					$isComputeCheckbox.attr('checked','checked');
 				}
+				/*if(masterName == ''){
+					masterName = k8nName;
+					k8nRole = 'master';
+					$('option[value="'+k8nRole+'"]',$k8nRoleSelect).attr('selected','selected');
+				}*/
 				if(ingressName == '' && k8nRole == 'master'){
 					ingressName = k8nName;
 					isIngress = true;
@@ -521,7 +546,7 @@ export class AKTClusterConfig{
 			if($('#buildABoxModal #finishHost').hasClass('nonActive')){
 				return;
 			}
-			$('#buildABoxModal #finishHost').html('Submitting...').addClass('nonActive');
+			$('#buildABoxModal #finishHost').html('Creating ISO/Flashing USB...').addClass('nonActive');
 			$('#buildABoxModal #autoConfig .error').hide();
 			$('#buildABoxModal #autoConfig .confirmation').hide();
 			if(typeof path != "undefined" && hostname != ''){
@@ -577,12 +602,28 @@ export class AKTClusterConfig{
 					$('#buildAX86BoxModal .chooseDeviceResult').html('<div class="usbError">'+r.error+'</div>');
 				}
 				else{
+					//{platform:process.platform,usbs}
+					const platform = r.platform;
+					const usbs = r.usbs;
+					if(usbs.length == 0){
+						$('#buildAX86BoxModal .chooseDeviceResult').html('<div class="usbError">No USB Disks Detected</div>');
+						return;
+					}
 					const $select = $('<select class="styledSelect usbDevice" id="usbDevicex86"></select>')
-					r.map(usb=>{
-						const $option = $('<option value="'+usb.meta.device+'">'+usb.meta.model+' - '+usb.meta.size+'</option>')
+					usbs.map(usb=>{
+						const diskSize = typeof usb.meta.size == 'number' ? numeral(usb.meta.size).format('0.0b') : usb.meta.size;
+						const $option = $('<option value="'+usb.meta.device+'">'+usb.meta.model+' - '+diskSize+'</option>')
 						$select.append($option);
 					})
 					$('#buildAX86BoxModal .chooseDeviceResult').html($select);
+					if(platform == 'darwin'){
+						$('#buildAX86BoxModal .chooseDeviceResult').after(`
+							<div class="chooseDeviceResult">
+								<input type="password" id="sudoPW" class="styledInput" placeholder="Your MacOS Password" />
+								<label for="sudoPW">*Note: Your MacOS User Password is required to flash an attached USB device</label>
+							</div>
+						`)
+					}
 					if($('#buildAX86BoxModal .usbDevice option:selected').length > 0){
 						$('#buildAX86BoxModal #finishHostx86').removeClass('nonActive');
 					}
@@ -597,7 +638,7 @@ export class AKTClusterConfig{
 			if($('#buildAX86BoxModal .finishHost').hasClass('nonActive')){
 				return;
 			}
-			$('#buildAX86BoxModal .finishHost').html('Submitting...').addClass('nonActive');
+			$('#buildAX86BoxModal .finishHost').html('Creating ISO/Flashing USB...').addClass('nonActive');
 			$('#buildAX86BoxModal .autoConfig .error').hide();
 			$('#buildAX86BoxModal .autoConfig .confirmation').hide();
 			if(typeof path != "undefined"){
@@ -609,7 +650,7 @@ export class AKTClusterConfig{
 				      'Content-Type': 'application/json'
 				    },
 				    method: "POST",
-				    body: JSON.stringify({path})
+				    body: JSON.stringify({path,pw:$('#sudoPW').val()})
 				})
 				.then((res)=>{ console.log('success'); return res.json(); }).then(data=>{
 					$('#buildAX86BoxModal .finishHost').html('Create Ubuntu Auto-Installer');

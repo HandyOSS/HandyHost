@@ -28,7 +28,7 @@ export NVM_DIR="/home/$USER/.nvm"
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
 
 doCommand(){
-    su - $USER -c "systemctl --user restart docker && source /home/$USER/.bashrc && source /home/$USER/.profile && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" && cd $SOURCE_DIR && nvm use && $forever $1 --pidFile $pidfile -l $logfile -a $SOURCE_NAME"
+    su - $USER -c "source /home/$USER/.bashrc && source /home/$USER/.profile && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" && cd $SOURCE_DIR && nvm use && $forever $1 --pidFile $pidfile -l $logfile -a $SOURCE_NAME"
     #RETVAL=$?
 }
 start() {

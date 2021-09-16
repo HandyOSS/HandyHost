@@ -71,7 +71,8 @@ export class SiaWalletConfig{
 			});
 		})*/
 		
-		$('#closeModal').off('click').on('click',()=>{
+		$('#walletInitModal .closeModal').off('click').on('click',()=>{
+			console.log('hide');
 			this.hide();
 		})
 

@@ -174,7 +174,7 @@ export class DVPNNodeStatus{
 		//show the modal
 		$('#updateHandyHostModal').show();
 		$('#updateHandyHostModal .modalContent').addClass('showing');
-		$('#updateHandyHostModal #closeModal').off('click').on('click',()=>{
+		$('#updateHandyHostModal .closeModal').off('click').on('click',()=>{
 			$('#updateHandyHostModal').hide();
 		});
 		$('#updateHandyHostModal #updateHandyHost.save').off('click').on('click',()=>{
@@ -187,10 +187,16 @@ export class DVPNNodeStatus{
 			fetch('/api/updateHandyHost').then(d=>d.json()).then(json=>{
 				console.log('done with update???',json);
 				$('#dvpnMain .options li#handyhostUpdatesWarning').hide();
-				$('#updateHandyHostModal .updateInfo').html("Update Complete! Reloading in 5s...")
+				$('#updateHandyHostModal .updateInfo').html("Update Complete! Reloading in <span class=\"secVal\">5</span>s...")
+				let i = 10;
+				const reloadInterval = setInterval(()=>{
+					i = i-1 <= 0 ? 0 : i-1;
+					$('#updateHandyHostModal .secVal').html(i);
+				},1000);
 				setTimeout(()=>{
+					clearInterval(reloadInterval);
 					window.location.reload();
-				},5000);
+				},10000);
 			})
 		});
 		$('#updateHandyHostModal #cancelHandyHostUpdate').off('click').on('click',()=>{
@@ -202,7 +208,7 @@ export class DVPNNodeStatus{
 		//show the modal
 		$('#updateDVPNModal').show();
 		$('#updateDVPNModal .modalContent').addClass('showing');
-		$('#updateDVPNModal #closeModal').off('click').on('click',()=>{
+		$('#updateDVPNModal .closeModal').off('click').on('click',()=>{
 			$('#updateDVPNModal').hide();
 		});
 		$('#updateDVPNModal #updateNode').off('click').on('click',()=>{

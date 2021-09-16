@@ -79,7 +79,7 @@ cd $pwd && \
 nvm install $NPMVERSION && \
 nvm use && \
 sudo chown -R "$USERNAME:$USERGROUP" $pwd && \
-su - $USERNAME -c "npm config set python $PYTHON && cd $pwd && npm install --build-from-source --python=$PYTHON" && \
+su - $USERNAME -c "[ -s \"/usr/local/opt/nvm/nvm.sh\" ] && \. \"/usr/local/opt/nvm/nvm.sh\" && cd $pwd && nvm install $NPMVERSION && nvm use && npm config set python $PYTHON && cd $pwd && npm install --build-from-source --python=$PYTHON" && \
 sudo chown -R "$USERNAME:$USERGROUP" ./node_modules && \
 sudo npm install -g bower && \
 BOWER=$(which bower) && \
@@ -247,6 +247,7 @@ su - $USERNAME -c "brew install cdrtools" && \
 su - $USERNAME -c "brew install p7zip" && \
 su - $USERNAME -c "brew install whois" && \
 su - $USERNAME -c "brew install coreutils" && \
+su - $USERNAME -c "brew install gnupg" && \
 echo "Finished Installing Akash Dependencies" && \
 
 export AKASH_NET="https://raw.githubusercontent.com/ovrclk/net/master/mainnet"

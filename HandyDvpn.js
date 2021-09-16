@@ -263,7 +263,9 @@ export class HandyDVPN{
 				reject(err);
 			})
 		}
+		console.log('config autostart start');
 		this.dvpnSetup.configureAutostart(parsed);
+		console.log('config autostart finished');
 		return this.dvpnSetup.launchDVPN(parsed.pw,this.ioNamespace);
 	}
 	getWallets(requestBody){

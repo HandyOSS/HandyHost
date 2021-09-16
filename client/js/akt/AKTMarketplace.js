@@ -497,7 +497,13 @@ export class AKTMarketplace{
 			$tr.attr('data-id',longID);
 			let shortenedID = order.order_id.owner;
 			shortenedID = (shortenedID.slice(0,10) + '...' + shortenedID.slice(-8));
-			$tr.append('<td colspan="8">Order: '+shortenedID+'/'+order.order_id.dseq+'/'+order.order_id.oseq+'/'+order.order_id.gseq+' <div class="bidOpts"><a class="seeAllBids akashLink">View All Bids</a> | <a class="placeBid akashLink">Place Bid</a></div></td>')
+			/*
+******* NOTE: AKT doesnt support manual bids yet.
+******* Re-enable this once they do.....
+			*/
+			//$tr.append('<td colspan="8">Order: '+shortenedID+'/'+order.order_id.dseq+'/'+order.order_id.oseq+'/'+order.order_id.gseq+' <div class="bidOpts"><a class="seeAllBids akashLink">View All Bids</a> | <a class="placeBid akashLink">Place Bid</a></div></td>')
+			
+			$tr.append('<td colspan="8">Order: '+shortenedID+'/'+order.order_id.dseq+'/'+order.order_id.oseq+'/'+order.order_id.gseq+' <div class="bidOpts"><a class="seeAllBids akashLink">View All Bids</a></div></td>')
 			$('a.placeBid',$tr).off('click').on('click',()=>{
 				this.showBidModal(order);
 			})

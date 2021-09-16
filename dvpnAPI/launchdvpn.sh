@@ -1,5 +1,7 @@
 #!/bin/bash
-sudo modprobe ip6table_filter && \
+if [ -z "$4" ] ; then
+	sudo modprobe ip6table_filter
+fi
 (echo $1) | docker run --rm \
 --interactive \
 --volume ${HOME}/.sentinelnode:/root/.sentinelnode \

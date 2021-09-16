@@ -460,7 +460,7 @@ export class AKTClusterStatus{
 		$('.walletUtil').addClass('showing');
 	}
 	showRegistrationModal(isUpdateMode,walletName,isGenerateCertOnly){
-		$('#closeModal').off('click').on('click',()=>{
+		$('#registrationModal .closeModal').off('click').on('click',()=>{
 			this.hideModal();
 		})
 		const label = isGenerateCertOnly ? 'Generate Certificate' : 'Register';

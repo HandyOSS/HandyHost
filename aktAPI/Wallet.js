@@ -503,7 +503,9 @@ export class Wallet{
 			fs.writeFileSync(autostartFile,JSON.stringify(params),'utf8');
 		}
 		else{
-			fs.unlinkSync(autostartFile);
+			if(fs.existsSync(autostartFile)){
+				fs.unlinkSync(autostartFile);
+			}
 		}
 	}
 	startProvider(params){

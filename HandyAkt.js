@@ -224,8 +224,9 @@ export class HandyAKT{
 			break;
 			case 'getThumbDrives':
 				//get thumb drives for iso creation
-				this.diskUtils.getThumbDrives().then(usbs=>{
-					resolve(usbs);
+				const method = process.platform == 'darwin' ? this.diskUtils.getUSBFromDiskUtil : this.diskUtils.getThumbDrives;
+				method().then(usbs=>{
+					resolve({platform:process.platform,usbs});
 				}).catch(error=>{
 					reject(error);
 				})
@@ -413,7 +414,7 @@ export class HandyAKT{
 				reject(err);
 			})
 		}
-		return this.k8sUtils.flashThumbDrive(parsed.path);
+		return this.k8sUtils.flashThumbDrive(parsed.path,parsed.pw);
 	}
 	fetchAllOrderBids(requestBody){
 		const {parsed,err} = this.parseRequestBody(requestBody);

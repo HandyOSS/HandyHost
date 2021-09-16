@@ -271,7 +271,7 @@ export class AKTNodeConfig{
 		$('#walletInitModal').show();
 		$('.walletModalContent').removeClass('showing');
 		$('#buildABoxModal').addClass('showing');
-		$('#closeModal').off('click').on('click',()=>{
+		$('.closeWalletInitModal').off('click').on('click',()=>{
 			this.hideModal();
 		})
 		
@@ -281,7 +281,7 @@ export class AKTNodeConfig{
 		$('#walletInitModal').show();
 		$('.walletModalContent').removeClass('showing');
 		$('#buildAX86BoxModal').addClass('showing');
-		$('#closeModal').off('click').on('click',()=>{
+		$('.closeWalletInitModal').off('click').on('click',()=>{
 			this.hideModal();
 		})
 	}
@@ -325,6 +325,8 @@ export class AKTNodeConfig{
 				
 			})
 			.catch((res)=>{ 
+				$('#sshPW').val('');
+				$('#sshUser').val('');
 				console.log('error submitting',res) 
 				this.showGenericErrorModal('Error: '+res.error,$('.setupSSHModal'));
 			});

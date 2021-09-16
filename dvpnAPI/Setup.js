@@ -112,16 +112,19 @@ export class DVPNSetup{
 				return;
 			}
 
-			const args = ['./dvpnAPI/initConfigs.sh'];
+			let args = ['./dvpnAPI/initConfigs.sh'];
+			if(process.platform == 'darwin'){
+				args = ['./dvpnAPI/initConfigsMAC.sh'];
+			}
 			let output = '';
 			const s = spawn('bash',args,{shell:true,env:process.env,cwd:process.env.PWD});
 			//s.stdin.write('(echo derparoo;)');
 			s.stdout.on('data',d=>{
 				output += d.toString();
-			    //console.log('stdout',d.toString());
+			    console.log('stdout',d.toString());
 			})
 			s.stderr.on('data',d=>{
-			    //console.log('stderr',d.toString());
+			    console.log('stderr',d.toString());
 			    reject({'error':d.toString()})
 			})
 			s.on('close',d=>{
@@ -458,18 +461,24 @@ export class DVPNSetup{
 	}
 	configureAutostart(params){
 		const autostartFile = process.env.HOME+'/.HandyHost/sentinelData/autostart.json';
+		console.log('autostart params',params);
 		if(params.autostart){
 			fs.writeFileSync(autostartFile,JSON.stringify(params),'utf8');
 		}
 		else{
-			fs.unlinkSync(autostartFile);
+			if(fs.existsSync(autostartFile)){
+				fs.unlinkSync(autostartFile);
+			}
 		}
 	}
 	launchDVPN(pw,socketIONamespace){
 		return new Promise((resolve,reject)=>{
 			this.getPorts().then(ports=>{
 				console.log('should start dvpn',ports)
-				const args = ['./dvpnAPI/launchdvpn.sh',pw,ports.node,ports.wireguard];
+				let args = ['./dvpnAPI/launchdvpn.sh',pw,ports.node,ports.wireguard];
+				if(process.platform != 'darwin'){
+					args.push(1);
+				}
 				let output = '';
 				let lineCount = 0;
 				let hasFailed = false;

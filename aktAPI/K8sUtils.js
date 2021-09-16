@@ -3,12 +3,13 @@ import {spawn} from 'child_process';
 import https from 'https';
 import {DiskUtils} from './DiskUtils.js';
 import yaml from 'js-yaml';
-
+import {CommonUtils} from '../CommonUtils.js';
 
 export class K8sUtils{
 	constructor(configPath){
 		this.configJSONPath = configPath; //the json for handyhost app about the cluster inventory
 		this.diskUtils = new DiskUtils();
+		this.commonUtils = new CommonUtils();
 	}
 	generateUbuntuCloudInit(params,hosts){
 		return new Promise((resolve,reject)=>{
@@ -631,31 +632,40 @@ export class K8sUtils{
 			});
 		})
 	}
-	flashThumbDrive(path){
+	flashThumbDrive(path,pw){
 		//path = device path. first verify it's detachable media just to be paranoid..
 		return new Promise((resolve,reject)=>{
 			let shouldProceed = false;
-			this.diskUtils.getThumbDrives().then(usbDrives=>{
+			const method = process.platform == 'darwin' ? this.diskUtils.getUSBFromDiskUtil : this.diskUtils.getThumbDrives;
+			method().then(usbDrives=>{
+				let devicePath;
 				usbDrives.map(usb=>{
 					if(usb.meta.device == path && usb.rm){
 						//is removable
+						devicePath = usb.meta.path;
 						shouldProceed = true;
 					}
 				})
+
 				if(!shouldProceed){
 					reject('error');
 					return;
 				}
 				else{
 					//ok lets flash the drive then
-					this.createUbuntuISO(path).then(data=>{
-						resolve(data)
-					})
+					if(typeof devicePath != "undefined"){
+						this.createUbuntuISO(devicePath,pw).then(data=>{
+							resolve(data)
+						})
+					}
+					else{
+						reject('error');
+					}
 				}
 			});
 		});
 	}
-	createUbuntuISO(devicePath){
+	createUbuntuISO(devicePath,pw){
 		return new Promise((resolve,reject)=>{
 			this.generateSSHKey().then(()=>{
 				//done
@@ -674,7 +684,10 @@ export class K8sUtils{
 						fs.writeFileSync(generatorPath+'/user-data',cloudInitOutput,'utf8');
 						//ok now to generate the ISO...
 						console.log('device path',devicePath);
-						const args = ['./aktAPI/generateUbuntuAutoinstallerISO.sh'];
+						let args = ['./aktAPI/generateUbuntuAutoinstallerISO.sh'];
+						if(process.platform == 'darwin'){
+							args = ['./aktAPI/generateUbuntuAutoinstallerISO_MAC.sh'];
+						}
 						let output = '';
 						let errs = '';
 						const autogen = spawn('bash',args,{shell:true,env:process.env,cwd:process.env.PWD});
@@ -691,13 +704,23 @@ export class K8sUtils{
 							if(fs.existsSync(generatorPath+'/ubuntu-autoinstaller.iso')){
 								//ok it wrote it then, lets continue
 								const chunkSize = process.platform == 'darwin' ? '4m' : '4M';
-								const ddArgs = [
-									'./aktAPI/flashUbuntuISO.sh',
+								console.log('device path',devicePath,generatorPath);
+								let script = './aktAPI/flashUbuntuISO.sh';
+								if(process.platform == 'darwin'){
+									script = './aktAPI/flashUbuntuISO_MAC.sh';
+								}
+
+								let ddArgs = [
+									script,//'./aktAPI/flashUbuntuISO.sh',
 									devicePath,
 									chunkSize
-								]
+								];
+								if(process.platform == 'darwin'){
+									ddArgs.push(this.commonUtils.escapeBashString(pw)); //dd needs sudo on mac
+								}
 								let ddOut = '';
 								let ddErr = '';
+								
 								const dd = spawn('bash',ddArgs,{shell:true,env:process.env,cwd:process.env.PWD});
 
 								dd.stdout.on('data',d=>{
@@ -735,13 +758,39 @@ export class K8sUtils{
 		//mkpasswd -m sha-512 1234
 		return new Promise((resolve,reject)=>{
 			let output = '';
-			const mkpasswd = spawn('mkpasswd',['-m','sha-512',Math.floor(new Date().getTime() * Math.random())])
-			mkpasswd.stdout.on('data',d=>{
-				output += d.toString();
-			});
-			mkpasswd.on('close',()=>{
-				resolve(output);
-			})
+			if(process.platform != 'darwin'){
+				const mkpasswd = spawn('mkpasswd',['-m','sha-512',Math.floor(new Date().getTime() * Math.random())])
+				mkpasswd.stdout.on('data',d=>{
+					output += d.toString();
+				});
+				mkpasswd.on('close',()=>{
+					resolve(output);
+				})
+			}
+			else{
+				//on mac there is no mkpasswd...
+				const mkpasswd0 = spawn('slappasswd',['-g'])
+				mkpasswd0.stdout.on('data',d=>{
+					output += d.toString();
+				});
+				mkpasswd0.on('close',()=>{
+					const mkpasswd1 = spawn('slappasswd',['-g'])
+					mkpasswd1.stdout.on('data',d=>{
+						output += d.toString();
+					});
+					mkpasswd1.on('close',()=>{
+						//resolve(output);
+						const mkpasswd2 = spawn('slappasswd',['-g'])
+						mkpasswd2.stdout.on('data',d=>{
+							output += d.toString();
+						});
+						mkpasswd2.on('close',()=>{
+							resolve(output);
+						})
+					})
+					//resolve(output);
+				})
+			}
 		})
 	}
 	addUbuntuAutoinstalledNode(ipAddress,moniker,socketIONamespace){

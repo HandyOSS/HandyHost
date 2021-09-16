@@ -7,6 +7,10 @@ export class CommonUtils{
 		this.port = process.env.HANDYHOST_PORT || 8008;
 		this.sslPort = process.env.HANDYHOST_SSL_PORT || 58008;
 	}
+	escapeBashString(str){
+		//escape strings for bash
+		return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|\#\&\~\"\'\`]/g, "\\$&");
+	}
 	getIPForDisplay(){
 		return new Promise((resolve,reject)=>{
 			let getIPCommand;

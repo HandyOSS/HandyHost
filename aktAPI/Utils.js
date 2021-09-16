@@ -74,7 +74,7 @@ export class AKTUtils{
 		let discoveredMachines = {};
 		return new Promise((resolve,reject)=>{
 			const lines = data.split('\n');
-			console.log('lines',lines);
+			//console.log('lines',lines);
 			let didConfiguredMachineChange = false;
 			lines.map(line=>{
 				let cells = line.split(' ');
@@ -100,7 +100,15 @@ export class AKTUtils{
 							//mac
 							if(cell.indexOf('incomplete') == -1){
 								prop = 'mac';
+								cell = cell.split(':').map(c=>{
+									if(c.length == 1){
+										return '0'+c;
+									}
+									return c;
+								}).join(':')
 								discoveredMachines[cell] = true;
+								//macOS drops leadng 0's from parts of the mac addr in arp i guess?????
+								
 								machine['manufacturer'] = this.getMfg(cell);
 								if(typeof existingConfigData.nodes != "undefined"){
 									const node = existingConfigData.nodes.find(node=>{
@@ -215,35 +223,80 @@ export class AKTUtils{
 	getHostnames(machines){
 		return new Promise((resolve,reject)=>{
 			//avahi-resolve-address
-			let machineCount = machines.length;
-			let finished = 0;
-			machines.map(machine=>{
-				const ip = machine.ip;
-				const s = spawn('avahi-resolve-address',[ip]);
-				let out = '';
-				s.stdout.on('data',(d)=>{
-					out += d.toString();
+			if(process.platform != 'darwin'){
+				let machineCount = machines.length;
+				let finished = 0;
+				machines.map(machine=>{
+					const ip = machine.ip;
+					const s = spawn('avahi-resolve-address',[ip]);
+					let out = '';
+					s.stdout.on('data',(d)=>{
+						out += d.toString();
+					})
+					s.stderr.on('data',(d)=>{
+						console.log('avahi resolve address err',d.toString())
+					})
+					s.on('close',()=>{
+						let cells = out.split('\t').filter(cell=>{
+							return cell.length > 0;
+						});
+						if(cells.length > 1){
+							machine.hostname = cells[1].replace('\n','').trim();
+						}
+							
+						finished++;
+						if(finished == machineCount){
+							resolve(machines);
+						}
+					})
 				})
-				s.stderr.on('data',(d)=>{
-					console.log('avahi resolve address err',d.toString())
-				})
-				s.on('close',()=>{
-					let cells = out.split('\t').filter(cell=>{
-						return cell.length > 0;
+			}
+			else{
+				//no avahi utils on mac, nor is arp (or anything) consistent at getting hostnames
+				//in this case we will use the pre-registered nodes to show any hostnames
+				//laod this.configFilePath
+				let config = {};
+				if(fs.existsSync(this.configFilePath)){
+					config = JSON.parse(fs.readFileSync(this.configFilePath,'utf8'));
+				}
+				let indexedByIP = {};
+				if(typeof config.preConfiguredNVMe != "undefined"){
+					Object.keys(config.preConfiguredNVMe).map(machineName=>{
+						const ip = config.preConfiguredNVMe[machineName].ip;
+						const localAddress = config.preConfiguredNVMe[machineName].reservedNetworkHost;
+						const hostname = machineName;
+						indexedByIP[ip] = {
+							ip,
+							localAddress,
+							hostname
+						};
 					});
-					if(cells.length > 1){
-						machine.hostname = cells[1].replace('\n','').trim();
-					}
-						
-					finished++;
-					if(finished == machineCount){
-						resolve(machines);
+					
+				}
+				if(typeof config.nodes != "undefined"){
+					config.nodes.map(node=>{
+						if(node.hostname != '?'){
+							indexedByIP[node.ip] = {
+								ip:node.ip,
+								localAddress:node.hostname,
+								hostname:node.hostname
+							}
+						}
+					})
+				}
+				machines.map(machine=>{
+					const ip = machine.ip;
+					let name = '?';
+					if(typeof indexedByIP[ip] != "undefined"){
+						machine.hostname = indexedByIP[ip].localAddress;
 					}
 				})
-			})
+				resolve(machines);
+			}
 		})
 	}
 	getMfg(macAddress){
+
 		let macSplit = macAddress.split(':')
 		let first3 = macSplit.slice(0,3).join(':').toUpperCase();
 		let first4 = macSplit.slice(0,4).join(':').toUpperCase();
@@ -455,37 +508,63 @@ export class AKTUtils{
 					res();
 				}
 			}).then(()=>{
-				const cpid = spawn('sshpass',['-p',nodePW,'ssh-copy-id','-i',process.env.HOME+'/.ssh/handyhost',nodeUser+'@'+node.ip,'-o','StrictHostKeyChecking=no'])
+				//TODO: ./sshCopyIDAutomated user host pw keylocation
+				let cpid;
+				if(process.platform == 'darwin'){
+					cpid = spawn('./sshCopyIdAutomated.sh',[nodeUser,node.ip,nodePW,process.env.HOME+'/.ssh/handyhost'],{env:process.env,cwd:process.env.PWD+'/aktAPI'})
+				}
+				else{
+					cpid = spawn('sshpass',['-p',nodePW,'ssh-copy-id','-i',process.env.HOME+'/.ssh/handyhost',nodeUser+'@'+node.ip,'-o','StrictHostKeyChecking=no'])
+				}
+				
 				let hasError = false;
+				let errOut = '';
 				cpid.stdout.on('data',(d)=>{
+					errOut += d.toString();
 					console.log('set ssh key?',d.toString())
 				})
 				cpid.stderr.on('data',(d)=>{
+					errOut += d.toString();
 					console.log('set ssh key error?',d.toString())
 					hasError = true;
 				})
 				cpid.on('close',()=>{
 					//TODO: Verify ssh access
-					const whoami = spawn('ssh',['-i',process.env.HOME+'/.ssh/handyhost',nodeUser+'@'+node.ip,'whoami'])
+					if(errOut.indexOf('Permission denied, please try again') >= 0){
+						console.log('rejecting');
+						reject({error:'Invalid Password for '+nodeUser+'@'+node.ip});
+						return;
+					}
+					const hostname = spawn('ssh',['-i',process.env.HOME+'/.ssh/handyhost',nodeUser+'@'+node.ip,'hostname'])
 					let out = '';
-					whoami.stdout.on('data',(d)=>{
+					hostname.stdout.on('data',(d)=>{
 						out += d.toString();
 					})
-					whoami.on('close',()=>{
-						if(out.trim() != nodeUser){
+					hostname.on('close',()=>{
+						console.log('output',out);
+						/*if(out.trim() != nodeUser){
 							resolve({error:'error copying ssh keys to host'})
 						}
-						else{
-							clusterConfigJSON.nodes.map(configNode=>{
-								if(configNode.mac == node.mac){
-									configNode.sshConfigured = true;
-									configNode.user = nodeUser;
-								}
-							})
-							fs.writeFileSync(configPath,JSON.stringify(clusterConfigJSON,null,2),'utf8');
-							//}
-							resolve({saved:true,config:clusterConfigJSON});
-						}
+						else{*/
+							if(out.trim() != ''){
+								clusterConfigJSON.nodes.map(configNode=>{
+									if(configNode.mac == node.mac){
+										configNode.sshConfigured = true;
+										configNode.user = nodeUser;
+										configNode.hostname = out.trim()+'.local';
+										if(typeof configNode.kubernetes != "undefined"){
+											configNode.kubernetes.name = out.trim();
+										}
+									}
+								})
+								fs.writeFileSync(configPath,JSON.stringify(clusterConfigJSON,null,2),'utf8');
+								//}
+								resolve({saved:true,config:clusterConfigJSON});
+							}
+							else{
+								reject({error:'Error connecting to host'});
+							}
+						//}
 					})
 					
 				})

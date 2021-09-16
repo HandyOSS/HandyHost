@@ -140,7 +140,7 @@ export class AKTDashboard {
 	showUpdateModal(){
 		$('#updateAKTModal').show();
 		$('#updateAKTModal .launchModal').addClass('showing');
-		$('#updateAKTModal #closeModal').off('click').on('click',()=>{
+		$('#updateAKTModal .closeModal').off('click').on('click',()=>{
 			$('#updateAKTModal').hide();
 		});
 		$('#updateAKT').off('click').on('click',()=>{
@@ -180,7 +180,7 @@ export class AKTDashboard {
 		//show the modal
 		$('#updateHandyHostModal').show();
 		$('#updateHandyHostModal .modalContent').addClass('showing');
-		$('#updateHandyHostModal #closeModal').off('click').on('click',()=>{
+		$('#updateHandyHostModal .closeModal').off('click').on('click',()=>{
 			$('#updateHandyHostModal').hide();
 		});
 		$('#updateHandyHostModal #updateHandyHost.save').off('click').on('click',()=>{
@@ -193,10 +193,16 @@ export class AKTDashboard {
 			fetch('/api/updateHandyHost').then(d=>d.json()).then(json=>{
 				console.log('done with update???',json);
 				$('#dvpnMain .options li#handyhostUpdatesWarning').hide();
-				$('#updateHandyHostModal .updateInfo').html("Update Complete! Reloading in 5s...")
+				$('#updateHandyHostModal .updateInfo').html("Update Complete! Reloading in <span class=\"secVal\">5</span>s...")
+				let i = 10;
+				const reloadInterval = setInterval(()=>{
+					i = i-1 <= 0 ? 0 : i-1;
+					$('#updateHandyHostModal .secVal').html(i);
+				},1000);
 				setTimeout(()=>{
+					clearInterval(reloadInterval);
 					window.location.reload();
-				},5000);
+				},10000);
 				//$('#updateHandyHostModal').hide();
 			})
 		});

@@ -19,7 +19,7 @@ export class DVPNNodeConfig{
 		$('.walletUtil').removeClass('showing');
 		$('#walletInitModal').show();
 		this.showInitModal();
-		$('#closeModal').off('click').on('click',()=>{
+		$('#walletInitModal .closeModal').off('click').on('click',()=>{
 			this.hideModal();
 		})
 	}
@@ -717,15 +717,15 @@ export class DVPNNodeConfig{
 		//make sure the remote URL isnt 0.0.0.0 else they wont be publically visible
 		return new Promise((resolve,reject)=>{
 			if(remoteURLVal == '0.0.0.0'){
-				this.utils.getIP().then(data=>{
-					console.log('got ip, output isset',output);
+				fetch('/api/akt/getGlobalIP').then(d=>d.json()).then(data=>{
 					if(typeof output.node.node != "undefined"){
 						if(typeof output.node.node.remote_url != "undefined"){
-							output.node.node.remote_url = 'https://'+data.ip+':'+(portsData.node.replace(/"/gi,''));
+							output.node.node.remote_url = 'https://'+data.global_ip+':'+(portsData.node.replace(/"/gi,''));
 						}
 					}
 					resolve();
 				})
+				
 			}
 			else{
 				resolve();

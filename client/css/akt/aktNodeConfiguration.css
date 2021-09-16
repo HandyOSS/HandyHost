@@ -181,10 +181,11 @@ a.getGlobalIP{
 	margin-top: 5px;
 }
 .usbDevice.styledSelect{
-	width: auto !important;
-	font-size: 14px !important;
-	padding: 2px;
-	border-radius: 3px;
+	width: 50%;
+    font-size: 16px !important;
+    padding: 10px 5px;
+    border-radius: 10px;
+    margin-top: 15px;
 }
 .autoConfig ul{
 	list-style-type:none;
@@ -317,5 +318,18 @@ a.getGlobalIP{
 	*/
 }
 
+.chooseDeviceResult .styledInput#sudoPW{
+	width: 50%;
+	float:left;
+	clear:both;
+	font-size: 16px;
+	margin-top:2px;
+}
+.chooseDeviceResult label{
+	float:left;
+	clear:both;
+	font-size: 14px;
+	color:#333;
+}
 
 

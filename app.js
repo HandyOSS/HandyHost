@@ -137,6 +137,7 @@ utils.getIPForDisplay().then(data=>{
 
 
 process.on('uncaughtException', function(err) {
+  console.log('err',err);
   if(err.code.indexOf('EADDRINUSE') >= 0){
     utils.getIPForDisplay().then(data=>{
       if(process.platform == 'darwin'){

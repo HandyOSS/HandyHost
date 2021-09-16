@@ -496,7 +496,6 @@ export class DiskUtils{
 	getUSBFromDiskUtil(){
 		//macos
 		return new Promise((resolve,reject)=>{
-			import {spawn} from 'child_process';
 			const disksOut = [];
 			let out = '';
 			const diskutil = spawn('diskutil',['list']);
@@ -514,14 +513,12 @@ export class DiskUtils{
 				let lineI = 0;
 				lines.map(line=>{
 					if(line.trim() == ''){
-						console.log('empty line');
 						disks.push(disk);
 						disk = {};
 						lineI = 0;
 					}
 					else{
 						if(lineI == 0){
-							console.log('line',line);
 							let parts = line.split(':')[0];
 							parts = parts.split('(');
 							parts[0] = parts[0].trim();
@@ -533,32 +530,50 @@ export class DiskUtils{
 						lineI++;
 					}
 				});
-				console.log('disks',disks);
 				let jsonOut = ''
-				const jsonDiskList = spawn('bash',['./getUSB_MAC.sh'])
+				const jsonDiskList = spawn('bash',['./getUSB_MAC.sh'],{shell:true,env:process.env,cwd:process.env.PWD+'/aktAPI'})
 				jsonDiskList.stdout.on('data',d=>{
 					jsonOut += d.toString();
 				})
 				jsonDiskList.on('close',()=>{
-					console.log('json list',jsonOut);
-					console.log('disks',disks)
+					//console.log('json list',jsonOut);
+					//console.log('disks',disks)
 					const json = JSON.parse(jsonOut);
-					disks.filter(d=>{
-						return Object.keys(d) > 0;
+					const d2 = disks.filter(d=>{
+						return Object.keys(d).length > 0;
 					}).filter(disk=>{
+						console.log('f2',disk);
 						return disk.type.indexOf('external') >= 0 && disk.type.indexOf('physical') >= 0;
-					}).map(disk=>{
+					})
+					console.log('filtered disks',d2);
+					d2.map(disk=>{
 
 						let id = disk.path.split('/');
 						id = id[id.length-1];
 						console.log('disk to parse',disk,id);
-						const meta = jsonOut.AllDisksAndPartitions.find(d=>{
+						const meta = json.AllDisksAndPartitions.find(d=>{
 							return d.DeviceIdentifier == id;
 						})
-						console.log('external drive',meta);
-						disksOut.push(id);
+						/*disksOut.push({
+							id:disk.path,
+							deviceIdentifier: meta.DeviceIdentifier,
+							mountPoint: meta.MountPoint,
+							size: meta.Size,
+							name: meta.VolumeName
+						})*/
+						disksOut.push({
+							meta:{
+								device: meta.MountPoint,
+								size: meta.Size,
+								model: meta.VolumeName,
+								path: disk.path
+							},
+							rm:true
+						})
+						
 					})
-					console.log('disks out',disksOut);
+					//console.log('disks out',disksOut);
+					resolve(disksOut);
 				})
 			});
 
