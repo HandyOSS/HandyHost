@@ -220,7 +220,7 @@ fi
 if [[ ! -d ${HOME}/.HandyHost/aktData/ubuntu-autoinstall-generator ]] ; then
   echo "installing ubuntu-autoinstall-generator"
   cd ${HOME}/.HandyHost/aktData && \
-  git clone https://github.com/covertsh/ubuntu-autoinstall-generator.git && \
+  git clone https://github.com/HandyMiner/ubuntu-autoinstall-generator.git && \
   cd ubuntu-autoinstall-generator && \
   chmod +x ubuntu-autoinstall-generator.sh
 else

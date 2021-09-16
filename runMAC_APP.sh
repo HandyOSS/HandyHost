@@ -16,7 +16,7 @@ echo -n > "$HOME/.HandyHost/handyhost.log" && \
 cd $PWD/HandyHost && \
 nvm use && \
 nohup node app.js > $HOME/.HandyHost/handyhost.log 2>&1 & \
-echo "LAUNCHED" && \
-sleep 1 && \
+echo "LAUNCHING..." && \
+sleep 5 && \
 echo "$(cat $HOME/.HandyHost/handyhost.log)" && \
 exit 0
