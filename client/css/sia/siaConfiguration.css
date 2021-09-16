@@ -358,4 +358,21 @@ span.info{
 	cursor:pointer;
 	float:right;
 }
+.advanced{
+	display: none;
+}
+.advanced.visible{
+	display: block !important;
+}
 
+.advancedToggle{
+	float: left;
+    width: 100%;
+    margin: -5px 0px 10px 8px;
+    color: #29ea83;
+    text-decoration: underline;
+}
+.advancedToggle a{
+	float: left;
+	cursor: pointer;
+}

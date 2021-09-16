@@ -237,3 +237,6 @@ html.darkTheme .modalWrap{
 .darkTheme .isActiveBadge .badgeWrap{
 	filter:invert(1);
 }
+.darkTheme .advancedToggle{
+	filter: invert(1);
+}

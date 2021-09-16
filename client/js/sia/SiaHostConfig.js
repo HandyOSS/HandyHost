@@ -54,25 +54,25 @@ export class SiaHostConfig {
 	initHostForm(configData,averagePriceData,portsData){
 		console.log('config data',configData,averagePriceData,portsData);
 		const fields = {
-			acceptingcontracts:{type: 'boolean',label:'Accepting Contracts', 'info':'When set to true, the host will accept new file contracts if the terms are reasonable. When set to false, the host will not accept new file contracts at all.'},
-			maxdownloadbatchsize:{type:'bytes',label:'Max Download Batch Size (MB)', 'info':'The maximum size of a single download request from a renter. Each download request has multiple round trips of communication that exchange money. Larger batch sizes mean fewer round trips, but more financial risk for the host - the renter can get a free batch when downloading by refusing to provide a signature.'},
-			maxduration:{type:'blocks', label:'Max Duration (days)', 'info':'The maximum duration of a file contract that the host will accept. The storage proof window must end before the current height + maxduration.'},
-			maxrevisebatchsize:{type: 'bytes', label: 'Max Revise Batch Size (MB)', 'info':'The maximum size of a single batch of file contract revisions. The renter can perform DoS attacks on the host by uploading a batch of data then refusing to provide a signature to pay for the data. The host can reduce this exposure by limiting the batch size. Larger batch sizes allow for higher throughput as there is significant communication overhead associated with performing a batch upload.'},
-			netaddress: {type:'string', label: 'Network Address', info: 'The IP address or hostname (including port) that the host should be contacted at. If left blank, the host will automatically figure out its ip address and use that. If given, the host will use the address given.'},
-			windowsize: {type: 'blocks', label:'Window Size (days)', info: 'The storage proof window is the number of blocks that the host has to get a storage proof onto the blockchain. The window size is the minimum size of window that the host will accept in a file contract.'},
-			collateral: {type: 'hastings/byte/block', label: 'Collateral (SC/TB/Month)', info: 'The maximum amount of money that the host will put up as collateral per byte per block of storage that is contracted by the renter.'},
-			collateralbudget: {type: 'hastings', label: 'Collateral Budget (SC)', info:'The total amount of money that the host will allocate to collateral across all file contracts.'},
-			maxcollateral:{type:'hastings', label: 'Max Collateral (SC)', info:'The maximum amount of collateral that the host will put into a single file contract.'},
-			minbaserpcprice: {type: 'hastings', label: 'Min Base RPC Price (SC)', info:'The minimum price that the host will demand from a renter for interacting with the host. This is charged for every interaction a renter has with a host to pay for resources consumed during the interaction. It is added to the mindownloadbandwidthprice and minuploadbandwidthprice when uploading or downloading files from the host.'},
-			mincontractprice: {type: 'hastings', label: 'Min Contract Price (SC)', info:'The minimum price that the host will demand from a renter when forming a contract. Typically this price is to cover transaction fees on the file contract revision and storage proof, but can also be used if the host has a low amount of collateral. The price is a minimum because the host may automatically adjust the price upwards in times of high demand.'},
-			minsectoraccessprice: {type: 'hastings', label: 'Min Sector Access Price (SC)', info: 'The minimum price that the host will demand from a renter for accessing a sector of data on disk. Since the host has to read at least a full 4MB sector from disk regardless of how much the renter intends to download this is charged to pay for the physical disk resources the host uses. It is multiplied by the number of sectors read then added to the mindownloadbandwidthprice when downloading a file.'},
+			acceptingcontracts:{type: 'boolean', field_type:'all', label:'Accepting Contracts', 'info':'When set to true, the host will accept new file contracts if the terms are reasonable. When set to false, the host will not accept new file contracts at all.'},
+			maxdownloadbatchsize:{type:'bytes', field_type:'advanced', label:'Max Download Batch Size (MB)', 'info':'The maximum size of a single download request from a renter. Each download request has multiple round trips of communication that exchange money. Larger batch sizes mean fewer round trips, but more financial risk for the host - the renter can get a free batch when downloading by refusing to provide a signature.'},
+			maxduration:{type:'blocks', field_type:'all', label:'Max Duration (days)', 'info':'The maximum duration of a file contract that the host will accept. The storage proof window must end before the current height + maxduration.'},
+			maxrevisebatchsize:{type: 'bytes', field_type:'advanced', label: 'Max Revise Batch Size (MB)', 'info':'The maximum size of a single batch of file contract revisions. The renter can perform DoS attacks on the host by uploading a batch of data then refusing to provide a signature to pay for the data. The host can reduce this exposure by limiting the batch size. Larger batch sizes allow for higher throughput as there is significant communication overhead associated with performing a batch upload.'},
+			netaddress: {type:'string', field_type:'all', label: 'Network Address', info: 'The IP address or hostname (including port) that the host should be contacted at. If left blank, the host will automatically figure out its ip address and use that. If given, the host will use the address given. If you dont want to use your IP: An easy/free domain name service to use is noip.com'},
+			windowsize: {type: 'blocks', field_type:'advanced', label:'Window Size (days)', info: 'The storage proof window is the number of blocks that the host has to get a storage proof onto the blockchain. The window size is the minimum size of window that the host will accept in a file contract.'},
+			collateral: {type: 'hastings/byte/block', field_type:'all', label: 'Collateral (SC/TB/Month)', info: 'The maximum amount of SC that the host will put up as collateral per TB/Month. It is generally recommended to put up 2x the Storage Price per TB/Month'},
+			collateralbudget: {type: 'hastings', field_type:'all', label: 'Collateral Budget (SC)', info:'The total amount of money that the host will allocate to collateral across all file contracts.'},
+			maxcollateral:{type:'hastings', field_type:'advanced', label: 'Max Collateral (SC)', info:'The maximum amount of collateral that the host will put into a single file contract.'},
+			minbaserpcprice: {type: 'hastings', field_type:'advanced', label: 'Min Base RPC Price (SC)', info:'The minimum price that the host will demand from a renter for interacting with the host. This is charged for every interaction a renter has with a host to pay for resources consumed during the interaction. It is added to the mindownloadbandwidthprice and minuploadbandwidthprice when uploading or downloading files from the host.'},
+			mincontractprice: {type: 'hastings', field_type:'advanced', label: 'Min Contract Price (SC)', info:'The minimum price that the host will demand from a renter when forming a contract. Typically this price is to cover transaction fees on the file contract revision and storage proof, but can also be used if the host has a low amount of collateral. The price is a minimum because the host may automatically adjust the price upwards in times of high demand.'},
+			minsectoraccessprice: {type: 'hastings', field_type:'advanced', label: 'Min Sector Access Price (SC)', info: 'The minimum price that the host will demand from a renter for accessing a sector of data on disk. Since the host has to read at least a full 4MB sector from disk regardless of how much the renter intends to download this is charged to pay for the physical disk resources the host uses. It is multiplied by the number of sectors read then added to the mindownloadbandwidthprice when downloading a file.'},
 			mindownloadbandwidthprice:{type: 'hastings/byte', label: 'Min Download Bandwidth Price (SC/TB)', info:'The minimum price that the host will demand from a renter when the renter is downloading data. If the host is saturated, the host may increase the price from the minimum.'},
-			minstorageprice: {type:'hastings/byte/block', label:'Min Storage Price (SC/TB/Month)', info:'The minimum price that the host will demand when storing data for extended periods of time. If the host is low on space, the price of storage may be set higher than the minimum.'},
-			minuploadbandwidthprice: {type: 'hastings/byte', label: 'Min Upload Bandwidth Price (SC/TB)', info:'The minimum price that the host will demand from a renter when the renter is uploading data. If the host is saturated, the host may increase the price from the minimum.'},
-			maxephemeralaccountbalance: {type: 'hastings', label:'Max Ephemeral Account Balance (SC)', info:'The maximum amount of money that the host will allow a user to deposit into a single ephemeral account.'},
-			maxephemeralaccountrisk: {type: 'hastings', label: 'Max Ephemeral Account Risk (SC)', info:`To increase performance, the host will allow a user to withdraw from an ephemeral account without requiring the user to wait until the host has persisted the updated ephemeral account balance to complete a transaction. This means that the user can perform actions such as downloads with significantly less latency. This also means that if the host loses power at that exact moment, the host will forget that the user has spent money and the user will be able to spend that money again.<br />maxephemeralaccountrisk is the maximum amount of money that the host is willing to risk to a system failure. The account manager will keep track of the total amount of money that has been withdrawn, but has not yet been persisted to disk. If a user's withdrawal would put the host over the maxephemeralaccountrisk, the host will wait to complete the user's transaction until it has persisted the widthdrawal, to prevent the host from having too much money at risk.<br />Note that money is only at risk if the host experiences an unclean shutdown while in the middle of a transaction with a user, and generally the amount at risk will be minuscule unless the host experiences an unclean shutdown while in the middle of many transactions with many users at once. This value should be larger than 'maxephemeralaccountbalance but does not need to be significantly larger.`},
-			registrysize:{type: 'int', label: 'Registry Size (GB)', info:'The size of the registry in GigaBytes. One entry requires 256 bytes of storage on disk and the size of the registry needs to be a multiple of 64 entries. Therefore any provided number >0 bytes will be rounded to the nearest 16kib. The default is 0 which means no registry.'},
-			customregistrypath:{type:'string', label:'Custom Registry Path', info:'The path of the registry on disk. If it&#039;s empty, it uses the default location relative to siad&#039;s host folder. Otherwise the provided path will be used. Changing it will trigger a registry migration which takes an arbitrary amount of time depending on the size of the registry.'}
+			minstorageprice: {type:'hastings/byte/block', field_type:'all', label:'Min Storage Price (SC/TB/Month)', info:'The minimum price that the host will demand when storing data for extended periods of time. If the host is low on space, the price of storage may be set higher than the minimum.'},
+			minuploadbandwidthprice: {type: 'hastings/byte', field_type:'all', label: 'Min Upload Bandwidth Price (SC/TB)', info:'The minimum price that the host will demand from a renter when the renter is uploading data. If the host is saturated, the host may increase the price from the minimum.'},
+			maxephemeralaccountbalance: {type: 'hastings', field_type:'advanced', label:'Max Ephemeral Account Balance (SC)', info:'The maximum amount of money that the host will allow a user to deposit into a single ephemeral account.'},
+			maxephemeralaccountrisk: {type: 'hastings', field_type:'advanced', label: 'Max Ephemeral Account Risk (SC)', info:`To increase performance, the host will allow a user to withdraw from an ephemeral account without requiring the user to wait until the host has persisted the updated ephemeral account balance to complete a transaction. This means that the user can perform actions such as downloads with significantly less latency. This also means that if the host loses power at that exact moment, the host will forget that the user has spent money and the user will be able to spend that money again.<br />maxephemeralaccountrisk is the maximum amount of money that the host is willing to risk to a system failure. The account manager will keep track of the total amount of money that has been withdrawn, but has not yet been persisted to disk. If a user's withdrawal would put the host over the maxephemeralaccountrisk, the host will wait to complete the user's transaction until it has persisted the widthdrawal, to prevent the host from having too much money at risk.<br />Note that money is only at risk if the host experiences an unclean shutdown while in the middle of a transaction with a user, and generally the amount at risk will be minuscule unless the host experiences an unclean shutdown while in the middle of many transactions with many users at once. This value should be larger than 'maxephemeralaccountbalance but does not need to be significantly larger.`},
+			registrysize:{type: 'int', field_type:'all', label: 'Registry Size (GB)', info:'The size of the SkyNet registry in GigaBytes. We recommend 5-10GB of Registry Space.'},
+			customregistrypath:{type:'string', field_type:'advanced', label:'Custom Registry Path', info:'The path of the registry on disk. If it&#039;s empty, it uses the default location relative to siad&#039;s host folder. Otherwise the provided path will be used. Changing it will trigger a registry migration which takes an arbitrary amount of time depending on the size of the registry.'}
 		};
 		const $el = $('#siaHostInfo');
 		const $ul = $('<ul />')
@@ -134,7 +134,7 @@ export class SiaHostConfig {
 			}
 
 
-			const $li = $('<li />');
+			const $li = $('<li class="'+labelData.field_type+'" />');
 			let $field;
 			switch(labelData.type){
 				case 'boolean':
@@ -203,7 +203,7 @@ export class SiaHostConfig {
 			}
 			$ul.append($li);
 		});
-		const $ports = $('<ul class="hostPorts"><div class="portsTitle">Sia Host Ports</div></ul>');
+		const $ports = $('<ul class="hostPorts advanced"><div class="portsTitle">Sia Host Ports</div></ul>');
 		if(portsData.portsSet){
 			
 			const $rpcAddr = $('<li><label for="rpcPort">RPC Port (default 9981)</label><input id="rpcPort" data-key="rpc" type="number" placeholder="default: 9981" value="'+portsData.rpc+'" /></li>')
@@ -215,7 +215,7 @@ export class SiaHostConfig {
 			$ports.append($muxAddr);
 			$ports.append($muxWSAddr);
 		}
-
+		const $advancedLink = $('<div class="advancedToggle"><a>Advanced Settings</a></div>')
 		const $submit = $('<div class="buttons" />');
 		const $cancel = $('<div class="button cancel"><div class="foreground">cancel</div><div class="background">cancel</div></div>');
 		const $save = $('<div class="button save"><div class="foreground">save</div><div class="background">save</div></div>')
@@ -225,8 +225,12 @@ export class SiaHostConfig {
 		//$ul.append($submit);
 		$el.html($ul);
 		$el.append($ports);
+		$el.append($advancedLink);
 		$el.append($submit);
 
+		$('.advancedToggle a').off('click').on('click',()=>{
+			$('.advanced',$el).toggleClass('visible');
+		})
 		//todo cancel hides form
 		$save.off('click').on('click',()=>{
 			this.submitForm(fields,$ports,portsData);
