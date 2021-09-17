@@ -21,6 +21,16 @@ source $profile_file
 pwd="/Applications/HandyHost/HandyHost" #set to applications dir
 
 echo "PWD: ${PWD}"
+
+if [[ -s "$USERHOME/.HandyHost/handyhost.pid" ]] ; then
+	HANDYHOSTPID="$(cat $USERHOME/.HandyHost/handyhost.pid)"
+	if ps -p $HANDYHOSTPID > /dev/null
+	then
+		echo "###### STOPPING EXISTING HANDYHOST ######" && \
+		kill $HANDYHOSTPID
+	fi
+fi
+
 echo "########## Installing HandyHost Dependencies... ##########"
 
 #NOTE: just have mac users install this themselves...
@@ -280,7 +290,6 @@ fi
 
 platypus -P /Applications/HandyHost/HandyHost/MacOS_Resources/HandyHost.platypus HandyHost.app && \
 echo "Done Compiling HandyHost.app" && \
-
 
 node $pwd/rainbow.js && \
 exit 0

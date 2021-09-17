@@ -32,7 +32,15 @@ export class HandyDVPN{
 			process.env.DVPN_ACCT_NAME = acctName.replace(/\n/g,'');
 			//try startup here since we have already inited
 		}
-		this.dvpnSetup.initConfigs(); //check if dvpn configs exist, create them if not.
+		setTimeout(()=>{
+			//edge case: if I manually removed .sentinelnode for a clean install
+			//left my old instance running, ran the installer, then started up,
+			//the 2nd instance would fire ininConfigs on startup but never finish
+			//because the new instance would fail **almost** immediately.
+			//we add this timeout to give some buffer time..
+			console.log('ran init configs');
+			this.dvpnSetup.initConfigs(); //check if dvpn configs exist, create them if not.
+		},100);
 		setTimeout(()=>{
 			//give some time to spin up before autostarting
 			this.dvpnSetup.autostartDVPN(this.ioNamespace); //make sure io exists before we autostart

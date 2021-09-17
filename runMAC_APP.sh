@@ -18,5 +18,5 @@ nvm use && \
 nohup node app.js > $HOME/.HandyHost/handyhost.log 2>&1 & \
 echo "LAUNCHING..." && \
 sleep 5 && \
-echo "$(cat $HOME/.HandyHost/handyhost.log)" && \
+echo "$(cat $HOME/.HandyHost/startup.log)" && \
 exit 0
