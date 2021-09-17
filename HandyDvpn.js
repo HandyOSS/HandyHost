@@ -38,7 +38,6 @@ export class HandyDVPN{
 			//the 2nd instance would fire ininConfigs on startup but never finish
 			//because the new instance would fail **almost** immediately.
 			//we add this timeout to give some buffer time..
-			console.log('ran init configs');
 			this.dvpnSetup.initConfigs(); //check if dvpn configs exist, create them if not.
 		},100);
 		setTimeout(()=>{
