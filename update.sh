@@ -33,17 +33,22 @@ cp -r $UPDATED_DIR/* $HANDYHOST_DIR && \
 rm -rf $HOME/.HandyHost/HandyHostUpdate && \
 cd $HANDYHOST_DIR && \
 echo "restarting handyhost" && \
-sleep 2
+echo "will respawn with: $2" && \
+sleep 2 && \
 
 if [[ -s "/etc/init.d/handyhost" ]] ; then
 	echo "found /etc/init.d/handyhost" && \
-	sudo systemctl restart handyhost
+	sudo systemctl restart handyhost && \
+	exit 0
 	#if type forever > /dev/null 2>&1; then
   		#forever exists, kill with forever
   		#forever stop $HANDYHOST_PID
-else
-	echo "killing and restarting $2" && \
-	kill $HANDYHOST_PID && \
-	sh -c "$2 > $USERHOME/.HandyHost/handyhost.log" &
 fi
+
+echo "killing and restarting $2" && \
+sleep 1 && \
+kill $HANDYHOST_PID && \
+sleep 1 && \
+sh -c "$2 > $USERHOME/.HandyHost/handyhost.log" & \
 exit 0
+
