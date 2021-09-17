@@ -75,6 +75,9 @@ export class CommonUtils{
 				})
 				update.stderr.on('data',(d)=>{
 					console.log('update stderr',d.toString());
+					if(d.toString().trim() == 'restarting handyhost'){
+						resolve(true);
+					}
 				})
 				update.on('close',()=>{
 					console.log('done with update');

@@ -5,7 +5,13 @@ HANDYHOST_PID=$3
 if [[ -s "$HOME/.bash_profile" ]] ; then
 	source "$HOME/.bash_profile"
 fi
-source $HOME/.profile && \
+if [[ -s "$HOME/.profile" ]] ; then
+	source "$HOME/.profile"
+fi
+if [[ -s "$HOME/.bashrc" ]] ; then
+	source "$HOME/.bashrc"
+fi
+
 if [[ -s /var/log/handyhost.pid ]]; then
 	HANDYHOST_PID=$(cat /var/log/handyhost.pid)
 fi
@@ -21,7 +27,8 @@ git clone $URL . && \
 git checkout "$1" && \
 #skip rebuilding sqlite3 if we can.....
 cp -r $HANDYHOST_DIR/node_modules ./node_modules && \
-source $USERHOME/.bashrc && \
+mv update.sh ./update.new.sh && \
+
 if [[ -d "$USERHOME/.nvm" ]] ; then
 	#has nvm
 	nvm install $(cat $UPDATED_DIR/.nvmrc) && \
@@ -33,22 +40,18 @@ cp -r $UPDATED_DIR/* $HANDYHOST_DIR && \
 rm -rf $HOME/.HandyHost/HandyHostUpdate && \
 cd $HANDYHOST_DIR && \
 echo "restarting handyhost" && \
-echo "will respawn with: $2" && \
 sleep 2 && \
 
 if [[ -s "/etc/init.d/handyhost" ]] ; then
-	echo "found /etc/init.d/handyhost" && \
-	sudo systemctl restart handyhost && \
-	exit 0
+	sudo systemctl restart handyhost
 	#if type forever > /dev/null 2>&1; then
   		#forever exists, kill with forever
   		#forever stop $HANDYHOST_PID
+else
+	kill $HANDYHOST_PID && \
+	sh -c "$2 > $HOME/.HandyHost/handyhost.log 2>&1 &" & \
 fi
 
-echo "killing and restarting $2" && \
-sleep 1 && \
-kill $HANDYHOST_PID && \
-sleep 1 && \
-sh -c "$2 > $USERHOME/.HandyHost/handyhost.log" & \
+mv $HANDYHOST_DIR/update.new.sh $HANDYHOST_DIR/update.sh && \
 exit 0
 
