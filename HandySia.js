@@ -843,29 +843,25 @@ export class HandySia{
 		});
 
 		this.ioNamespace.adapter.on("delete-room", (room) => {
-		  console.log(`room deleted ${room}`);
+		  //console.log(`room deleted ${room}`);
 		  if(room.indexOf('sia') == 0){
 		  	//stop a Socket listener for this room
 		  	this.removeSocketListener(room);
 		  }
 		});
-		this.ioNamespace.adapter.on("join-room", (room, id) => {
+		/*this.ioNamespace.adapter.on("join-room", (room, id) => {
 		  console.log(`socket ${id} has joined room ${room}`);
 		});
 		this.ioNamespace.adapter.on("leave-room", (room, id) => {
 		  console.log(`socket ${id} has left room ${room}`);
-		});
-		//console.log('setup connection events');
+		});*/
 		this.ioNamespace.on('connection',(socket)=>{
-			console.log('new connection');
 			this.addSocketConnection(socket);
 		});
 	}
 	addSocketConnection(socket){
-		console.log('add socket connection');
 		socket.emit('register');
 		socket.on('subscribe',()=>{
-			console.log('socket did subscribe');
 			socket.join('sia');
 		})
 

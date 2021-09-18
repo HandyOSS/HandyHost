@@ -57,29 +57,26 @@ export class HandyAKT{
 		});
 
 		this.ioNamespace.adapter.on("delete-room", (room) => {
-		  console.log(`room deleted ${room}`);
+		  //console.log(`room deleted ${room}`);
 		  if(room.indexOf('akt') == 0){
 		  	//stop a Socket listener for this room
 		  	this.removeSocketListener(room);
 		  }
 		});
-		this.ioNamespace.adapter.on("join-room", (room, id) => {
+		/*this.ioNamespace.adapter.on("join-room", (room, id) => {
 		  console.log(`socket ${id} has joined room ${room}`);
 		});
 		this.ioNamespace.adapter.on("leave-room", (room, id) => {
 		  console.log(`socket ${id} has left room ${room}`);
-		});
+		});*/
 		//console.log('setup connection events');
 		this.ioNamespace.on('connection',(socket)=>{
-			console.log('new connection');
 			this.addSocketConnection(socket);
 		});
 	}
 	addSocketConnection(socket){
-		console.log('add socket connection');
 		socket.emit('register');
 		socket.on('subscribe',()=>{
-			console.log('socket did subscribe');
 			socket.join('akt');
 		})
 
@@ -736,7 +733,6 @@ export class HandyAKT{
 			const configFile = this.clusterConfigFilePath;
 			if(fs.existsSync(configFile)){
 				let json = JSON.parse(fs.readFileSync(configFile,'utf8'));
-				console.log('json',json);
 				if(typeof json.preConfiguredNVMe != "undefined" && typeof json.nodes != "undefined"){
 					json.nodes.map(node=>{
 						if(typeof json.preConfiguredNVMe[node.hostname.split('.')[0]] != "undefined"){

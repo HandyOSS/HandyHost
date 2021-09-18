@@ -421,15 +421,19 @@
 		
 	</div>
 	<div id="ingressPortsMessage" class="configPanel">
-		Note: You must open ports <span class="standout">80</span> and <span class="standout">30000-32767</span> to your IP <span class="ip standout"></span> in your internet router Port Forwarding. The machine <span class="ip standout"></span> runs the Ingress Controller which is responsible to route all internet traffic to nodes in your Kubernetes Cluster. <a href="https://www.noip.com/support/knowledgebase/general-port-forwarding-guide/" target="_blank" class="akashLink">How to Setup Port Forwarding on Your Router</a>
+		Note: You must open ports <span class="standout">80</span> and <span class="standout">30000-32767</span> to your IP <span class="ip standout"></span> in your internet router Port Forwarding. The machine <span class="ip standout"></span> runs the Ingress Controller which is responsible to route all internet traffic to nodes in your Kubernetes Cluster. 
+		<br />
+		You must also open the Akash Provider port <span class="standout">8443</span> for TCP traffic for IP: <span class="localIP standout"></span> in your network router port forwarding.
+		<br />
+		<a href="https://www.noip.com/support/knowledgebase/general-port-forwarding-guide/" target="_blank" class="akashLink">How to Setup Port Forwarding on Your Router</a>
 	</div>
 	<div class="buttons">
 		<div class="button save" id="saveNodeConfigs">
 			<div class="foreground">
-				Save Nodes
+				Save Config
 			</div>
 			<div class="background">
-				Save Nodes
+				Save Config
 			</div>
 		</div>
 		<div class="button cancel" id="cancel">

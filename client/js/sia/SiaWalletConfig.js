@@ -190,6 +190,18 @@ export class SiaWalletConfig{
 				return;
 			}
 		});
+		$('.walletUtil input, .walletUtil textarea').off('keyup').on('keyup',(e)=>{
+			if(e.keyCode == 13){
+				//is enter
+				$('.walletUtil input, .walletUtil textarea').blur();
+				if($('.walletUtil #mnemonic').val() == ''){
+					$('.walletUtil #createNewWallet').trigger('click');
+				}
+				else{
+					$('.walletUtil #importWallet').trigger('click');
+				}
+			}
+		});
 		$('.walletUtil #createNewWallet').off('click').on('click',()=>{
 			const pwMatch = this.checkPWMatch();
 			if(!pwMatch){

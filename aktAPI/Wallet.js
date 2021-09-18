@@ -21,6 +21,8 @@ export class Wallet{
 			catch(e){
 				exists = false;
 			}
+			console.log('akash exists??',exists);
+			console.log("akash dir exists?",fs.existsSync(`${process.env.HOME}/.akash`));
 			if(!exists){
 				if(!fs.existsSync(`${process.env.HOME}/.akash`)){
 					//akash needs inited
@@ -147,7 +149,6 @@ export class Wallet{
 		};
 		
 		let seeds = '';
-		console.log('start http request');
 		const request = https.request(options,response=>{
 			response.on('data', (chunk) => {
 				seeds += chunk;
@@ -159,7 +160,6 @@ export class Wallet{
 				let seedsCommaSeparated = seeds.trim().split('\n').filter(seed=>{
 					return seed.length > 0;
 				}).join(',');
-				console.log('got seeds',seedsCommaSeparated);
 				//this.utils.getConfigs().then(configData=>{
 					//console.log('configs',configData);
 					//configData.node.p2p.seeds.value = `"${seedsCommaSeparated}"`;
@@ -189,7 +189,6 @@ export class Wallet{
 			const args = ['./createWallet.sh',this.commonUtils.escapeBashString(pw),this.commonUtils.escapeBashString(walletName)];
 			let output = '';
 			let errOutput = '';
-			console.log('init wallet',args);
 			const s = spawn('bash',args,{shell:true,env:process.env,cwd:process.env.PWD+'/aktAPI'});
 			//s.stdin.write('(echo derparoo;)');
 			s.stdout.on('data',d=>{
@@ -296,8 +295,7 @@ export class Wallet{
 			//TODO need to format properly for AKT
 			s.on('close',d=>{
 				const allowedKeys = ['name','address'];
-				console.log('list wallets output',output);
-			    let outputData = [];
+				let outputData = [];
 			    let nextRecord = {};
 			    output.split('\n').filter(d=>{
 			    	return d.length > 0;
@@ -391,10 +389,21 @@ export class Wallet{
 			    //reject({'error':d.toString()})
 			})
 			s.on('close',d=>{
-				console.log('output',output);
+				//console.log('output',output);
 				if(output == '' && errOutput.length >= 0){
-					reject({error:true,message:errOutput});
-					return;
+					if(errOutput.indexOf('invalid provider: already exists') && mode == 'create'){
+						//try update, provider must have switched computers/cleaned disk...
+						console.log('recurse, already exists',errOutput);
+						this.registerProvider(params,'update',providerHost).then(d=>{
+							resolve(d);
+						}).catch(e=>{
+							reject(e);
+						})
+					}
+					else{
+						reject({error:true,message:errOutput});
+						return;
+					}
 				}
 				else{
 					//TODO set registration tx, return
@@ -418,7 +427,7 @@ export class Wallet{
 						fs.writeFileSync(process.env.HOME+'/.HandyHost/aktData/providerReceipt.'+wallet+'.json',JSON.stringify(jsonOut),'utf8');
 						const actioned = mode == 'create' ? 'Registered' : 'Updated';
 						if(params.generateCert){
-							console.log('done with tx 1, create cert now');
+							//console.log('done with tx 1, create cert now');
 							this.createOrUpdateServerCertificate(params,wallet,providerHost).then(result=>{
 								let serverMessageSuccess = '';
 								let serverErrorMessage = '';
@@ -556,7 +565,9 @@ export class Wallet{
 				clearTimeout(returnTimeout);
 				clearInterval(logInterval);
 				resolve({success:false,error:output});
-				fs.unlinkSync(process.env.HOME+'/.HandyHost/aktData/provider.pid',s.pid.toString());
+				if(fs.existsSync(process.env.HOME+'/.HandyHost/aktData/provider.pid')){
+					fs.unlinkSync(process.env.HOME+'/.HandyHost/aktData/provider.pid');
+				}
 			})	
 		});
 	}
@@ -566,6 +577,7 @@ export class Wallet{
 			if(fs.existsSync(pidPath)){
 				const pid = parseInt(fs.readFileSync(pidPath,'utf8').trim());
 				process.kill(pid);
+				fs.unlinkSync(pidPath);
 				resolve({success:true});
 			}
 			else{
@@ -599,7 +611,7 @@ export class Wallet{
 			})
 			s.on('close',()=>{
 				console.log('cert output',output)
-				console.log('cert err? ',errOutput);
+				//console.log('cert err? ',errOutput);
 				//all done, check if we did it..
 				let successful = false;
 				let message = '';

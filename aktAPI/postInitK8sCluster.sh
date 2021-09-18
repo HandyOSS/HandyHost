@@ -3,10 +3,16 @@
 #./postInitK8sCluster.sh ansible akashnode1.local akashnode1 192.168.0.17
 echo "INGRESS NODE NAME $3" && \
 echo "MASTER IP $4" && \
-cd ~/.HandyHost/aktData && \
-ssh -oStrictHostKeyChecking=accept-new $1@$2 'bash --login echo "" | sudo chown ansible:ansible /etc/kubernetes/admin.conf && exit' && \
-scp $1@$2:/etc/kubernetes/admin.conf ./ && \
-sed -i 's/127.0.0.1/'"$4"'/g' admin.conf
+cd "$HOME/.HandyHost/aktData" && \
+ssh -oStrictHostKeyChecking=accept-new -i "$HOME/.ssh/handyhost" $1@$2 'bash --login echo "" | sudo chown ansible:ansible /etc/kubernetes/admin.conf && exit' && \
+scp -i "$HOME/.ssh/handyhost" $1@$2:/etc/kubernetes/admin.conf ./ && \
+if [[ "$OSTYPE" == "darwin"* ]]; then
+	#nice macOS sed slightly different vs linux
+	sed -i'.original' -e 's/127.0.0.1/'"$4"'/g' admin.conf && \
+	rm admin.conf.original
+else
+	sed -i 's/127.0.0.1/'"$4"'/g' admin.conf
+fi
 export KUBECONFIG=$PWD/admin.conf && \
 mkdir -p ./akash_cluster_resources && \
 curl https://raw.githubusercontent.com/ovrclk/akash/master/pkg/apis/akash.network/v1/crd.yaml --output akash_cluster_resources/crd.yaml && \

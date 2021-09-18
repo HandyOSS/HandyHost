@@ -39,7 +39,7 @@ export class EnvUtils{
 			let done = 0;
 			process.env.AKASH_NET = this.AKASH_NET;
 			this.getChainID().then(id=>{
-				console.log("SET ENV.AKASH_CHAIN_ID",id);
+				//console.log("SET ENV.AKASH_CHAIN_ID",id);
 				process.env.AKASH_CHAIN_ID = id;
 				done++;
 				if(done == waitingOn){
@@ -49,7 +49,7 @@ export class EnvUtils{
 				reject(e);
 			});
 			this.getVersion().then(v=>{
-				console.log("SET ENV.AKASH_VERSION",v);
+				//console.log("SET ENV.AKASH_VERSION",v);
 				process.env.AKASH_VERSION = v;
 				done++;
 				if(done == waitingOn){
@@ -108,6 +108,7 @@ export class EnvUtils{
 					}
 					return true;
 				})
+				console.log('nodelist',nodeList);
 				//get a random node
 				resolve(nodeList[Math.floor(Math.random() * (nodeList.length-1))]);
 			}).catch(e=>{

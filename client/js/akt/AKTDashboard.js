@@ -100,6 +100,7 @@ export class AKTDashboard {
 			const diff = podSum - this.podsActive;
 			if(diff != 0){
 				let msg = '';
+				let action;
 				if(diff < 0){
 					action = ' Ended';
 				}
@@ -118,6 +119,12 @@ export class AKTDashboard {
 					$('li#changeMessage').remove();
 				},15000)
 			}
+		}
+		if(data.providerIsRunning){
+			$('.options li#providerStatus').hide();
+		}
+		else{
+			$('.options li#providerStatus').show();
 		}
 		//need to update?
 		this.showUpdateOpts(data.akashVersion);
@@ -292,7 +299,13 @@ export class AKTDashboard {
 		})
 		this.utils.getIP().then(data=>{
 			$('.options #ipDisplay').remove();
-			$('.options').append('<div id="ipDisplay">Network URL: <span>'+data.ip+':'+data.port+'</span></div>')
+			$('.options').append(`
+				<div id="ipDisplay">Network URL: 
+					<span>http://${data.ip}:${data.port}</span>
+					<span>https://${data.ip}:${data.sslPort}</span>
+				</div>`
+			);
+			$('#ingressPortsMessage .localIP').html(data.ip);
 		})
 	}
 	
@@ -301,6 +314,7 @@ export class AKTDashboard {
 		$('#runProviderModal').hide();
 		$('#providerLogsModal').hide();
 		$('#newNodeAddedModal').hide();
+		$('#walletInitModal').hide();
 		$('#unlockRunPW').val('');
 		$('.walletUtil').addClass('showing');
 	}
@@ -461,6 +475,7 @@ export class AKTDashboard {
 		$('.runProviderModal').removeClass('showing');
 		$('.providerLogsModal').removeClass('showing');
 		$('.runMessage').addClass('showing');
+		$('.options li#providerStatus').hide();
 		setTimeout(()=>{
 			this.clusterStatus.fetchStats();
 		},10000);

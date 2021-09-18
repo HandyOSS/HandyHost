@@ -732,6 +732,7 @@ export class K8sUtils{
 									ddErr += d.toString();
 								})
 								dd.on('close',()=>{
+									//TODO: If mac: check for password success else throw specific error
 									if(ddErr.indexOf('records in') == -1 && ddErr.indexOf('records out') == -1 && ddErr.indexOf('bytes') == -1 && ddErr.indexOf('copied') == -1){
 										//is a real error
 										reject({error:ddErr})
