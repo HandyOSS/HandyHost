@@ -6,7 +6,7 @@ set cpuPrice [lindex $argv 3];
 set txFees [lindex $argv 4];
 
 set timeout -1
-spawn ./runProvider.sh $walletName $server $cpuPrice $txFees
+spawn ./runProvider.sh "$walletName" $server $cpuPrice $txFees
 expect "Enter keyring passphrase:"
 send -- "$walletKey\r"
 expect "Enter keyring passphrase:"

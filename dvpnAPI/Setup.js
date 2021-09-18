@@ -3,16 +3,17 @@ import {spawn} from 'child_process';
 import https from 'https';
 import http from 'http';
 import generator from 'project-name-generator';
+import {CommonUtils} from '../CommonUtils.js';
 
 export class DVPNSetup{
 	constructor(){
 		this.redlistPortsPath = process.env.HOME+'/.HandyHost/ports.json';
-		
+		this.utils = new CommonUtils();
 	}
 	
 	initWallet(pw,walletName){
 		return new Promise((resolve,reject)=>{
-			const args = ['./dvpnAPI/addNewKey.sh',pw,walletName];
+			const args = ['./dvpnAPI/addNewKey.sh',this.utils.escapeBashString(pw),this.utils.escapeBashString(walletName)];
 			let output = '';
 			let stderrOutput = '';
 			const s = spawn('bash',args,{shell:true,env:process.env,cwd:process.env.PWD});
@@ -37,7 +38,7 @@ export class DVPNSetup{
 	}
 	initWalletFromSeed(seed,pw,walletName){
 		return new Promise((resolve,reject)=>{
-			const args = ['./dvpnAPI/recoverKey.sh',pw,`"${seed}"`,walletName];
+			const args = ['./dvpnAPI/recoverKey.sh',this.utils.escapeBashString(pw),`"${seed}"`,this.utils.escapeBashString(walletName)];
 			let output = '';
 			let stderrOutput = '';
 			const s = spawn('bash',args,{shell:true,env:process.env,cwd:process.env.PWD});
@@ -130,24 +131,41 @@ export class DVPNSetup{
 			s.on('close',d=>{
 			    //console.log('spawn closed',d);
 			    //1.1.0rc0 dvpn-node requires from and price to be set in order to init wallets now.
-			    const newConfigParam = {
-			    	node:{
-			    		chain:{
-			    			id:'sentinelhub-2'
-			    		},
-			    		keyring:{
-			    			from:`"__default__"`
-			    		},
-			    		node:{
-			    			price:'10dvpn',
-			    			remote_url:'https://0.0.0.0:8585',
-			    			listen_on:'0.0.0.0:8585',
-			    			moniker: generator({words: 3}).dashed
-			    		}
-			    	}
-			    };
-			    this.updateConfigs(newConfigParam);
-			    resolve({exists:true});
+			    const port = this.utils.getSafePort();
+			    const port2 = this.utils.getSafePort([port]);
+			    let globalIP = '0.0.0.0';
+			    this.utils.getGlobalIP().then(ipData=>{
+			    	globalIP = ipData.global_ip;
+			    	finish();
+			    }).catch(e=>{
+			    	finish();
+			    });
+			    const _this = this;
+			    function finish(){
+			    	const newConfigParam = {
+				    	node:{
+				    		chain:{
+				    			id:'sentinelhub-2'
+				    		},
+				    		keyring:{
+				    			from:`"__default__"`
+				    		},
+				    		node:{
+				    			remote_url:'https://'+globalIP+':'+port,
+				    			listen_on:globalIP+':'+port,
+				    			moniker: generator({words: 3}).dashed,
+				    			price: '1000000udvpn'
+				    		}
+				    	},
+				    	wireguard:{
+				    		listen_port:port2
+				    	}
+				    };
+				    _this.updateConfigs(newConfigParam);
+				    resolve({exists:true});
+			    }
+			    
+
 			})
 		});
 	}
@@ -280,7 +298,7 @@ export class DVPNSetup{
 	}
 	getKeyList(pw){
 		return new Promise((resolve,reject)=>{
-			const args = ['./dvpnAPI/listKeys.sh',pw];
+			const args = ['./dvpnAPI/listKeys.sh',this.utils.escapeBashString(pw)];
 			let output = '';
 			const s = spawn('bash',args,{shell:true,env:process.env,cwd:process.env.PWD});
 			//s.stdin.write('(echo derparoo;)');
@@ -296,11 +314,15 @@ export class DVPNSetup{
 			    output.split('\n').filter(d=>{
 			    	return d.length > 0;
 			    }).map(rec=>{
-			    	let parts = rec.split(' ').filter(p=>{
+			    	let parts = rec.split(' ');/*.filter(p=>{
 			    		return p.length > 0;
-			    	});
+			    	});*/
+			    	//allows for spaces at begin and end of name string...
 			    	if(parts.length > 1){
-			    		outputData[parts[0].trim().toLowerCase()] = parts[1].trim();
+			    		const name = parts.slice(0,-2).join(' '); 
+			    		const addr = parts.slice(-2,-1)[0];
+
+			    		outputData[name] = addr;
 			    	}
 			    })
 			    resolve(outputData);
@@ -475,7 +497,7 @@ export class DVPNSetup{
 		return new Promise((resolve,reject)=>{
 			this.getPorts().then(ports=>{
 				console.log('should start dvpn',ports)
-				let args = ['./dvpnAPI/launchdvpn.sh',pw,ports.node,ports.wireguard];
+				let args = ['./dvpnAPI/launchdvpn.sh',this.utils.escapeBashString(pw),ports.node,ports.wireguard];
 				if(process.platform != 'darwin'){
 					args.push(1);
 				}

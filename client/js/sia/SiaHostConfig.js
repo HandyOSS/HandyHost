@@ -230,6 +230,14 @@ export class SiaHostConfig {
 
 		$('.advancedToggle a').off('click').on('click',()=>{
 			$('.advanced',$el).toggleClass('visible');
+			if($('.advancedToggle a').hasClass('isVisible')){
+				$('.advancedToggle a').removeClass('isVisible');
+				$('.advancedToggle a').html('Show Advanced Settings')
+			}
+			else{
+				$('.advancedToggle a').addClass('isVisible');
+				$('.advancedToggle a').html('Hide Advanced Settings')
+			}
 		})
 		//todo cancel hides form
 		$save.off('click').on('click',()=>{

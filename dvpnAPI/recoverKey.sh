@@ -3,4 +3,4 @@
 docker run --rm \
 --interactive \
 --volume ${HOME}/.sentinelnode:/root/.sentinelnode \
-sentinel-dvpn-node process keys add $3 --recover 
+sentinel-dvpn-node process keys add "$3" --recover 

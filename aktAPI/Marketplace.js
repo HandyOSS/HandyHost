@@ -1,8 +1,10 @@
 import {spawn} from 'child_process';
 import {EnvUtils} from './envUtils.js';
+import {CommonUtils} from '../CommonUtils.js';
 export class Marketplace{
 	constructor(){
 		this.envUtils = new EnvUtils();
+		this.commonUtils = new CommonUtils();
 	}
 	getOrders(params){
 		return new Promise((resolve,reject)=>{
@@ -299,14 +301,14 @@ export class Marketplace{
 			*/
 			const args = [
 				'./placeBid.sh',
-				params.pw,
+				this.commonUtils.escapeBashString(params.pw),
 				(params.deposit+'uakt' || '50000000uakt'),
 				(params.price+'uakt' || '1uakt'),
 				params.orderData.order_id.dseq,
 				params.orderData.order_id.gseq,
 				params.orderData.order_id.oseq,
 				'10000uakt',
-				walletName,
+				this.commonUtils.escapeBashString(walletName),
 				params.orderData.order_id.owner
 			]
 			console.log('args',args);
@@ -390,12 +392,12 @@ export class Marketplace{
 			*/
 			const args = [
 				'./cancelBid.sh',
-				params.pw,
+				this.commonUtils.escapeBashString(params.pw),
 				params.orderData.order_id.dseq,
 				params.orderData.order_id.gseq,
 				params.orderData.order_id.oseq,
 				'10000uakt',
-				walletName,
+				this.commonUtils.escapeBashString(walletName),
 				params.orderData.order_id.owner,
 				params.orderData.order_id.provider
 			]

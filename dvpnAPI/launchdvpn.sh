@@ -2,7 +2,7 @@
 if [ -z "$4" ] ; then
 	sudo modprobe ip6table_filter
 fi
-(echo $1) | docker run --rm \
+(echo "$1") | docker run --rm \
 --interactive \
 --volume ${HOME}/.sentinelnode:/root/.sentinelnode \
 --volume /lib/modules:/lib/modules \

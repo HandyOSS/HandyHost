@@ -73,6 +73,22 @@ export class AKTNodeConfig{
 				return;
 			}
 		});
+		$('.walletUtil #walletName').off('input').on('input',()=>{
+			$('.walletUtil #walletName').val($('.walletUtil #walletName').val().replace(/[\'\"\`]/g,""));
+			//remove quotes
+		})
+		$('.walletUtil input, .walletUtil textarea').off('keyup').on('keyup',(e)=>{
+			if(e.keyCode == 13){
+				//is enter
+				$('.walletUtil input, .walletUtil textarea').blur();
+				if($('.walletUtil #mnemonic').val() == ''){
+					$('.walletUtil #createNewWallet').trigger('click');
+				}
+				else{
+					$('.walletUtil #importWallet').trigger('click');
+				}
+			}
+		});
 		$('.walletUtil #createNewWallet').off('click').on('click',()=>{
 			const pwMatch = this.checkPWMatch();
 			const walletHasLength = this.checkWalletName();
@@ -89,7 +105,7 @@ export class AKTNodeConfig{
 			$('.walletUtil #createNewWallet .foreground, .walletUtil #createNewWallet .background').html('Loading...');
 			const formOutput = {
 				pw:$('#encryptionPW').val(),
-				walletName:$('#walletName').val(),
+				walletName:$('#walletName').val().trim(),
 				import:false
 			}
 			//console.log('form output',formOutput);
@@ -105,8 +121,6 @@ export class AKTNodeConfig{
 			    body: JSON.stringify(formOutput)
 			})
 			.then((res)=>{ console.log('success'); return res.json(); }).then(data=>{
-				console.log('res data',data);
-
 				$('.walletUtil').removeClass('showing');
 				if(typeof data.error != "undefined" ){
 					this.showErrorModal('Error: '+data.error);
@@ -155,7 +169,7 @@ export class AKTNodeConfig{
 					const formOutput = {
 						pw: $('#encryptionPW').val(),
 						import:true,
-						walletName:$('#walletName').val(),
+						walletName:$('#walletName').val().trim(),
 						seed: $('.walletUtil #mnemonic').val()
 					}
 					console.log('form output',formOutput);
@@ -260,6 +274,12 @@ export class AKTNodeConfig{
 		$('#encryptionPW').val('');
 		$('#walletName').val('');
 		$('textarea#mnemonic').val('');
+		$('#mnemonicWrap').css({
+			opacity:0,
+			height: '0px'
+		});
+		$('.walletUtil #importWallet').removeClass('opened');
+		$('.walletUtil #importWallet').addClass('save').removeClass('cancel');
 		$('.walletUtil').addClass('showing');
 		$('.seedImportMessage').removeClass('showing');
 	}
@@ -513,8 +533,10 @@ export class AKTNodeConfig{
 						$('#walletInitModal').hide();
 						$('#confirmPW').val('');
 						$('#encryptionPW').val('');
+						$('#walletName').val('');
 						$('.newWalletInfo #mnemonicConfirmation1').hide();
 						$('.newWalletInfo #mnemonicConfirmation0').addClass('save').removeClass('cancel');
+						this.hideModal();
 					},300);
 				}
 			},10);

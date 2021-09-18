@@ -117,7 +117,11 @@ export class DVPNDashboardAnalytics{
 			$('.balanceNote',$info).html(`
 				Warning: You must have DVPN in your wallet to cover transaction fees. 
 				<br />Please deposit at least 50DVPN in this wallet.
-				`)
+			`)
+			$('#nodeStatusInfo .balanceNote').show()
+		}
+		else{
+			$('#nodeStatusInfo .balanceNote').hide()
 		}
 		this.renderAnalyticsPanel(analytics,sessionMeta,allSessionsMeta);
 	}

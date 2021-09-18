@@ -4,10 +4,12 @@ import https from 'https';
 import generator from 'project-name-generator';
 import {AKTUtils} from './Utils.js';
 import QRCode from 'qrcode';
+import {CommonUtils} from '../CommonUtils.js';
 
 export class Wallet{
 	constructor(){
 		this.utils = new AKTUtils();
+		this.commonUtils = new CommonUtils();
 		this.AKASH_NETWORK = 'mainnet';
 	}
 	getState(){
@@ -184,9 +186,10 @@ export class Wallet{
 	}
 	initWallet(pw,walletName){
 		return new Promise((resolve,reject)=>{
-			const args = ['./createWallet.sh',pw,walletName];
+			const args = ['./createWallet.sh',this.commonUtils.escapeBashString(pw),this.commonUtils.escapeBashString(walletName)];
 			let output = '';
 			let errOutput = '';
+			console.log('init wallet',args);
 			const s = spawn('bash',args,{shell:true,env:process.env,cwd:process.env.PWD+'/aktAPI'});
 			//s.stdin.write('(echo derparoo;)');
 			s.stdout.on('data',d=>{
@@ -212,7 +215,7 @@ export class Wallet{
 	}
 	initWalletFromSeed(seed,pw,walletName){
 		return new Promise((resolve,reject)=>{
-			const args = ['./recoverWallet.sh',`"${seed}"`,pw,walletName];
+			const args = ['./recoverWallet.sh',`"${seed}"`,this.commonUtils.escapeBashString(pw),this.commonUtils.escapeBashString(walletName)];
 			let output = '';
 			let errOutput = '';
 			const s = spawn('bash',args,{shell:true,env:process.env,cwd:process.env.PWD+'/aktAPI'});
@@ -279,7 +282,7 @@ export class Wallet{
 	}
 	getKeyList(pw){
 		return new Promise((resolve,reject)=>{
-			const args = ['./listKeys.sh',pw];
+			const args = ['./listKeys.sh',this.commonUtils.escapeBashString(pw)];
 			let output = '';
 			const s = spawn('bash',args,{shell:true,env:process.env,cwd:process.env.PWD+'/aktAPI'});
 			//s.stdin.write('(echo derparoo;)');
@@ -293,7 +296,7 @@ export class Wallet{
 			//TODO need to format properly for AKT
 			s.on('close',d=>{
 				const allowedKeys = ['name','address'];
-				//console.log('list wallets output',output);
+				console.log('list wallets output',output);
 			    let outputData = [];
 			    let nextRecord = {};
 			    output.split('\n').filter(d=>{
@@ -374,7 +377,7 @@ export class Wallet{
 		return new Promise((resolve,reject)=>{
 			//console.log('register called',params,mode);
 			const fees = typeof params.fees != "undefined" ? (params.fees == "" ? '10000' : params.fees) : '10000';
-			const args = ['./registerProvider.sh',params.pw,params.walletName,mode,fees];
+			const args = ['./registerProvider.sh',this.commonUtils.escapeBashString(params.pw),this.commonUtils.escapeBashString(params.walletName),mode,fees];
 			let output = '';
 			let errOutput = '';
 			const s = spawn('bash',args,{shell:true,env:process.env,cwd:process.env.PWD+'/aktAPI'});
@@ -512,7 +515,7 @@ export class Wallet{
 		//params = walletName,serverHost,prob password????
 		return new Promise((resolve,reject)=>{
 			let logInterval;
-			const args = [params.pw,params.walletName,params.serverHost,params.cpuPrice,params.fees];
+			const args = [this.commonUtils.escapeBashString(params.pw),this.commonUtils.escapeBashString(params.walletName),params.serverHost,params.cpuPrice,params.fees];
 			const s = spawn('./runProviderAutomated.sh',args,{env:process.env,cwd:process.env.PWD+'/aktAPI',detached:true});
 			fs.writeFileSync(process.env.HOME+'/.HandyHost/aktData/provider.pid',s.pid.toString());
 			let logsPath = process.env.HOME+'/.HandyHost/aktData/providerRun.log';
@@ -584,7 +587,7 @@ export class Wallet{
 			let createOut = '';
 			let errorOut = '';
 			
-			const args = [params.pw,params.walletName,providerHost];
+			const args = [this.commonUtils.escapeBashString(params.pw),this.commonUtils.escapeBashString(params.walletName),providerHost];
 			let output = '';
 			let errOutput = '';
 			const s = spawn('./createProviderCertAutomated.sh',args,{shell:true,env:process.env,cwd:process.env.PWD+'/aktAPI'});

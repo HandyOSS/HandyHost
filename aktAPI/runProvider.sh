@@ -6,7 +6,7 @@ $HOME/.HandyHost/aktData/bin/akash provider run \
 --chain-id $AKASH_CHAIN_ID \
 --node $AKASH_NODE \
 --keyring-backend file \
---from $1 \
+--from "$1" \
 --fees "${4}uakt" \
 --kubeconfig $HOME/.HandyHost/aktData/admin.conf \
 --cluster-k8s true \

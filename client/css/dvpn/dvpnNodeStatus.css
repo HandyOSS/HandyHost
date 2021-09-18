@@ -108,3 +108,9 @@
 	margin-bottom: 10px;
 	color:#333;
 }
+#noteStatusInfo .balanceNote{
+	display:none;
+	font-size: 14px;
+	color: #ffbf00;
+	filter: invert(1);
+}

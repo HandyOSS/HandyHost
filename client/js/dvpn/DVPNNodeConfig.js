@@ -1,8 +1,9 @@
 import {CommonUtils} from '../CommonUtils.js';
 
 export class DVPNNodeConfig{
-	constructor(){
+	constructor(dashboardComponent){
 		this.utils = new CommonUtils();
+		this.parentComponent = dashboardComponent;
 		fetch('./uiFragments/dvpn/nodeConfig.html').then(res=>res.text()).then(fragment=>{
 			$('body').append(fragment);
 			//this.initWallet();
@@ -10,7 +11,8 @@ export class DVPNNodeConfig{
 	}
 	show(){
 		$('#nodeConfigInfo').show();
-
+		this.parentComponent.nodeStatus.hide();
+		this.parentComponent.hide();
 	}
 	hide(){
 		$('#nodeConfigInfo').hide();
@@ -73,6 +75,22 @@ export class DVPNNodeConfig{
 				return;
 			}
 		});
+		$('.walletUtil #walletName').off('input').on('input',()=>{
+			$('.walletUtil #walletName').val($('.walletUtil #walletName').val().replace(/[\'\"\`]/g,""));
+			//remove quotes
+		})
+		$('.walletUtil input, .walletUtil textarea').off('keyup').on('keyup',(e)=>{
+			if(e.keyCode == 13){
+				//is enter
+				$('.walletUtil input, .walletUtil textarea').blur();
+				if($('.walletUtil #mnemonic').val() == ''){
+					$('.walletUtil #createNewWallet').trigger('click');
+				}
+				else{
+					$('.walletUtil #importWallet').trigger('click');
+				}
+			}
+		});
 		$('.walletUtil #createNewWallet').off('click').on('click',()=>{
 			const pwMatch = this.checkPWMatch();
 			const walletHasLength = this.checkWalletName();
@@ -89,7 +107,7 @@ export class DVPNNodeConfig{
 			$('.walletUtil #createNewWallet .foreground, .walletUtil #createNewWallet .background').html('Loading...');
 			const formOutput = {
 				pw:$('#encryptionPW').val(),
-				walletName:$('#walletName').val(),
+				walletName:$('#walletName').val().trim(),
 				import:false
 			}
 			//console.log('form output',formOutput);
@@ -105,7 +123,7 @@ export class DVPNNodeConfig{
 			    body: JSON.stringify(formOutput)
 			})
 			.then((res)=>{ console.log('success'); return res.json(); }).then(data=>{
-				console.log('res data',data);
+				//console.log('res data',data);
 
 				$('.walletUtil').removeClass('showing');
 				if(typeof data.error != "undefined" ){
@@ -155,7 +173,7 @@ export class DVPNNodeConfig{
 					const formOutput = {
 						pw: $('#encryptionPW').val(),
 						import:true,
-						walletName:$('#walletName').val(),
+						walletName:$('#walletName').val().trim(),
 						seed: $('.walletUtil #mnemonic').val()
 					}
 					console.log('form output',formOutput);
@@ -249,6 +267,12 @@ export class DVPNNodeConfig{
 		$('#encryptionPW').val('');
 		$('#walletName').val('');
 		$('textarea#mnemonic').val('');
+		$('#mnemonicWrap').css({
+			opacity:0,
+			height: '0px'
+		});
+		$('.walletUtil #importWallet').removeClass('opened');
+		$('.walletUtil #importWallet').addClass('save').removeClass('cancel');
 		$('.walletUtil').addClass('showing');
 		$('.seedImportMessage').removeClass('showing');
 	}
@@ -258,6 +282,13 @@ export class DVPNNodeConfig{
 		$('#walletInitModal').show();
 		$('.walletModalContent').removeClass('showing');
 		$('.getKeysModal').addClass('showing');
+		$('#unlockPW').off('keyup').on('keyup',(e)=>{
+			if(e.keyCode == 13){
+				//hit enter
+				$('#unlockPW').blur();
+				$('#getKeys').trigger('click');
+			}
+		})
 		$('#getKeys').off('click').on('click',()=>{
 			if($('#getKeys').hasClass('selectWallet')){
 				const wallet = $('.getKeysModal .allKeys select option:selected').val();
@@ -331,6 +362,7 @@ export class DVPNNodeConfig{
 						$('.newWalletInfo #mnemonicConfirmation1').hide();
 						$('.newWalletInfo #mnemonicConfirmation0').addClass('save').removeClass('cancel');
 					},300);
+					this.getNodeConfigData();
 				}
 			},10);
 		})
@@ -383,7 +415,7 @@ export class DVPNNodeConfig{
 			},
 			listen_on: {
 				label:'Listen PORT',
-				notes:'example: 8585. Open this port (TCP) <span class="myLocalIP"></span> on your network router.',
+				notes:'Open this port (TCP) <span class="myLocalIP"></span> on your network router.',
 				type:'all'
 			},
 			moniker:{
@@ -392,8 +424,8 @@ export class DVPNNodeConfig{
 				type:'all'
 			},
 			price:{
-				label:'Price',
-				notes:'Per Gigabyte price to charge against the provided bandwidth',
+				label:'Price (uDVPN)',
+				notes:'Per Gigabyte price to charge against the provided bandwidth. 1,000,000 uDVPN = 1DVPN',
 				type:'all'
 			},
 			remote_url:{
@@ -557,8 +589,19 @@ export class DVPNNodeConfig{
 				})
 				$ul.append('<input type="hidden" value="'+operator+'" id="operatorAddress" />');
 			}
+			/*$('#showAdvancedSettings').off('click').on('click',()=>{
+				$('.advanced').toggleClass('showAdvanced');
+			})*/
 			$('#showAdvancedSettings').off('click').on('click',()=>{
 				$('.advanced').toggleClass('showAdvanced');
+				if($('#showAdvancedSettings').hasClass('isVisible')){
+					$('#showAdvancedSettings').removeClass('isVisible');
+					$('#showAdvancedSettings').html('Show Advanced Settings')
+				}
+				else{
+					$('#showAdvancedSettings').addClass('isVisible');
+					$('#showAdvancedSettings').html('Hide Advanced Settings')
+				}
 			})
 			this.activateSaveButton();
 		})
@@ -653,6 +696,20 @@ export class DVPNNodeConfig{
 					remoteURLVal = val;
 					value = 'https://'+val+':'+(portsData.node.replace(/"/gi,''));
 				}
+				if(configKey == 'price'){
+					//check it has udvpn
+					if(val.toLowerCase().indexOf('udvpn') == -1){
+						//check first if they put in dvpn
+						if(val.toLowerCase().indexOf('dvpn') == -1){
+							//ok it needs udvpn then
+							value = val.replace(/\D/g, '') + 'udvpn';
+						}
+						else{
+							//ok lets convert to udvpn;
+							value = (parseFloat(val.replace('dvpn','').replace(/[^0-9.]+/g, '')) * 1000000) + 'udvpn';
+						}
+					}
+				}
 				if(typeof output[topLevelConfig] == "undefined"){
 					output[topLevelConfig] = {};
 				}
@@ -690,11 +747,11 @@ export class DVPNNodeConfig{
 					    body: JSON.stringify({config:output,operator})
 					})
 					.then((res)=>{ console.log('success'); return res.json(); }).then(data=>{
-						console.log('res data',data);
+						//console.log('res data',data);
 						$('.walletUtil').removeClass('showing');
 						$('#walletInitModal').show();
 						this.verifyImportFromSeed('Saved Node Config!');
-
+						this.parentComponent.fetchDashboardData();
 					})
 					.catch((res)=>{ 
 						$('.walletUtil').removeClass('showing');

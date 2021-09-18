@@ -6,10 +6,68 @@ export class CommonUtils{
 	constructor(){
 		this.port = process.env.HANDYHOST_PORT || 8008;
 		this.sslPort = process.env.HANDYHOST_SSL_PORT || 58008;
+		this.redlistPortsPath = process.env.HOME+'/.HandyHost/ports.json';
 	}
 	escapeBashString(str){
 		//escape strings for bash
-		return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|\#\&\~\"\'\`]/g, "\\$&");
+		return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|\#\&\~\"\'\`\ ]/g, "\\$&");
+	}
+	getSafePort(interimPorts){
+		//get a random port outside of the range that may be used in the services
+		//for config generation, mainly in dvpn
+		const interim = typeof interimPorts == "undefined" ? [] : interimPorts;
+		let ports = {}
+		if(fs.existsSync(this.redlistPortsPath)){
+			ports = JSON.parse(fs.readFileSync(this.redlistPortsPath,'utf8'));
+		}
+		else{
+			ports = JSON.parse(fs.readFileSync('./reservedPortsDefault.json','utf8'));
+		}
+		return getRandomPort();
+		function getRandomPort(){
+			//recursively check for a free port that's not in cusrom
+			const port = Math.floor((Math.random() * 19999) + 10000);
+			if(typeof ports.custom[port.toString()] == "undefined" && typeof ports.default[port.toString()] == "undefined" && interim.indexOf(port) == -1){
+				return port;
+			}
+			else{
+				console.log('port was taken, try again');
+				return getRandomPort();
+			}
+		}
+	}
+	getGlobalIP(){
+		return new Promise((resolve,reject)=>{
+			//get public IP for them at least..
+			const options = {
+				host: 'api.ipify.org',
+				port:'443',
+				path: `/`,
+				method:'GET',
+				rejectUnauthorized: true,
+				requestCert: true,
+				agent: false
+			};
+			let output = '';
+			const request = https.request(options,response=>{
+				response.on('data', (chunk) => {
+					output += chunk;
+				});
+
+				//the whole response has been received, so we just print it out here
+				response.on('end', () => {
+					resolve({global_ip:output});
+				});
+
+				if(response.statusCode.toString() != '200'){
+					//something went wrong
+					console.log('error getting public ip',response.statusCode.toString());
+					reject(output);
+				}
+			});
+			request.end();
+			
+		})
 	}
 	getIPForDisplay(){
 		return new Promise((resolve,reject)=>{

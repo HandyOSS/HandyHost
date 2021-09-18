@@ -8,7 +8,7 @@ export class DVPNDashboard {
 	constructor(){
 		this.theme = new Theme();
 		this.utils = new CommonUtils();
-		this.nodeConfig = new DVPNNodeConfig();
+		this.nodeConfig = new DVPNNodeConfig(this);
 		this.nodeStatus = new DVPNNodeStatus(this);
 		this.dashboardAnalytics = new DVPNDashboardAnalytics(this);
 		fetch('./uiFragments/dvpn/dashboard.html').then(res=>res.text()).then(fragment=>{

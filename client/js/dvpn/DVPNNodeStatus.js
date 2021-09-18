@@ -20,6 +20,13 @@ export class DVPNNodeStatus{
 	showModal(){
 		$('#launchNodeModal').show();
 		$('.launchModal').addClass('showing');
+		$('#launchPW').off('keyup').on('keyup',(e)=>{
+			if(e.keyCode == 13){
+				//hit enter
+				$('#launchPW').blur();
+				$('#launchNode').trigger('click');
+			}
+		})
 		$('#launchNode').off('click').on('click',()=>{
 			fetch("/api/dvpn/launch",
 			{
