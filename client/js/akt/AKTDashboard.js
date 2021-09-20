@@ -349,6 +349,8 @@ export class AKTDashboard {
 				//todo make message, update status
 				if(d.success){
 					this.verifyHalt('Successfully Halted Provider');
+					
+					$('.providerStat').html('<span class="indicator offline"></span> Provider is Offline')
 				}
 				else{
 					this.showErrorModal(data);
@@ -478,8 +480,10 @@ export class AKTDashboard {
 		$('.options li#providerStatus').hide();
 		setTimeout(()=>{
 			this.clusterStatus.fetchStats();
-		},10000);
+		},30000);
 		$('#aktMain .options li#providerLogs').show();
+		
+		$('.providerStat').html('<span class="indicator issue"></span> Provider is Starting Up...')
 		this.handleVerifyModalHide();
 
 	}
@@ -495,7 +499,7 @@ export class AKTDashboard {
 		$('.logsMessage').addClass('showing');
 		setTimeout(()=>{
 			this.clusterStatus.fetchStats();
-		},10000);
+		},20000);
 		$('#providerStatus').show();
 		$('#providerLogs').hide();
 
@@ -508,13 +512,13 @@ export class AKTDashboard {
 		$('#runMessageConf').off('click').on('click',()=>{
 			console.log('should close modal');
 			this.hideModal()
-			if(wasError){
+			/*if(wasError){
 				//this.showRunProviderModal();
 				//leave it hidden
 			}
 			else{
 				this.clusterStatus.fetchStats();
-			}
+			}*/
 		})
 		$('#logsMessageConf').off('click').on('click',()=>{
 			this.hideModal()

@@ -284,22 +284,8 @@ export class Marketplace{
 		};
 		*/
 		return new Promise((resolve,reject)=>{
-			/*
-			(echo "$1";) | ./bin/akash tx market bid create \
-			--deposit $2 \
-			--price $3 \
-			--dseq $4 \
-			--gseq $5 \
-			--oseq $6 \
-			--fees $7 \
-			--gas auto \
-			--keyring-backend file \
-			--from $8
-			--node $AKASH_NODE \
-			--owner $9 \
-			$P10
-			*/
-			const args = [
+			
+			/*const args = [
 				'./placeBid.sh',
 				this.commonUtils.escapeBashString(params.pw),
 				(params.deposit+'uakt' || '50000000uakt'),
@@ -310,8 +296,21 @@ export class Marketplace{
 				'10000uakt',
 				this.commonUtils.escapeBashString(walletName),
 				params.orderData.order_id.owner
+			]*/
+			const args = [
+				'tx', 'market', 'bid', 'create',
+				'--deposit', (params.deposit+'uakt' || '50000000uakt'),
+				'--price', (params.price+'uakt' || '1uakt'),
+				'--dseq', params.orderData.order_id.dseq,
+				'--gseq', params.orderData.order_id.gseq,
+				'--oseq', params.orderData.order_id.oseq,
+				'--fees', '10000uakt',
+				'--gas', 'auto',
+				'--keyring-backend', 'file',
+				'--from', this.commonUtils.escapeBashString(walletName),
+				'--node', `${process.env.AKASH_NODE}`,
+				'--owner', params.orderData.order_id.owner
 			]
-			console.log('args',args);
 			this.getCurrentChainHeight().then(height=>{
 				if(height >= 0){
 					let defaultExpiry = 7200;
@@ -322,8 +321,13 @@ export class Marketplace{
 						(height + defaultExpiry)
 					);
 				}
+				args.push('-y');
+				console.log('args',args);
+				const p = spawn(`${process.env.HOME}/.HandyHost/aktData/bin/akash`,args,{shell:true,env:process.env,cwd:process.env.PWD+'/aktAPI'});
+				p.stdin.write(`${this.commonUtils.escapeBashString(params.pw)}\n`);
+			
 				//now finish
-				const p = spawn('bash',args,{shell:true,env:process.env,cwd:process.env.PWD+'/aktAPI'});
+				//const p = spawn('bash',args,{shell:true,env:process.env,cwd:process.env.PWD+'/aktAPI'});
 				let output = '';
 				let errOut = '';
 				p.stdout.on('data',d=>{
@@ -335,6 +339,7 @@ export class Marketplace{
 					console.log('err bid output',d.toString());
 					this.envUtils.trySetEnv(); //reset env on fail
 				})
+				p.stdin.end();
 				p.on('close',()=>{
 					let json = {};
 					try{
@@ -374,23 +379,8 @@ export class Marketplace{
 		};
 		*/
 		return new Promise((resolve,reject)=>{
-			/*
-			#!/bin/bash
-
-			(echo "$1";) | ./bin/akash tx market bid cancel \
-			--dseq $2 \
-			--gseq $3 \
-			--oseq $4 \
-			--fees $5 \
-			--gas auto \
-			--keyring-backend file \
-			--from $6 \
-			--node $AKASH_NODE \
-			--owner $7 \
-			-y
-
-			*/
-			const args = [
+			
+			/*const args = [
 				'./cancelBid.sh',
 				this.commonUtils.escapeBashString(params.pw),
 				params.orderData.order_id.dseq,
@@ -400,9 +390,26 @@ export class Marketplace{
 				this.commonUtils.escapeBashString(walletName),
 				params.orderData.order_id.owner,
 				params.orderData.order_id.provider
-			]
+			]*/
+			const args = [
+				'tx', 'market', 'bid', 'close',
+				'--dseq', params.orderData.order_id.dseq,
+				'--gseq', params.orderData.order_id.gseq,
+				'--oseq', params.orderData.order_id.oseq,
+				'--fees', '10000uakt',
+				'--gas', 'auto',
+				'--keyring-backend', 'file',
+				'--from', this.commonUtils.escapeBashString(walletName),
+				'--node' `${process.env.AKASH_NODE}`,
+				'--owner', params.orderData.order_id.owner,
+				'--provider', params.orderData.order_id.provider,
+				'-y'
+			];
+			const p = spawn(`${process.env.HOME}/.HandyHost/aktData/bin/akash`,args,{shell:true,env:process.env,cwd:process.env.PWD+'/aktAPI'});
+			p.stdin.write(`${this.commonUtils.escapeBashString(params.pw)}\n`);
 			console.log('args',args);
-			const p = spawn('bash',args,{shell:true,env:process.env,cwd:process.env.PWD+'/aktAPI'});
+			
+			//const p = spawn('bash',args,{shell:true,env:process.env,cwd:process.env.PWD+'/aktAPI'});
 			let output = '';
 			let errOut = '';
 			p.stdout.on('data',d=>{
@@ -414,6 +421,7 @@ export class Marketplace{
 				console.log('err bid output',d.toString());
 				this.envUtils.trySetEnv(); //reset env on fail
 			})
+			p.stdin.end();
 			p.on('close',()=>{
 				let json = {};
 				try{

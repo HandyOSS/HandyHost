@@ -186,10 +186,17 @@ export class Wallet{
 	}
 	initWallet(pw,walletName){
 		return new Promise((resolve,reject)=>{
-			const args = ['./createWallet.sh',this.commonUtils.escapeBashString(pw),this.commonUtils.escapeBashString(walletName)];
+			//const args = ['./createWallet.sh',this.commonUtils.escapeBashString(pw),this.commonUtils.escapeBashString(walletName)];
 			let output = '';
 			let errOutput = '';
-			const s = spawn('bash',args,{shell:true,env:process.env,cwd:process.env.PWD+'/aktAPI'});
+			const args = [
+				'--keyring-backend','file',
+				'keys', 'add', this.commonUtils.escapeBashString(walletName)
+			];
+			const s = spawn(`${process.env.HOME}/.HandyHost/aktData/bin/akash`,args,{shell:true,env:process.env,cwd:process.env.PWD+'/aktAPI'});
+			s.stdin.write(`${this.commonUtils.escapeBashString(pw)}\n`)
+			s.stdin.write(`${this.commonUtils.escapeBashString(pw)}\n`)
+			//const s = spawn('bash',args,{shell:true,env:process.env,cwd:process.env.PWD+'/aktAPI'});
 			//s.stdin.write('(echo derparoo;)');
 			s.stdout.on('data',d=>{
 				output += d.toString();
@@ -199,6 +206,7 @@ export class Wallet{
 
 			    //reject({'error':d.toString()})
 			})
+			s.stdin.end();
 			s.on('close',d=>{
 				if(output == '' && errOutput.indexOf('mnemonic') >= 0){
 					reject({'error':errOutput});
@@ -214,10 +222,26 @@ export class Wallet{
 	}
 	initWalletFromSeed(seed,pw,walletName){
 		return new Promise((resolve,reject)=>{
-			const args = ['./recoverWallet.sh',`"${seed}"`,this.commonUtils.escapeBashString(pw),this.commonUtils.escapeBashString(walletName)];
+			//const args = ['./recoverWallet.sh',`"${seed}"`,this.commonUtils.escapeBashString(pw),this.commonUtils.escapeBashString(walletName)];
 			let output = '';
 			let errOutput = '';
-			const s = spawn('bash',args,{shell:true,env:process.env,cwd:process.env.PWD+'/aktAPI'});
+			
+			/*
+			#$1 = mnemonic
+#$2 = pw
+#$3 = walletname
+(echo "$1"; echo "$2"; echo "$2") | $HOME/.HandyHost/aktData/bin/akash --keyring-backend file keys add "$3" --recover
+			*/	
+			const args = [
+				'--keyring-backend', 'file',
+				'keys', 'add', this.commonUtils.escapeBashString(walletName),
+				'--recover'
+			];
+			const s = spawn(`${process.env.HOME}/.HandyHost/aktData/bin/akash`,args,{shell:true,env:process.env,cwd:process.env.PWD+'/aktAPI'});
+			s.stdin.write(`${seed}\n`);
+			s.stdin.write(`${this.commonUtils.escapeBashString(pw)}\n`);
+			s.stdin.write(`${this.commonUtils.escapeBashString(pw)}\n`);
+			//const s = spawn('bash',args,{shell:true,env:process.env,cwd:process.env.PWD+'/aktAPI'});
 			//s.stdin.write('(echo derparoo;)');
 			s.stdout.on('data',d=>{
 				output += d.toString();
@@ -226,6 +250,7 @@ export class Wallet{
 			    errOutput += d.toString();
 			    //reject({'error':d.toString()})
 			})
+			s.stdin.end();
 			s.on('close',d=>{
 				if(output == ''){
 					reject({error:errOutput})
@@ -281,9 +306,17 @@ export class Wallet{
 	}
 	getKeyList(pw){
 		return new Promise((resolve,reject)=>{
-			const args = ['./listKeys.sh',this.commonUtils.escapeBashString(pw)];
+			//const args = ['./listKeys.sh',this.commonUtils.escapeBashString(pw)];
 			let output = '';
-			const s = spawn('bash',args,{shell:true,env:process.env,cwd:process.env.PWD+'/aktAPI'});
+			const args = [
+				'keys', 
+				'list',
+				'--keyring-backend', 'file'
+			];
+			const s = spawn(`${process.env.HOME}/.HandyHost/aktData/bin/akash`,args,{shell:true,env:process.env,cwd:process.env.PWD+'/aktAPI'});
+			s.stdin.write(`${this.commonUtils.escapeBashString(pw)}\n`);
+			s.stdin.write(`${this.commonUtils.escapeBashString(pw)}\n`);
+			//const s = spawn('bash',args,{shell:true,env:process.env,cwd:process.env.PWD+'/aktAPI'});
 			//s.stdin.write('(echo derparoo;)');
 			s.stdout.on('data',d=>{
 				output += d.toString();
@@ -292,6 +325,7 @@ export class Wallet{
 			    console.log('stderr',d.toString());
 			    reject({'error':d.toString()})
 			})
+			s.stdin.end();
 			//TODO need to format properly for AKT
 			s.on('close',d=>{
 				const allowedKeys = ['name','address'];
@@ -375,19 +409,30 @@ export class Wallet{
 		return new Promise((resolve,reject)=>{
 			//console.log('register called',params,mode);
 			const fees = typeof params.fees != "undefined" ? (params.fees == "" ? '10000' : params.fees) : '10000';
-			const args = ['./registerProvider.sh',this.commonUtils.escapeBashString(params.pw),this.commonUtils.escapeBashString(params.walletName),mode,fees];
+			//const args = ['./registerProvider.sh',this.commonUtils.escapeBashString(params.pw),this.commonUtils.escapeBashString(params.walletName),mode,fees];
+			const args = [
+				'tx', 'provider', mode,
+				`${process.env.HOME}/.HandyHost/aktData/provider.yaml`,
+				'--from', this.commonUtils.escapeBashString(params.walletName),
+				`--home=${process.env.HOME}/.akash`,
+				'--keyring-backend=file',
+				`--node=${process.env.AKASH_NODE}`,
+				`--chain-id=${process.env.AKASH_CHAIN_ID}`,
+				'--fees', `${fees}uakt`,
+				'--gas', 'auto',
+				'-y'
+			]
+			const s = spawn(`${process.env.HOME}/.HandyHost/aktData/bin/akash`,args,{shell:true,env:process.env,cwd:process.env.PWD+'/aktAPI'});
 			let output = '';
 			let errOutput = '';
-			const s = spawn('bash',args,{shell:true,env:process.env,cwd:process.env.PWD+'/aktAPI'});
-			//s.stdin.write('(echo derparoo;)');
+			s.stdin.write(`${this.commonUtils.escapeBashString(params.pw)}\n`)
 			s.stdout.on('data',d=>{
 				output += d.toString();
 			})
 			s.stderr.on('data',d=>{
-			    errOutput += d.toString();
-
-			    //reject({'error':d.toString()})
+				errOutput += d.toString();
 			})
+			s.stdin.end();
 			s.on('close',d=>{
 				//console.log('output',output);
 				if(output == '' && errOutput.length >= 0){
@@ -524,51 +569,64 @@ export class Wallet{
 		//params = walletName,serverHost,prob password????
 		return new Promise((resolve,reject)=>{
 			let logInterval;
-			const args = [this.commonUtils.escapeBashString(params.pw),this.commonUtils.escapeBashString(params.walletName),params.serverHost,params.cpuPrice,params.fees];
-			const s = spawn('./runProviderAutomated.sh',args,{env:process.env,cwd:process.env.PWD+'/aktAPI',detached:true});
-			fs.writeFileSync(process.env.HOME+'/.HandyHost/aktData/provider.pid',s.pid.toString());
-			let logsPath = process.env.HOME+'/.HandyHost/aktData/providerRun.log';
-			if(fs.existsSync(logsPath)){
-				//unlink if exists
-				fs.unlinkSync(logsPath);
+			//unfortunately this command doesnt accept a pw as stdin
+			//so we encrypt to a readonly file and pass to the expect script
+			//the expect script deletes the encrypted file after reading it.
+			let opensslLoc;
+			if(process.platform == 'darwin'){
+				opensslLoc = '/usr/local/opt/openssl@1.1/bin/openssl'
 			}
-			let intervalsPassed = 0;
-			
-			logInterval = setInterval(()=>{
-				intervalsPassed += 1;
-				if(intervalsPassed >= 180){
-					intervalsPassed = 0;
-					fs.truncateSync(logsPath); //clear logs
+			else{
+				opensslLoc = 'openssl'
+			}
+			this.commonUtils.encrypt(this.commonUtils.escapeBashString(params.pw)).then(pwLoc=>{
+				const args = [pwLoc,this.commonUtils.escapeBashString(params.walletName),params.serverHost,params.cpuPrice,params.fees,opensslLoc];
+				const s = spawn('./runProviderAutomated.sh',args,{env:process.env,cwd:process.env.PWD+'/aktAPI',detached:true});
+				fs.writeFileSync(process.env.HOME+'/.HandyHost/aktData/provider.pid',s.pid.toString());
+				let logsPath = process.env.HOME+'/.HandyHost/aktData/providerRun.log';
+				if(fs.existsSync(logsPath)){
+					//unlink if exists
+					fs.unlinkSync(logsPath);
 				}
-				fs.appendFileSync(logsPath,output,'utf8');
-				output = '';
+				let intervalsPassed = 0;
+				
+				logInterval = setInterval(()=>{
+					intervalsPassed += 1;
+					if(intervalsPassed >= 180){
+						intervalsPassed = 0;
+						fs.truncateSync(logsPath); //clear logs
+					}
+					fs.appendFileSync(logsPath,output,'utf8');
+					output = '';
 
-			},10*1000);
-			let hasReturned = false;
-			let returnTimeout = setTimeout(()=>{
-				if(!hasReturned){
-					resolve({success:true});
-				}
-			},2000);
-			
-			let output = '';
-			s.stdout.on('data',d=>{
-				//console.log('stdout',d.toString());
-				output += d.toString();
-			})
-			s.stderr.on('data',d=>{
-				console.log('stderr run provider:',d.toString());
-				output += d.toString();
-			})
-			s.on('close',()=>{
-				hasReturned = true;
-				clearTimeout(returnTimeout);
-				clearInterval(logInterval);
-				resolve({success:false,error:output});
-				if(fs.existsSync(process.env.HOME+'/.HandyHost/aktData/provider.pid')){
-					fs.unlinkSync(process.env.HOME+'/.HandyHost/aktData/provider.pid');
-				}
-			})	
+				},10*1000);
+				let hasReturned = false;
+				let returnTimeout = setTimeout(()=>{
+					if(!hasReturned){
+						resolve({success:true});
+					}
+				},2000);
+				
+				let output = '';
+				s.stdout.on('data',d=>{
+					//console.log('stdout',d.toString());
+					output += d.toString();
+				})
+				s.stderr.on('data',d=>{
+					console.log('stderr run provider:',d.toString());
+					output += d.toString();
+				})
+				s.on('close',()=>{
+					hasReturned = true;
+					clearTimeout(returnTimeout);
+					clearInterval(logInterval);
+					resolve({success:false,error:output});
+					if(fs.existsSync(process.env.HOME+'/.HandyHost/aktData/provider.pid')){
+						fs.unlinkSync(process.env.HOME+'/.HandyHost/aktData/provider.pid');
+					}
+				})
+			});
+				
 		});
 	}
 	haltProvider(){
@@ -598,59 +656,63 @@ export class Wallet{
 			//confirm transaction before signing and broadcasting [y/N]: y
 			let createOut = '';
 			let errorOut = '';
-			
-			const args = [this.commonUtils.escapeBashString(params.pw),this.commonUtils.escapeBashString(params.walletName),providerHost];
-			let output = '';
-			let errOutput = '';
-			const s = spawn('./createProviderCertAutomated.sh',args,{shell:true,env:process.env,cwd:process.env.PWD+'/aktAPI'});
-			s.stdout.on('data',d=>{
-				output += d.toString();
-			})
-			s.stderr.on('data',d=>{
-				errOutput += d.toString();
-			})
-			s.on('close',()=>{
-				console.log('cert output',output)
-				//console.log('cert err? ',errOutput);
-				//all done, check if we did it..
-				let successful = false;
-				let message = '';
-				const testStr = 'confirm transaction before signing and broadcasting [y/N]: y';
-				if(output.indexOf(testStr) >= 0){
-					let json = {};
-					const msgParts = output.split(testStr);
-					try{
-						json = JSON.parse(msgParts[1].trim());
-					}
-					catch(e){
-						console.log("no json here");
-						if(errOutput == ''){
-							if(msgParts.length > 1){
-								message = msgParts[1]
+			this.commonUtils.encrypt(this.commonUtils.escapeBashString(params.pw)).then(encPath=>{
+				const openssl = process.platform == 'darwin' ? '/usr/local/opt/openssl@1.1/bin/openssl' : 'openssl';
+				const fees = typeof params.fees != "undefined" ? (params.fees == "" ? '10000' : params.fees) : '10000';
+				const args = [encPath,this.commonUtils.escapeBashString(params.walletName),providerHost,fees,openssl];
+				let output = '';
+				let errOutput = '';
+				const s = spawn('./createProviderCertAutomated.sh',args,{shell:true,env:process.env,cwd:process.env.PWD+'/aktAPI'});
+				s.stdout.on('data',d=>{
+					output += d.toString();
+				})
+				s.stderr.on('data',d=>{
+					errOutput += d.toString();
+				})
+				s.on('close',()=>{
+					console.log('cert output',output)
+					//console.log('cert err? ',errOutput);
+					//all done, check if we did it..
+					let successful = false;
+					let message = '';
+					const testStr = 'transaction successful:y';
+					if(output.indexOf(testStr) >= 0){
+						let json = {};
+						const msgParts = output.split(testStr);
+						try{
+							json = JSON.parse(msgParts[1].trim());
+						}
+						catch(e){
+							console.log("no json here");
+							if(errOutput == ''){
+								if(msgParts.length > 1){
+									message = msgParts[1]
+								}
+								
+							}
+							else{
+								message = errOutput;
 							}
 							
 						}
-						else{
-							message = errOutput;
+						if(typeof json.code != "undefined"){
+							if(json.code == 0){
+								//success
+								successful = true;
+								message = 'Akash Server Certificate Generated Successfully';
+							}
+							else{
+								message = json.raw_log;
+							}
 						}
-						
+						resolve({success:successful,message})
 					}
-					if(typeof json.code != "undefined"){
-						if(json.code == 0){
-							//success
-							successful = true;
-							message = 'Akash Server Certificate Generated Successfully';
-						}
-						else{
-							message = json.raw_log;
-						}
+					if(output == '' && errOutput != ''){
+						resolve({success:successful,message:errOutput})
 					}
-					resolve({success:successful,message})
-				}
-				if(output == '' && errOutput != ''){
-					resolve({success:successful,message:errOutput})
-				}
+				})
 			})
+			
 		})
 		
 

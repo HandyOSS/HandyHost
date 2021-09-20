@@ -13,10 +13,23 @@ export class DVPNSetup{
 	
 	initWallet(pw,walletName){
 		return new Promise((resolve,reject)=>{
-			const args = ['./dvpnAPI/addNewKey.sh',this.utils.escapeBashString(pw),this.utils.escapeBashString(walletName)];
+		
+			//const args = ['./dvpnAPI/addNewKey.sh',pwLoc,this.utils.escapeBashString(walletName)];
 			let output = '';
 			let stderrOutput = '';
-			const s = spawn('bash',args,{shell:true,env:process.env,cwd:process.env.PWD});
+			
+			const args = [
+				'run', 
+				'--rm',
+				'--interactive',
+				'--volume', `${process.env.HOME}/.sentinelnode:/root/.sentinelnode`,
+				'sentinel-dvpn-node', 'process', 'keys', 'add', this.utils.escapeBashString(walletName)
+			];
+
+			const s = spawn('docker',args,{shell:true,env:process.env,cwd:process.env.PWD});
+			s.stdin.write(`${this.utils.escapeBashString(pw)}\n`)
+			s.stdin.write(`${this.utils.escapeBashString(pw)}\n`)
+			//const s = spawn('bash',args,{shell:true,env:process.env,cwd:process.env.PWD});
 			//s.stdin.write('(echo derparoo;)');
 			s.stdout.on('data',d=>{
 				output += d.toString();
@@ -26,6 +39,7 @@ export class DVPNSetup{
 			    //reject({'error':d.toString()})
 			    stderrOutput += d.toString();
 			})
+			s.stdin.end();
 			s.on('close',d=>{
 				if(stderrOutput.indexOf('mnemonic') == -1 && stderrOutput.indexOf('address') == -1 && stderrOutput.indexOf('operator') == -1){
 					reject({error:stderrOutput})
@@ -34,31 +48,48 @@ export class DVPNSetup{
 
 			    this.finishWalletInit(output,stderrOutput,walletName,false,resolve);
 			})
+		
 		});
 	}
 	initWalletFromSeed(seed,pw,walletName){
 		return new Promise((resolve,reject)=>{
-			const args = ['./dvpnAPI/recoverKey.sh',this.utils.escapeBashString(pw),`"${seed}"`,this.utils.escapeBashString(walletName)];
-			let output = '';
-			let stderrOutput = '';
-			const s = spawn('bash',args,{shell:true,env:process.env,cwd:process.env.PWD});
-			//s.stdin.write('(echo derparoo;)');
-			s.stdout.on('data',d=>{
-				output += d.toString();
-			    //console.log('stdout',d.toString());
-			})
-			s.stderr.on('data',d=>{
-			    //console.log('stderr',d.toString());
-			    stderrOutput += d.toString();
-			    //reject({'error':d.toString()})
-			})
-			s.on('close',d=>{
-			    if(stderrOutput.indexOf('mnemonic') == -1 && stderrOutput.indexOf('address') == -1 && stderrOutput.indexOf('operator') == -1){
-					reject({error:stderrOutput})
-					return;
-				}
-			    this.finishWalletInit(output,stderrOutput,walletName,true,resolve);
-			})
+				//const args = ['./dvpnAPI/recoverKey.sh',seedLoc,pwLoc,this.utils.escapeBashString(walletName)];
+				let output = '';
+				let stderrOutput = '';
+				
+				const args = [
+					'run', 
+					'--rm',
+					'--interactive',
+					'--volume', `${process.env.HOME}/.sentinelnode:/root/.sentinelnode`,
+					'sentinel-dvpn-node', 'process', 'keys', 'add', this.utils.escapeBashString(walletName), 
+					'--recover'
+				];
+				
+				const s = spawn('docker',args,{shell:true,env:process.env,cwd:process.env.PWD})
+				s.stdin.write(`${seed}\n`);
+				s.stdin.write(`${this.utils.escapeBashString(pw)}\n`);
+				s.stdin.write(`${this.utils.escapeBashString(pw)}\n`);
+				//const s = spawn('bash',args,{shell:true,env:process.env,cwd:process.env.PWD});
+				s.stdout.on('data',d=>{
+					output += d.toString();
+				    //console.log('stdout',d.toString());
+				})
+				s.stderr.on('data',d=>{
+				    //console.log('stderr',d.toString());
+				    stderrOutput += d.toString();
+				    //reject({'error':d.toString()})
+				})
+				s.stdin.end();
+				s.on('close',d=>{
+				    if(stderrOutput.indexOf('mnemonic') == -1 && stderrOutput.indexOf('address') == -1 && stderrOutput.indexOf('operator') == -1){
+						reject({error:stderrOutput})
+						return;
+					}
+				    this.finishWalletInit(output,stderrOutput,walletName,true,resolve);
+				})
+			
+			
 		});
 	}
 	finishWalletInit(output,stderrOutput,walletName,isInitFromSeed,resolve){
@@ -298,9 +329,18 @@ export class DVPNSetup{
 	}
 	getKeyList(pw){
 		return new Promise((resolve,reject)=>{
-			const args = ['./dvpnAPI/listKeys.sh',this.utils.escapeBashString(pw)];
+			//const args = ['./dvpnAPI/listKeys.sh',pwLoc];
 			let output = '';
-			const s = spawn('bash',args,{shell:true,env:process.env,cwd:process.env.PWD});
+			const args = [
+				'run', '--rm',
+				'--interactive',
+				'--volume', `${process.env.HOME}/.sentinelnode:/root/.sentinelnode`,
+				'sentinel-dvpn-node', 'process', 'keys', 'list'
+			];
+			const s = spawn('docker',args,{shell:true,env:process.env,cwd:process.env.PWD});
+			s.stdin.write(`${this.utils.escapeBashString(pw)}\n`);
+			s.stdin.write(`${this.utils.escapeBashString(pw)}\n`);
+			//const s = spawn('bash',args,{shell:true,env:process.env,cwd:process.env.PWD});
 			//s.stdin.write('(echo derparoo;)');
 			s.stdout.on('data',d=>{
 				output += d.toString();
@@ -309,6 +349,7 @@ export class DVPNSetup{
 			    console.log('stderr',d.toString());
 			    reject({'error':d.toString()})
 			})
+			s.stdin.end();
 			s.on('close',d=>{
 			    const outputData = {};
 			    output.split('\n').filter(d=>{
@@ -326,7 +367,7 @@ export class DVPNSetup{
 			    	}
 			    })
 			    resolve(outputData);
-			})
+			});
 		})
 	}
 	parseConfigFile(contents,filterValuesForUI){
@@ -497,19 +538,35 @@ export class DVPNSetup{
 		return new Promise((resolve,reject)=>{
 			this.getPorts().then(ports=>{
 				console.log('should start dvpn',ports)
-				let args = ['./dvpnAPI/launchdvpn.sh',this.utils.escapeBashString(pw),ports.node,ports.wireguard];
-				if(process.platform != 'darwin'){
-					args.push(1);
-				}
+				const tcp = ports.node;
+				const udp = ports.wireguard;
+				const args = [
+					'run', 
+					'--rm',
+					'--interactive' ,
+					'--volume', `${process.env.HOME}/.sentinelnode:/root/.sentinelnode` ,
+					'--volume', '/lib/modules:/lib/modules' ,
+					'--cap-drop=ALL' ,
+					'--cap-add=NET_ADMIN' ,
+					'--cap-add=NET_BIND_SERVICE' ,
+					'--cap-add=NET_RAW' ,
+					'--cap-add=SYS_MODULE' ,
+					'--publish', `${tcp}:${tcp}/tcp` ,
+					'--publish', `${udp}:${udp}/udp` ,
+					'--sysctl', 'net.ipv4.ip_forward=1' ,
+					'--sysctl', 'net.ipv6.conf.all.forwarding=1' ,
+					'--sysctl', 'net.ipv6.conf.all.disable_ipv6=0' ,
+					'--sysctl', 'net.ipv6.conf.default.forwarding=1' ,
+					'sentinel-dvpn-node', 'process', 'start'
+				];
 				let output = '';
 				let lineCount = 0;
 				let hasFailed = false;
 				let hasReturned = false;
-				const s = spawn('bash',args,{shell:true,env:process.env,cwd:process.env.PWD,detached:true});
-				//s.stdin.write('(echo derparoo;)');
-				fs.writeFileSync(`${process.env.HOME}/.HandyHost/sentinelData/hostLogs`,output,'utf8')
+				
+				const s = spawn('docker',args,{shell:true,env:process.env,cwd:process.env.PWD,detached:true});
+				s.stdin.write(`${this.utils.escapeBashString(pw)}\n`);
 				s.stdout.on('data',d=>{
-					//console.log('stdout',d.toString());
 					socketIONamespace.to('dvpn').emit('logs',d.toString());
 					output += d.toString();
 					lineCount++;
@@ -518,7 +575,7 @@ export class DVPNSetup{
 						output = output.split('\n').slice(-20).join('\n');
 					}
 					fs.writeFileSync(`${process.env.HOME}/.HandyHost/sentinelData/hostLogs`,output,'utf8')
-				})
+				});
 				s.stderr.on('data',d=>{
 					//hasFailed = true;
 					output += d.toString();
@@ -532,7 +589,8 @@ export class DVPNSetup{
 					fs.writeFileSync(`${process.env.HOME}/.HandyHost/sentinelData/hostLogs`,output,'utf8')
 				    socketIONamespace.to('dvpn').emit('logs',d.toString());
 				    //reject({'error':d.toString()})
-				})
+				});
+				s.stdin.end();
 				s.on('close',d=>{
 					hasFailed = true;
 					//console.log('closed',output);
@@ -550,6 +608,7 @@ export class DVPNSetup{
 						resolve({status:'launched'});
 					}
 				},1000)
+				
 			})
 			
 		});

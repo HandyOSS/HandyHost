@@ -1,8 +1,9 @@
 import {spawn} from 'child_process';
 import fs from 'fs';
-
+import {CommonUtils} from '../CommonUtils.js';
 export class AKTUtils{
 	constructor(configFilePath){
+		this.commonUtils = new CommonUtils();
 		this.configFilePath = configFilePath;
 		this.providerYAMLPath = process.env.HOME+'/.HandyHost/aktData/provider.yaml';
 	}
@@ -510,42 +511,60 @@ export class AKTUtils{
 			}).then(()=>{
 				//TODO: ./sshCopyIDAutomated user host pw keylocation
 				let cpid;
-				if(process.platform == 'darwin'){
-					cpid = spawn('./sshCopyIdAutomated.sh',[nodeUser,node.ip,nodePW,process.env.HOME+'/.ssh/handyhost'],{env:process.env,cwd:process.env.PWD+'/aktAPI'})
-				}
-				else{
-					cpid = spawn('sshpass',['-p',nodePW,'ssh-copy-id','-i',process.env.HOME+'/.ssh/handyhost',nodeUser+'@'+node.ip,'-o','StrictHostKeyChecking=no'])
-				}
-				
-				let hasError = false;
-				let errOut = '';
-				cpid.stdout.on('data',(d)=>{
-					errOut += d.toString();
-					console.log('set ssh key?',d.toString())
-				})
-				cpid.stderr.on('data',(d)=>{
-					errOut += d.toString();
-					console.log('set ssh key error?',d.toString())
-					hasError = true;
-				})
-				cpid.on('close',()=>{
-					//TODO: Verify ssh access
-					if(errOut.indexOf('Permission denied, please try again') >= 0){
-						console.log('rejecting');
-						reject({error:'Invalid Password for '+nodeUser+'@'+node.ip});
-						return;
+				let command;
+				let args;
+				const cleanup = spawn('bash',['./aktAPI/cleanupKnownHosts.sh',node.ip],{shell:true,env:process.env,cwd:process.env.PWD});
+				//cleanup ssh keys in case we talked with this IP before..
+				cleanup.on('close',()=>{
+					if(process.platform == 'darwin'){
+						this.commonUtils.encrypt(this.commonUtils.escapeBashString(nodePW)).then(encPath=>{
+							//cpid = spawn('./sshCopyIdAutomated.sh',[nodeUser,node.ip,nodePW,process.env.HOME+'/.ssh/handyhost'],{env:process.env,cwd:process.env.PWD+'/aktAPI'})
+							command = './sshCopyIdAutomated.sh';
+							args = [nodeUser,node.ip,encPath,process.env.HOME+'/.ssh/handyhost','/usr/local/opt/openssl@1.1/bin/openssl'];
+							finish();
+						})
+						
 					}
-					const hostname = spawn('ssh',['-i',process.env.HOME+'/.ssh/handyhost',nodeUser+'@'+node.ip,'hostname'])
-					let out = '';
-					hostname.stdout.on('data',(d)=>{
-						out += d.toString();
+					else{
+						//cpid = spawn('sshpass',['-p',nodePW,'ssh-copy-id','-i',process.env.HOME+'/.ssh/handyhost',nodeUser+'@'+node.ip,'-o','StrictHostKeyChecking=no'])
+						command = 'sshpass';
+						args = ['-p',nodePW,'ssh-copy-id','-i',process.env.HOME+'/.ssh/handyhost',nodeUser+'@'+node.ip];
+						finish();
+					}
+				})
+				
+				function finish(){
+					cpid = spawn(command,args,{env:process.env,cwd:process.env.PWD+'/aktAPI'})
+					let hasError = false;
+					let errOut = '';
+					cpid.stdout.on('data',(d)=>{
+						errOut += d.toString();
+						console.log('set ssh key?',d.toString())
 					})
-					hostname.on('close',()=>{
-						console.log('output',out);
-						/*if(out.trim() != nodeUser){
-							resolve({error:'error copying ssh keys to host'})
+					cpid.stderr.on('data',(d)=>{
+						errOut += d.toString();
+						console.log('set ssh key error?',d.toString())
+						hasError = true;
+					})
+					cpid.on('close',()=>{
+						//TODO: Verify ssh access
+						if(errOut.indexOf('invalid password') >= 0){
+							console.log('rejecting');
+							reject({error:'Invalid Password for '+nodeUser+'@'+node.ip});
+							return;
 						}
-						else{*/
+						const hostname = spawn('ssh',['-i',process.env.HOME+'/.ssh/handyhost',nodeUser+'@'+node.ip,'hostname'])
+						let out = '';
+						let hostnameErr = '';
+						hostname.stdout.on('data',(d)=>{
+							out += d.toString();
+						})
+						hostame.stderr.on('data',(d)=>{
+							hostnameErr += d.toString()
+						})
+						hostname.on('close',()=>{
+							console.log('output',out);
+							
 							if(out.trim() != ''){
 								clusterConfigJSON.nodes.map(configNode=>{
 									if(configNode.mac == node.mac){
@@ -558,16 +577,17 @@ export class AKTUtils{
 									}
 								})
 								fs.writeFileSync(configPath,JSON.stringify(clusterConfigJSON,null,2),'utf8');
-								//}
 								resolve({saved:true,config:clusterConfigJSON});
 							}
 							else{
-								reject({error:'Error connecting to host'});
+								reject({error:'Error connecting to host: '+hostnameErr});
 							}
-						//}
+						
+						})
+						
 					})
-					
-				})
+				}
+				
 			})
 			
 		

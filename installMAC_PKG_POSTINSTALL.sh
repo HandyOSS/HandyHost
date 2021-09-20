@@ -258,6 +258,7 @@ su - $USERNAME -c "brew install p7zip" && \
 su - $USERNAME -c "brew install whois" && \
 su - $USERNAME -c "brew install coreutils" && \
 su - $USERNAME -c "brew install gnupg" && \
+su - $USERNAME -c "brew install openssl@1.1" && \
 echo "Finished Installing Akash Dependencies" && \
 
 export AKASH_NET="https://raw.githubusercontent.com/ovrclk/net/master/mainnet"

@@ -190,7 +190,6 @@ export class K8sUtils{
 	}
 	cleanupKnownHosts(allIPs){
 		return new Promise((resolve,reject)=>{
-			// ssh-keygen -f "/home/earthlab/.ssh/known_hosts" -R "192.168.0.218"
 			let finished = 0;
 			const finCount = allIPs.length;
 			allIPs.map(ip=>{
@@ -636,7 +635,7 @@ export class K8sUtils{
 		//path = device path. first verify it's detachable media just to be paranoid..
 		return new Promise((resolve,reject)=>{
 			let shouldProceed = false;
-			const method = process.platform == 'darwin' ? this.diskUtils.getUSBFromDiskUtil : this.diskUtils.getThumbDrives;
+			const method = process.platform == 'darwin' ? this.diskUtils.getUSBFromDiskUtil : this.diskUtils.getThumbDrivesNEW;
 			method().then(usbDrives=>{
 				let devicePath;
 				usbDrives.map(usb=>{
@@ -706,22 +705,30 @@ export class K8sUtils{
 								const chunkSize = process.platform == 'darwin' ? '4m' : '4M';
 								console.log('device path',devicePath,generatorPath);
 								let script = './aktAPI/flashUbuntuISO.sh';
-								if(process.platform == 'darwin'){
-									script = './aktAPI/flashUbuntuISO_MAC.sh';
-								}
-
+								let command = 'bash';
 								let ddArgs = [
 									script,//'./aktAPI/flashUbuntuISO.sh',
 									devicePath,
 									chunkSize
 								];
 								if(process.platform == 'darwin'){
-									ddArgs.push(this.commonUtils.escapeBashString(pw)); //dd needs sudo on mac
+									script = './aktAPI/flashUbuntuISO_MAC.sh';
+									/*
+									echo "Starting USB ISO Writing..." && \
+									diskutil unmountDisk $1 && \
+									(echo "$3";) | sudo -S dd bs=$2 if=$HOME/.HandyHost/aktData/ubuntu-autoinstall-generator/ubuntu-autoinstaller.iso of=$1 conv=sync
+									*/
+									//ddArgs.push(this.commonUtils.escapeBashString(pw)); //dd needs sudo on mac
+									this.createUbuntuISOMAC(devicePath,pw,chunkSize,resolve,reject);
+									return;
 								}
+
+								
+								
 								let ddOut = '';
 								let ddErr = '';
 								
-								const dd = spawn('bash',ddArgs,{shell:true,env:process.env,cwd:process.env.PWD});
+								const dd = spawn(command,ddArgs,{shell:true,env:process.env,cwd:process.env.PWD});
 
 								dd.stdout.on('data',d=>{
 									console.log('dd stdout output: ',d.toString());
@@ -754,6 +761,49 @@ export class K8sUtils{
 				
 			})
 		})
+	}
+	createUbuntuISOMAC(devicePath,pw,chunkSize,resolve,reject){
+		/*
+		echo "Starting USB ISO Writing..." && \
+		diskutil unmountDisk $1 && \
+		(echo "$3";) | sudo -S dd bs=$2 if=$HOME/.HandyHost/aktData/ubuntu-autoinstall-generator/ubuntu-autoinstaller.iso of=$1 conv=sync
+		*/
+		const unmount = spawn('diskutil',['unmountDisk',devicePath]);
+		unmount.on('close',()=>{
+			console.log('unmounted disk, now flashing USB ISO...');
+			const args = [
+				'-S',
+				'dd',
+				`bs=${chunkSize}`,
+				`if=${process.env.HOME}/.HandyHost/aktData/ubuntu-autoinstall-generator/ubuntu-autoinstaller.iso`,
+				`of=${devicePath}`, 
+				'conv=sync'
+			]
+			const dd = spawn('sudo',args);
+			let ddOut = '';
+			let ddErr = '';
+			
+			//const dd = spawn(command,ddArgs,{shell:true,env:process.env,cwd:process.env.PWD});
+
+			dd.stdout.on('data',d=>{
+				console.log('dd stdout output: ',d.toString());
+				ddOut += d.toString();
+			})
+			dd.stderr.on('data',d=>{
+				console.log('dd stderr output: ',d.toString());
+				ddErr += d.toString();
+			})
+			dd.on('close',()=>{
+				//TODO: If mac: check for password success else throw specific error
+				if(ddErr.indexOf('records in') == -1 && ddErr.indexOf('records out') == -1 && ddErr.indexOf('bytes') == -1 && ddErr.indexOf('copied') == -1){
+					//is a real error
+					reject({error:ddErr})
+				}
+				else{
+					resolve({success:true})
+				}
+			})
+		});
 	}
 	getRandomPW(){
 		//mkpasswd -m sha-512 1234

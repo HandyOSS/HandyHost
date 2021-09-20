@@ -221,7 +221,7 @@ export class HandyAKT{
 			break;
 			case 'getThumbDrives':
 				//get thumb drives for iso creation
-				const method = process.platform == 'darwin' ? this.diskUtils.getUSBFromDiskUtil : this.diskUtils.getThumbDrives;
+				const method = process.platform == 'darwin' ? this.diskUtils.getUSBFromDiskUtil : this.diskUtils.getThumbDrivesNEW;
 				method().then(usbs=>{
 					resolve({platform:process.platform,usbs});
 				}).catch(error=>{

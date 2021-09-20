@@ -44,7 +44,7 @@ start() {
 
     
     
-
+    sudo modprobe ip6table_filter
     doCommand "start"
 
 }

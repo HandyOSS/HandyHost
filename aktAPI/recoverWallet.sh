@@ -1,4 +1,5 @@
 #!/bin/bash
+#DEPRECATED
 #$1 = mnemonic
 #$2 = pw
 #$3 = walletname

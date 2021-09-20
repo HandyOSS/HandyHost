@@ -1,4 +1,6 @@
 #!/bin/bash
+#DEPRECATED
+
 ##register akash provider
 ## $1 = pw, $2 walletKeyName, $3 create || update, $4 fees
 export AKASH_NET="https://raw.githubusercontent.com/ovrclk/net/master/mainnet"

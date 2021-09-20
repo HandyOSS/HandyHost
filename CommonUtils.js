@@ -1,4 +1,4 @@
-import {spawn} from 'child_process'; 
+import {spawn,spawnSync} from 'child_process'; 
 import fs from 'fs';
 import https from 'https';
 
@@ -171,6 +171,79 @@ export class CommonUtils{
 				reject(e);
 			})
 			request.end();
+		})
+	}
+	initKeystore(){
+		if(!fs.existsSync(process.env.HOME+'/.HandyHost/keystore')){
+			fs.mkdirSync(process.env.HOME+'/.HandyHost/keystore','0700');
+		  	//create certs
+		  	const keyPath = process.env.HOME+'/.HandyHost/keystore/handyhost.key';
+		  	const pubPath = process.env.HOME+'/.HandyHost/keystore/handyhost.pub';
+		  	const openssl = process.platform == 'darwin' ? '/usr/local/opt/openssl@1.1/bin/openssl' : 'openssl';
+		  	const create = spawn(openssl,['genrsa', '-out', keyPath, '4096']);
+		  	create.on('close',()=>{
+		  		const createPub = spawn(openssl,['rsa', '-in', keyPath, '-pubout', '-out', pubPath])
+		  		createPub.on('close',()=>{
+		  			fs.chmodSync(keyPath,'0600');
+		  			fs.chmodSync(pubPath,'0644');
+
+		  		})
+		  	})
+		}
+	}
+	encrypt(value){
+		return new Promise((resolve,reject)=>{
+			
+			const basePath = process.env.HOME+'/.HandyHost/keystore/';
+			const pubPath = basePath+'handyhost.pub';
+			const encryptedOutPath = basePath+'k'+(new Date().getTime());
+			const openssl = process.platform == 'darwin' ? '/usr/local/opt/openssl@1.1/bin/openssl' : 'openssl';
+			const args = ['rsautl', '-pubin', '-inkey', pubPath, '-encrypt', '-pkcs','-out',encryptedOutPath];
+			
+			const enc = spawn(openssl,args)
+			enc.stdin.write(value);
+			let resp = '';
+			enc.stdout.on('data',d=>{
+				//console.log('stdout',d.toString());
+				resp += d.toString();
+			})
+			enc.stderr.on('data',d=>{
+				console.log('stderr',d.toString());
+			})
+			enc.on('close',()=>{
+				
+				fs.chmodSync(encryptedOutPath,'0600');
+				resolve(encryptedOutPath)
+			})
+			enc.stdin.end();
+		});
+	}
+	decrypt(encpath,isDaemon){
+		return new Promise((resolve,reject)=>{
+			const keyPath = process.env.HOME+'/.HandyHost/keystore/handyhost.key';
+			const openssl = process.platform == 'darwin' ? '/usr/local/opt/openssl@1.1/bin/openssl' : 'openssl';
+			const dec = spawn(openssl,['rsautl','-inkey',keyPath, '-decrypt', '-in', encpath]);
+			let out = '';
+			dec.stdout.on('data',d=>{
+				out += d.toString();
+			})
+			dec.on('close',()=>{
+				if(!isDaemon){
+					fs.unlinkSync(encpath);
+				}
+				resolve(out);
+			})
+		})
+	}
+	decryptSHTEST(encpath){
+		const keyPath = process.env.HOME+'/.HandyHost/keystore/handyhost.key';
+		console.log('enpath',encpath);
+		const b = spawn('bash',['./testDecrypt.sh',keyPath,encpath]);
+		b.stdout.on('data',d=>{
+			console.log('decrypt stdout',d.toString());
+		})
+		b.stderr.on('data',d=>{
+			console.log('decrypt stderr',d.toString());
 		})
 	}
 }

@@ -1,8 +1,17 @@
 #!/bin/bash
-if [ -z "$4" ] ; then
+#####DEPRECATED#######
+#####keeping it all in node to avoid moving passwords around#####
+if [[ "$OSTYPE" == "darwin"* ]]; then
+	OPENSSL='/usr/local/opt/openssl@1.1/bin/openssl'
+else
 	sudo modprobe ip6table_filter
+	OPENSSL="$(which openssl)"
 fi
-(echo "$1") | docker run --rm \
+
+pw=$($OPENSSL rsautl -inkey "$HOME/.HandyHost/keystore/handyhost.key" -decrypt -in $1) && \
+rm $1 && \
+
+(echo "$pw") | docker run --rm \
 --interactive \
 --volume ${HOME}/.sentinelnode:/root/.sentinelnode \
 --volume /lib/modules:/lib/modules \

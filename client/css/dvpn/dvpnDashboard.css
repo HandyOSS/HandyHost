@@ -143,6 +143,7 @@
   font-size: 14px;
   color: #ffbf00;
   filter: invert(1);
+  display: none;
 }
 .monikerWrap{
   float:left;

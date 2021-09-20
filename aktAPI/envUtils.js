@@ -59,7 +59,7 @@ export class EnvUtils{
 				reject(e);
 			});
 			this.getRPCNode().then(rpcnode=>{
-				console.log("SET ENV.AKASH_NODE",rpcnode);
+				//console.log("SET ENV.AKASH_NODE",rpcnode);
 				process.env.AKASH_NODE = rpcnode;
 				done++;
 				if(done == waitingOn){
@@ -108,7 +108,7 @@ export class EnvUtils{
 					}
 					return true;
 				})
-				console.log('nodelist',nodeList);
+				// /console.log('nodelist',nodeList);
 				//get a random node
 				resolve(nodeList[Math.floor(Math.random() * (nodeList.length-1))]);
 			}).catch(e=>{

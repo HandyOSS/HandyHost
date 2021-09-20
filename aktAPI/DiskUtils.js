@@ -445,13 +445,51 @@ export class DiskUtils{
 
 		})
 	}
-	
+	getThumbDrivesNEW(){
+		//no more need for any sudo calls now that we get rid of fdisk..
+		return new Promise((resolve,reject)=>{
+			const args = [
+				'--output',
+				'NAME,PATH,LABEL,RM,MODEL,VENDOR,SIZE,RM,HOTPLUG,PARTTYPE,MAJ:MIN',
+				'--exclude', '7', 
+				'--json'
+			]
+			let out = '';
+			const lsblk = spawn('lsblk',args); 
+			lsblk.stdout.on('data',d=>{
+				out += d.toString();
+			});
+			lsblk.on('close',()=>{
+				let json = {blockdevices:[]};
+				try{
+					json = JSON.parse(out);
+				}
+				catch(e){
+					console.log('error parsing lsblk');
+				}
+				const disksOut = json.blockdevices.filter(device=>{
+					return device.rm;
+				}).map(device=>{
+					return {
+						meta:{
+							device: device.path,
+							size: device.size,
+							model: device.model,
+							path: device.path
+						},
+						rm:device.rm
+					}
+				})
+				resolve(disksOut);
+			})
+		})
+	}
 	getThumbDrives(){
 		//get attached usb thumb drives for ubuntu iso creation
 		return new Promise((resolve,reject)=>{
 			this.getUSBFromLSBLK().then(blockDevices=>{
 				let fdiskOut = '';
-				const fdisk = spawn('sudo',['fdisk','-l'])
+				const fdisk = spawn('sudo',['fdisk','-l']);
 				fdisk.stdout.on('data',d=>{
 					//console.log('fdisk out',d.toString())
 					fdiskOut += d.toString();

@@ -13,35 +13,36 @@ const port = process.env.HANDYHOST_PORT || 8008;
 const httpsPort = process.env.HANDYHOST_SSL_PORT || 58008;
 if(!fs.existsSync(process.env.HOME+'/.HandyHost/handyhost_server.key')){
   //generate certs
-  utils.getIPForDisplay().then(ipData=>{
-    const args = [
-      'req',
-      '-x509', 
-      '-out', 
-      process.env.HOME+'/.HandyHost/handyhost_server.crt',
-      '-keyout', 
-      process.env.HOME+'/.HandyHost/handyhost_server.key',
-      '-newkey',
-      'rsa:2048', 
-      '-nodes', 
-      '-sha256',
-      '-extensions',
-      'EXT',
-      '-subj',
-      '/CN=HandyHost',
-      '-config',
-      'handyhost_server.cnf'
-    ];
-    const gencert = spawn('openssl',args)
-    gencert.on('close',()=>{
-      startHttpsServer();
-    })
-  });
+  //utils.getIPForDisplay().then(ipData=>{
+  const args = [
+    'req',
+    '-x509', 
+    '-out', 
+    process.env.HOME+'/.HandyHost/handyhost_server.crt',
+    '-keyout', 
+    process.env.HOME+'/.HandyHost/handyhost_server.key',
+    '-newkey',
+    'rsa:2048', 
+    '-nodes', 
+    '-sha256',
+    '-extensions',
+    'EXT',
+    '-subj',
+    '/CN=HandyHost',
+    '-config',
+    'handyhost_server.cnf'
+  ];
+  const gencert = spawn('openssl',args)
+  gencert.on('close',()=>{
+    startHttpsServer();
+  })
+  //});
 }
 else{
   //start ssl server
   startHttpsServer();
 }
+utils.initKeystore();
 
 const httpServer = http.createServer(function(request, response) { 
   handleServerRequest(request,response);

@@ -1,5 +1,19 @@
 #!/bin/bash
-(echo "$2"; echo "$1"; echo "$1";) | \
+#####DEPRECATED#######
+#####keeping it all in node to avoid moving passwords around#####
+if [[ "$OSTYPE" == "darwin"* ]]; then
+	OPENSSL='/usr/local/opt/openssl@1.1/bin/openssl'
+else
+	OPENSSL="$(which openssl)"
+fi
+
+pw=$($OPENSSL rsautl -inkey "$HOME/.HandyHost/keystore/handyhost.key" -decrypt -in $2) && \
+rm $2 && \
+
+mnemonic=$($OPENSSL rsautl -inkey "$HOME/.HandyHost/keystore/handyhost.key" -decrypt -in $1) && \
+rm $1 && \
+
+(echo "$mnemonic"; echo "$pw"; echo "$pw";) | \
 docker run --rm \
 --interactive \
 --volume ${HOME}/.sentinelnode:/root/.sentinelnode \
