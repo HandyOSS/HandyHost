@@ -37,7 +37,12 @@ export class HandyAKT{
 		this.k8sUtils = new K8sUtils(this.clusterConfigFilePath);
 		this.wallet = new Wallet();
 		this.market = new Marketplace();
-		this.wallet.autostartProvider();
+		setTimeout(()=>{
+			//give env time to spin up and get rpc node
+			this.wallet.autostartProvider();
+
+		},10000)
+		
 	}
 	checkClusterConfigExistence(){
 		if(!fs.existsSync(this.clusterConfigFilePath)){

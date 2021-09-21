@@ -238,6 +238,9 @@ li .dvpnDonut .donutTitle{
   right: 0px;
   line-height: 18px;
 }
+#providerStatus{
+  display:none;
+}
 
 .lds-ripple {
   display: inline-block;

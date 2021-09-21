@@ -555,7 +555,12 @@ export class Wallet{
 				if(fs.existsSync(encFilePath)){
 					this.commonUtils.decrypt(encFilePath).then(pw=>{
 						params.pw = pw;
-						this.startProvider(params);
+						this.checkProviderUpStatus().then(d=>{
+							console.log('autostart: akt provider is already running');
+						}).catch(e=>{
+							this.startProvider(params);
+							
+						})
 					})
 				}
 				else{
@@ -568,7 +573,12 @@ export class Wallet{
 					this.commonUtils.getDarwinKeychainPW('HANDYHOST_AKTAUTO').then(data=>{
 						if(data.exists){
 							params.pw = data.value;
-							this.startProvider(params);
+
+							this.checkProviderUpStatus().then(d=>{
+								console.log('autostart: akt provider is already running');
+							}).catch(e=>{
+								this.startProvider(params);
+							})
 						}
 						else{
 							console.log('no darwin akt autostart params exist');
@@ -603,7 +613,7 @@ export class Wallet{
 		}
 	}
 	startProvider(params){
-		console.log('start provider params',params);
+		
 		//params = walletName,serverHost,prob password????
 		return new Promise((resolve,reject)=>{
 			let logInterval;
@@ -647,7 +657,7 @@ export class Wallet{
 				
 				let output = '';
 				s.stdout.on('data',d=>{
-					//console.log('stdout',d.toString());
+					console.log('stdout',d.toString());
 					output += d.toString();
 				})
 				s.stderr.on('data',d=>{

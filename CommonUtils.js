@@ -238,9 +238,10 @@ export class CommonUtils{
 	}
 	getDarwinKeychainPW(serviceName){
 		return new Promise((resolve,reject)=>{
-			const getpw = spawn('security',['get-generic-password','-a',process.env.USER,'-s',serviceName]);
+			const getpw = spawn('security',['find-generic-password','-s',serviceName,'-a',process.env.USER,'-w']);
 			let exists = true;
 			getpw.stderr.on('data',d=>{
+				console.log('err',d.toString());
 				exists = false;
 			});
 			let out = '';
@@ -258,7 +259,7 @@ export class CommonUtils{
 
 	}
 	setDarwinKeychainPW(pw,serviceName){
-		const getpw = spawn('security',['get-generic-password','-a',process.env.USER,'-s',serviceName]);
+		const getpw = spawn('security',['find-generic-password','-a',process.env.USER,'-s',serviceName,'-w']);
 		let exists = true;
 		getpw.stderr.on('data',d=>{
 			exists = false;
