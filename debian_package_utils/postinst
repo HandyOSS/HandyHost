@@ -27,17 +27,40 @@ NVM_DIR="$USERHOME/.nvm" && \
 
 echo -e "########## \x1b[92mInstalling HandyHost Dependencies...\x1b[0m ##########" && \
 
-if [[ -d "/etc/sudoers.d" ]] ; then
-  echo "generating sudoers.d entry"
-  echo "$USERNAME ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/handyhost$USERNAME
-else
-echo "no dir /etc/sudoers.d, appending to /etc/sudoers"
-cat >> /etc/sudoers << EOF
-$USERNAME ALL=(ALL) NOPASSWD:ALL
-EOF
+# DEPRECATING SUDO REQUIREMENTS FOR RUNNING
+# if [[ -d "/etc/sudoers.d" ]] ; then
+#   echo "generating sudoers.d entry"
+#   echo "$USERNAME ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/handyhost$USERNAME
+# else
+# echo "no dir /etc/sudoers.d, appending to /etc/sudoers"
+# cat >> /etc/sudoers << EOF
+# $USERNAME ALL=(ALL) NOPASSWD:ALL
+# EOF
 
+# fi
+
+mkdir -p $USERHOME/.HandyHost
+
+if [[ ! -d "$HOME/.handy" ]] ; then
+  mkdir "$HOME/.handy" && \
+  openssl genrsa -out "$HOME/.handy/handyhost.key" 4096 && \
+  openssl rsa -in "$HOME/.handy/handyhost.key" -pubout -out "$HOME/.handy/handyhost.pub" && \
+  chmod -R 0600 "$HOME/.handy" && \
+  chmod 0644 "$HOME/.handy/handyhost.pub"
 fi
 
+
+if [[ ! -d "$USERHOME/.HandyHost/keystore" ]] ; then
+  mkdir "$USERHOME/.HandyHost/keystore" && \
+  chmod 0700 "$USERHOME/.HandyHost/keystore" && \
+  openssl genrsa -out "$USERHOME/.HandyHost/keystore/handyhost.key" 4096 && \
+  openssl rsa -in "$USERHOME/.HandyHost/keystore/handyhost.key" -pubout -out "$USERHOME/.HandyHost/keystore/handyhost.pub" && \
+  chmod 0644 "$USERHOME/.HandyHost/keystore/handyhost.pub" && \
+  chmod 0600 "$USERHOME/.HandyHost/keystore/handyhost.key" && \
+  cp "$HOME/.handy/handyhost.pub" "$USERHOME/.HandyHost/keystore/daemon.pub" && \
+  chown "$USERNAME:$USERGROUP" "$USERHOME/.HandyHost/keystore/daemon.pub" && \
+  chmod 0644 "$USERHOME/.HandyHost/keystore/daemon.pub"
+fi
 
 cd $pwd && \
 su - $USERNAME -c "source $USERHOME/.bashrc && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" && cd $pwd && nvm install $(cat $pwd/.nvmrc) && nvm use && npm install --build-from-source --python=/usr/bin/python3" && \
@@ -46,8 +69,8 @@ npm install -g bower && \
 npm install -g forever && \
 cd $pwd/client && \
 su - $USERNAME -c "cd $pwd && source $USERHOME/.bashrc && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" && cd $pwd && nvm install $(cat $pwd/.nvmrc) && nvm use && cd $pwd/client && bower install" && \
-mkdir -p $USERHOME/.HandyHost && \
 sudo chown -R "$USERNAME:$USERGROUP" $USERHOME/.HandyHost && \
+
 echo -e "########## \x1b[92mInstalling Sia\x1b[0m ##########" && \
 
 
@@ -205,6 +228,7 @@ sudo update-rc.d handyhost defaults && \
 sudo systemctl restart handyhost && \
 #sed s"/USERGID/${USERGROUP}/" -i /etc/init/handyhost.conf && \
 node rainbow.js && \
-echo -e "\x1b[92mHandyHost is now running on: http://localhost:8008\x1b[0m" && \
+echo -e "\x1b[92mHandyHost is  now running on: http://localhost:8008\x1b[0m" && \
+echo -e "\x1b[92mHandyHost is also running on: https://localhost:58008\x1b[0m (self-signed certificate)" && \
 echo "HandyHost is configured to start on machine restart" && \
 echo "Manually start|stop|restart like: sudo systemctl restart handyhost"

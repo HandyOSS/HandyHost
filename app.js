@@ -143,6 +143,9 @@ utils.getIPForDisplay().then(data=>{
   }
   
   console.log("HandyHost Daemon Running at: http://"+data.ip+":" + data.port + "/, and https://"+data.ip+":"+httpsPort+'/ (self-signed cert)');
+  console.log("SCAUTO ENV",process.env.SCAUTO)
+  console.log("AKTAUTO ENV",process.env.AKTAUTO)
+  console.log("DVPNAUTO ENV",process.env.DVPNAUTO)
 })
 
 

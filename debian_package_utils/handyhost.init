@@ -17,8 +17,9 @@ SOURCE_DIR=/opt/handyhost
 SOURCE_NAME=app.js
 USER=TARGETUSERNAME
 USERGROUP="$(id -gn $USER)"
+USERHOME="/home/$USER"
 NODE_ENVIROMENT=production
-
+ROOTHOME="/root"
 pidfile=/var/log/$NAME.pid
 logfile=/var/log/$NAME.log
 forever=forever
@@ -27,8 +28,48 @@ export NVM_DIR="/home/$USER/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
 
+moveDaemonKey(){
+    if [[ -s "$USERHOME/.HandyHost/keystore/daemon_$1" ]] ; then
+        #client wants a launch daemon, lets move that pubkey to root area
+        echo $(openssl rsautl -inkey "$ROOTHOME/.handy/handyhost.key" -decrypt -in "$USERHOME/.HandyHost/keystore/daemon_$1") | openssl rsautl -pubin -inkey $ROOTHOME/.handy/handyhost.pub -encrypt -pkcs -out "$ROOTHOME/.handy/$1"
+        rm "$USERHOME/.HandyHost/keystore/daemon_$1" && \
+        chown "root:root" "$ROOTHOME/.handy/$1" && \
+        chmod 0600 "$ROOTHOME/.handy/$1"
+    fi
+}
 doCommand(){
-    su - $USER -c "source /home/$USER/.bashrc && source /home/$USER/.profile && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" && cd $SOURCE_DIR && nvm use && $forever $1 --pidFile $pidfile -l $logfile -a $SOURCE_NAME"
+    
+    moveDaemonKey "sc"
+    moveDaemonKey "akt"
+    moveDaemonKey "dvpn"
+
+
+    ENVS=""
+    if [[ -s $ROOTHOME/.handy/sc ]] ; then
+        SCLOC=$(uuidgen)
+        echo "$(openssl rsautl -inkey $ROOTHOME/.handy/handyhost.key -decrypt -in $ROOTHOME/.handy/sc)" | openssl rsautl -pubin -inkey $USERHOME/.HandyHost/keystore/handyhost.pub -encrypt -pkcs -out "$USERHOME/.HandyHost/keystore/$SCLOC"
+        chown "$USER:$USERGROUP" $USERHOME/.HandyHost/keystore/$SCLOC && \
+        chmod 0600 $USERHOME/.HandyHost/keystore/$SCLOC
+        ENVS+=" SCAUTO=$SCLOC"
+    fi
+    if [[ -s $ROOTHOME/.handy/akt ]] ; then
+        AKTLOC=$(uuidgen)
+        echo "$(openssl rsautl -inkey $ROOTHOME/.handy/handyhost.key -decrypt -in $ROOTHOME/.handy/akt)" | openssl rsautl -pubin -inkey $USERHOME/.HandyHost/keystore/handyhost.pub -encrypt -pkcs -out "$USERHOME/.HandyHost/keystore/$AKTLOC"
+        chown "$USER:$USERGROUP" $USERHOME/.HandyHost/keystore/$AKTLOC && \
+        chmod 0600 $USERHOME/.HandyHost/keystore/$AKTLOC
+        ENVS+=" AKTAUTO=$AKTLOC"
+    fi
+    if [[ -s $ROOTHOME/.handy/dvpn ]] ; then
+        DVPNLOC=$(uuidgen)
+        echo "$(openssl rsautl -inkey $ROOTHOME/.handy/handyhost.key -decrypt -in $ROOTHOME/.handy/dvpn)" | openssl rsautl -pubin -inkey $USERHOME/.HandyHost/keystore/handyhost.pub -encrypt -pkcs -out "$USERHOME/.HandyHost/keystore/$DVPNLOC"
+        chown "$USER:$USERGROUP" $USERHOME/.HandyHost/keystore/$DVPNLOC && \
+        chmod 0600 $USERHOME/.HandyHost/keystore/$DVPNLOC
+        
+        ENVS+=" DVPNAUTO=$DVPNLOC"
+    fi
+
+    su - $USER -c "source /home/$USER/.bashrc && source /home/$USER/.profile && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" && cd $SOURCE_DIR && nvm use &&$ENVS $forever $1 --pidFile $pidfile -l $logfile -a $SOURCE_NAME" && \
+    ENVS=""
     #RETVAL=$?
 }
 start() {
@@ -42,21 +83,21 @@ start() {
     touch $logfile
     chown "$USER:$USERGROUP" $logfile
 
-    
-    
     sudo modprobe ip6table_filter
+    
     doCommand "start"
 
 }
 
 restart() {
     echo -n "Restarting $NAME node instance : "
+    
     doCommand "restart"
 }
 
 status() {
     echo "Status for $NAME:"
-    doCommand "list"
+    su - $USER -c "source /home/$USER/.bashrc && source /home/$USER/.profile && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" && cd $SOURCE_DIR && nvm use && $forever list --pidFile $pidfile -l $logfile -a $SOURCE_NAME"
 }
 
 stop() {

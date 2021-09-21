@@ -550,14 +550,51 @@ export class Wallet{
 		
 		if(fs.existsSync(autostartFile)){
 			const params = JSON.parse(fs.readFileSync(autostartFile,'utf8'));
-			this.startProvider(params);
+			if(typeof process.env.AKTAUTO != "undefined"){
+				const encFilePth = process.env.HOME+'/.HandyHost/keystore/'+process.env.AKTAUTO;
+				if(fs.existsSync(encFilePath)){
+					this.commonUtils.decrypt(encFilePath).then(pw=>{
+						params.pw = pw;
+						this.startProvider(params);
+					})
+				}
+				else{
+					console.log('no akt enc autostart found')
+				}
+			}
+			else{
+				if(process.platform == 'darwin'){
+					//is macos
+					this.commonUtils.getDarwinKeychainPW('HANDYHOST_AKTAUTO').then(data=>{
+						if(data.exists){
+							params.pw = data.value;
+							this.startProvider(params);
+						}
+						else{
+							console.log('no darwin akt autostart params exist');
+						}
+					})
+				}
+				else{
+					console.log('no akt autostart params present')
+				}
+			}
+			//this.startProvider(params);
 		}
 	}
 	setupProviderAutostart(params,doAutostart){
 		//auto start provider on app startup
 		const autostartFile = process.env.HOME+'/.HandyHost/aktData/autostart.json';
 		if(doAutostart){
-			fs.writeFileSync(autostartFile,JSON.stringify(params),'utf8');
+			let stripped = JSON.parse(JSON.stringify(params));
+			delete stripped.pw;
+			fs.writeFileSync(autostartFile,JSON.stringify(stripped),'utf8');
+			if(process.platform == 'darwin'){
+				this.commonUtils.setDarwinKeychainPW(params.pw,'HANDYHOST_AKTAUTO');
+			}	
+			else{
+				this.commonUtils.encrypt(params.pw,true,'akt');
+			}
 		}
 		else{
 			if(fs.existsSync(autostartFile)){
@@ -566,6 +603,7 @@ export class Wallet{
 		}
 	}
 	startProvider(params){
+		console.log('start provider params',params);
 		//params = walletName,serverHost,prob password????
 		return new Promise((resolve,reject)=>{
 			let logInterval;

@@ -504,29 +504,87 @@ export class DVPNSetup{
 		})
 	}
 	autostartDVPN(socketIONamespace){
-		const autostartFile = process.env.HOME+'/.HandyHost/sentinelData/autostart.json';
+		const autostartFile = process.env.HOME+'/.HandyHost/sentinelData/autostart';
+		const _this = this;
+		
 		if(fs.existsSync(autostartFile)){
 			this.checkMachineStatus().then(running=>{
 				console.log('is dvpn running ??',running);
 				if(!running){
-					const params = JSON.parse(fs.readFileSync(autostartFile,'utf8'));
-					this.launchDVPN(params.pw,socketIONamespace);
+					if(typeof process.env.DVPNAUTO != "undefined"){
+						getEncPayload(socketIONamespace);
+					}
+					else{
+						//could be macos
+						if(process.platform == 'darwin'){
+							getMacPayload(socketIONamespace)
+						}
+						else{
+							console.log('no dvpn autostart credentials found')
+						}
+					}
+					
 				}
 				else{
 					console.log('autostart: dvpn is already running')
 				}
 			}).catch(e=>{
-				const params = JSON.parse(fs.readFileSync(autostartFile,'utf8'));
-				this.launchDVPN(params.pw,socketIONamespace);
+				/*const params = JSON.parse(fs.readFileSync(autostartFile,'utf8'));
+				this.launchDVPN(params.pw,socketIONamespace);*/
+				if(typeof process.env.DVPNAUTO != "undefined"){
+					const encFilePath = process.env.HOME+'/.HandyHost/keystore/'+process.env.DVPNAUTO;
+					if(fs.existsSync(encFilePath)){
+						this.utils.decrypt(encFilePath).then(pass=>{
+							this.launchDVPN(pass,socketIONamespace);
+						})
+					}
+					else{
+						console.log('no encrypted credentials present')
+					}
+				}
+				else{
+					//could be macos
+					if(process.platform == 'darwin'){
+						getMacPayload(socketIONamespace)
+					}
+					else{
+						console.log('no dvpn autostart credentials found')
+					}
+				}
 			})
 			
 		}
+		function getEncPayload(socketIO){
+			const encFilePath = process.env.HOME+'/.HandyHost/keystore/'+process.env.DVPNAUTO;
+			if(fs.existsSync(encFilePath)){
+				_this.utils.decrypt(encFilePath).then(pass=>{
+					_this.launchDVPN(pass,socketIO);
+				})
+			}
+		}
+		function getMacPayload(){
+			getDarwinKeychainPW('HANDYHOST_DVPNAUTO').then(data=>{
+				if(data.exists){
+					_this.launchDVPN(data.value,socketIO);
+				}
+				else{
+					console.log('no dvpn autostart credentials present on macos keychain')
+				}
+			})
+		}
 	}
 	configureAutostart(params){
-		const autostartFile = process.env.HOME+'/.HandyHost/sentinelData/autostart.json';
-		console.log('autostart params',params);
+		const autostartFile = process.env.HOME+'/.HandyHost/sentinelData/autostart';
+		
 		if(params.autostart){
-			fs.writeFileSync(autostartFile,JSON.stringify(params),'utf8');
+			if(process.platform == 'darwin'){
+				this.utils.setDarwinKeychainPW(params.pw,'HANDYHOST_DVPNAUTO')
+			}
+			else{
+				this.utils.encrypt(params.pw,true,'dvpn');
+			}
+			
+			fs.writeFileSync(autostartFile,'true','utf8');
 		}
 		else{
 			if(fs.existsSync(autostartFile)){

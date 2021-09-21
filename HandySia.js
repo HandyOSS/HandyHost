@@ -3,7 +3,7 @@ import {Consensus} from './siaAPI/Consensus.js';
 import {Host} from './siaAPI/Host.js';
 import {Daemon} from './siaAPI/Daemon.js';
 import {CommonUtils} from './CommonUtils.js';
-
+import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
 import url from 'url';
@@ -19,7 +19,7 @@ export class HandySia{
 		this.host = new Host();
 		this.daemon = new Daemon();
 		this.handyUtils = new CommonUtils();
-		try{
+		/*try{
 			fs.mkdirSync(`${process.env.HOME}/.HandyHost/siaData`,{recursive:true})
 		}
 		catch(e){
@@ -33,7 +33,8 @@ export class HandySia{
 		
 		if(typeof unlockPW != "undefined"){
 			process.env.SIA_WALLET_PASSWORD = unlockPW.replace(/\n/g,'').trim();
-		}
+		}*/
+
 		
 		this.trySpawningSiad();
 		//this.consensus.getChainStatus();
@@ -44,17 +45,54 @@ export class HandySia{
 			return false;
 		}
 		this.daemon.getVersion().then(data=>{
-			console.log('fetched version',data);
+			//console.log('fetched version',data);
 			this.consensus.getChainStatus().then(d=>{
-				console.log('chain stats',d);
-				if(typeof process.env.SIA_WALLET_PASSWORD != "undefined"){
-					//unlock on startup so that we can host files else lose $$$
-					//console.log('doing wallet unlock',unlockPW)
-					this.wallet.unlockWallet(process.env.SIA_WALLET_PASSWORD).then(data=>{
-						console.log('wallet unlock success',data);
-					}).catch(error=>{
-						console.log('error unlocking wallet',error);
-					});
+				//console.log('chain stats',d);
+				if(typeof process.env.SCAUTO != "undefined"){
+					const encrypted = process.env.HOME+'/.HandyHost/keystore/'+process.env.SCAUTO;
+					if(fs.existsSync(encrypted)){
+						this.handyUtils.decrypt(encrypted,true).then(pass=>{
+							//unlock on startup so that we can host files else lose $$$
+							const passHash = crypto
+								.createHash("sha256")
+								.update(pass)
+								.digest("hex");
+							this.siaPasswordHash = passHash;
+							
+							this.wallet.unlockWallet(pass).then(data=>{
+								console.log('wallet unlock success',data);
+								if(fs.existsSync(encrypted)){
+									fs.unlinkSync(encrypted);
+								}
+							}).catch(error=>{
+								console.log('error unlocking wallet',error);
+							});
+						})
+					}
+					
+				}
+				else{
+					console.log('no sia autostart params found');
+				}
+				if(process.platform == 'darwin'){
+					//macos uses keychain
+
+					this.handyUtils.getDarwinKeychainPW('HANDYHOST_SCAUTO').then(data=>{
+						if(data.exists){
+							const passHash = crypto
+								.createHash("sha256")
+								.update(data.value)
+								.digest("hex");
+							this.siaPasswordHash = passHash;
+							
+							this.wallet.unlockWallet(data.value).then(data=>{
+								console.log('wallet unlock success',data);
+								
+							}).catch(error=>{
+								console.log('error unlocking wallet',error);
+							});
+						}
+					})
 				}
 			}).catch(e=>{
 				console.error('ERROR FETCHING CHAIN STATUS',e);
@@ -74,8 +112,69 @@ export class HandySia{
 	attemptWalletUnlock(){
 		setTimeout(()=>{
 			//give a little time to boot it up..
-			
-			if(typeof process.env.SIA_WALLET_PASSWORD != "undefined"){
+			if(typeof process.env.SCAUTO != "undefined"){
+				
+				const encrypted = process.env.HOME+'/.HandyHost/keystore/'+process.env.SCAUTO;
+				if(fs.existsSync(encrypted)){
+					this.handyUtils.decrypt(encrypted,true).then(pass=>{
+						//unlock on startup so that we can host files else lose $$$
+						const passHash = crypto
+							.createHash("sha256")
+							.update(pass)
+							.digest("hex");
+						this.siaPasswordHash = passHash;
+						console.log('tryingwallet unlock')
+						this.wallet.unlockWallet(pass).then(data=>{
+							console.log('wallet unlock success');
+							if(fs.existsSync(encrypted)){
+								fs.unlinkSync(encrypted);
+							}
+						}).catch(error=>{
+							console.log('error unlocking wallet',error);
+							if(error.toString() == '490'){
+								this.attemptWalletUnlock();
+							}
+						});
+					})
+				}
+				else{
+					console.log('no encrypted sia credentials found')
+				}
+			}
+			else{
+				if(process.platform == 'darwin'){
+					//macos uses keychain
+
+					this.handyUtils.getDarwinKeychainPW('HANDYHOST_SCAUTO').then(data=>{
+						if(data.exists){
+							const passHash = crypto
+								.createHash("sha256")
+								.update(data.value)
+								.digest("hex");
+							this.siaPasswordHash = passHash;
+							
+							console.log('tryingwallet unlock')
+							this.wallet.unlockWallet(pass).then(data=>{
+								console.log('wallet unlock success');
+								
+							}).catch(error=>{
+								console.log('error unlocking wallet',error);
+								if(error.toString() == '490'){
+									this.attemptWalletUnlock();
+								}
+							});
+						}
+						else{
+							console.log('no encrypted sia credentials found')
+						}
+					})
+				}
+				else{
+					console.log('no encrypted sia credentials found')
+				}
+				
+			}
+			/*if(typeof process.env.SIA_WALLET_PASSWORD != "undefined"){
 				//unlock on startup so that we can host files else lose $$$
 				console.log('tryingwallet unlock')
 				this.wallet.unlockWallet(process.env.SIA_WALLET_PASSWORD).then(data=>{
@@ -87,7 +186,7 @@ export class HandySia{
 					}
 				});
 				
-			}
+			}*/
 		},5000);
 	}
 	api(path,requestBody,resolve,reject){
@@ -570,11 +669,20 @@ export class HandySia{
 		const pw = parsed.pw;
 		console.log('amt',amountHastings);
 		console.log('dest',destination);
-		if(pw != process.env.SIA_WALLET_PASSWORD){
+		const passHash = crypto
+			.createHash("sha256")
+			.update(pw)
+			.digest("hex");
+		if(pw != this.siaPasswordHash){
+			return new Promise((resolve,reject)=>{
+				reject({message:"Incorrect Encryption Password"})
+			})
+		}
+		/*if(pw != process.env.SIA_WALLET_PASSWORD){
 			return new Promise((resolve,reject)=>{
 				reject({message:"Incorrect Encryption Password"})
 			});
-		}
+		}*/
 		return this.wallet.sendCoins(amountHastings,destination);
 	}
 	getQRCode(address){
@@ -647,6 +755,7 @@ export class HandySia{
 		else{
 			return this.wallet.initWallet(parsed.pw);
 		}
+
 		/*return new Promise((resolve,reject)=>{
 
 			this.checkWalletStatus().then(isSynced=>{
@@ -739,16 +848,25 @@ export class HandySia{
 		//it is recommended for sia hosting to always have the wallet unlocked so that
 		//our host is always serving. no unlocked wallet = no serving = potential loss of revenue
 		//due to power losses/unexpected restarts/etc.
-		//so we set the wallet unlock pw as an env variable.
-		//SIA_WALLET_PASSWORD
+		//so we set the wallet unlock pw as an encrypted file that root gives to us on start/restart of the app
 		return new Promise((resolve,reject)=>{
 			const {parsed,err} = this.parseRequestBody(requestBody);
-			if(typeof parsed.pw != "undefined"){
+			/*if(typeof parsed.pw != "undefined"){
 				fs.writeFileSync(`${process.env.HOME}/.HandyHost/siaData/.walletEnv`,parsed.pw);
 				process.env.SIA_WALLET_PASSWORD = parsed.pw;
-			}
-			console.log('unlocking wallet',parsed.pw);
+			}*/
+			//console.log('unlocking wallet',parsed.pw);
 			this.wallet.unlockWallet(parsed.pw).then(()=>{
+				if(process.platform == 'darwin'){
+					//well just use keychain on mac
+					//no daemons on mac bc user is always logged in
+					this.handyUtils.setDarwinKeychainPW(parsed.pw,'HANDYHOST_SCAUTO');
+				}
+				else{
+					this.handyUtils.encrypt(parsed.pw,true,'sc');
+				}
+				
+				//set encrypted (with root's pubkey) unlock pass for root to pickup
 				console.log('did unlock');
 				resolve();
 			});

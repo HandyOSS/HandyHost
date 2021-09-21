@@ -191,12 +191,13 @@ export class CommonUtils{
 		  	})
 		}
 	}
-	encrypt(value){
+	encrypt(value,isForDaemon,daemonServiceName){
 		return new Promise((resolve,reject)=>{
 			
+			const pubKeyName = isForDaemon ? 'daemon.pub' : 'handyhost.pub';
 			const basePath = process.env.HOME+'/.HandyHost/keystore/';
-			const pubPath = basePath+'handyhost.pub';
-			const encryptedOutPath = basePath+'k'+(new Date().getTime());
+			const pubPath = basePath+pubKeyName;
+			const encryptedOutPath = isForDaemon ? basePath+'daemon_'+daemonServiceName : basePath+'k'+(new Date().getTime());
 			const openssl = process.platform == 'darwin' ? '/usr/local/opt/openssl@1.1/bin/openssl' : 'openssl';
 			const args = ['rsautl', '-pubin', '-inkey', pubPath, '-encrypt', '-pkcs','-out',encryptedOutPath];
 			
@@ -233,6 +234,73 @@ export class CommonUtils{
 				}
 				resolve(out);
 			})
+		})
+	}
+	getDarwinKeychainPW(serviceName){
+		return new Promise((resolve,reject)=>{
+			const getpw = spawn('security',['get-generic-password','-a',process.env.USER,'-s',serviceName]);
+			let exists = true;
+			getpw.stderr.on('data',d=>{
+				exists = false;
+			});
+			let out = '';
+			getpw.stdout.on('data',d=>{
+				out += d.toString();
+			})
+			getpw.on('close',()=>{
+				resolve({
+					exists,
+					value:out.trim()
+				});
+			})
+		})
+		
+
+	}
+	setDarwinKeychainPW(pw,serviceName){
+		const getpw = spawn('security',['get-generic-password','-a',process.env.USER,'-s',serviceName]);
+		let exists = true;
+		getpw.stderr.on('data',d=>{
+			exists = false;
+		})
+		getpw.on('close',()=>{
+			if(!exists){
+				spawn('security',['add-generic-password','-a',process.env.USER,'-s',serviceName, '-w',pw])
+			}
+			else{
+				const del = spawn('security',['delete-generic-password','-a',process.env.USER,'-s',serviceName]);
+				del.on('close',()=>{
+					spawn('security',['add-generic-password','-a',process.env.USER,'-s',serviceName, '-w',pw])
+				})
+			}
+		})
+		
+				
+	}
+					
+	encryptToBase64(value){
+		return new Promise((resolve,reject)=>{
+			const basePath = process.env.HOME+'/.HandyHost/keystore/';
+			const encryptedOutPath = basePath+'temp'+(new Date().getTime());
+			const openssl = process.platform == 'darwin' ? '/usr/local/opt/openssl@1.1/bin/openssl' : 'openssl';
+			
+			const enc = spawn(openssl,['rsautl','-pubin','-inkey',process.env.HOME+'/.HandyHost/keystore/daemon.pub', '-encrypt','-pkcs']);
+			const toBase64 = spawn(openssl,['enc','-base64']);
+			enc.stdin.write(`${value}`);
+			enc.stdin.end();
+			enc.stdout.pipe(toBase64.stdin);
+			
+			let out = '';
+			toBase64.stdout.on('data',d=>{
+				out += d.toString();
+			})
+
+			toBase64.on('close',()=>{
+				resolve(out);
+			})
+			
+			/* | openssl rsautl -pubin -inkey ~/.ssh/handyhost.pub.pem -encrypt -pkcs \
+   			| openssl enc -base64 \*/
 		})
 	}
 	decryptSHTEST(encpath){
