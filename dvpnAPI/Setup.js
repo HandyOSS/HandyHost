@@ -512,7 +512,7 @@ export class DVPNSetup{
 				console.log('is dvpn running ??',running);
 				if(!running){
 					if(typeof process.env.DVPNAUTO != "undefined"){
-						getEncPayload(socketIONamespace);
+						getEncPayload(socketIONamespace,running);
 					}
 					else{
 						//could be macos
@@ -520,6 +520,9 @@ export class DVPNSetup{
 							getMacPayload(socketIONamespace,running)
 						}
 						else{
+							if(typeof process.env.DVPNAUTO != "undefined"){
+								getEncPayload(socketIONamespace,true);
+							}
 							console.log('no dvpn autostart credentials found')
 						}
 					}
@@ -543,11 +546,22 @@ export class DVPNSetup{
 						getMacPayload(socketIONamespace)
 					}
 					else{
+						if(typeof process.env.DVPNAUTO != "undefined"){
+							getEncPayload(socketIONamespace,true);
+						}
 						console.log('no dvpn autostart credentials found')
 					}
 				}
 			})
 			
+		}
+		else{
+			if(process.platform != 'darwin'){
+				if(typeof process.env.DVPNAUTO != "undefined"){
+					//clear out the credential that may be here
+					getEncPayload(socketIONamespace,true);
+				}
+			}
 		}
 		function getEncPayload(socketIO,isRunning){
 			const encFilePath = process.env.HOME+'/.HandyHost/keystore/'+process.env.DVPNAUTO;

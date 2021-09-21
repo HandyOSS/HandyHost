@@ -551,7 +551,7 @@ export class Wallet{
 		if(fs.existsSync(autostartFile)){
 			const params = JSON.parse(fs.readFileSync(autostartFile,'utf8'));
 			if(typeof process.env.AKTAUTO != "undefined"){
-				const encFilePth = process.env.HOME+'/.HandyHost/keystore/'+process.env.AKTAUTO;
+				const encFilePath = process.env.HOME+'/.HandyHost/keystore/'+process.env.AKTAUTO;
 				if(fs.existsSync(encFilePath)){
 					this.commonUtils.decrypt(encFilePath).then(pw=>{
 						params.pw = pw;
@@ -586,10 +586,31 @@ export class Wallet{
 					})
 				}
 				else{
-					console.log('no akt autostart params present')
+					console.log('no akt autostart params present');
+					//remove configs if present
+					if(typeof process.env.AKTAUTO != "undefined"){
+						const encFilePath = process.env.HOME+'/.HandyHost/keystore/'+process.env.AKTAUTO;
+						if(fs.existsSync(encFilePath)){
+							this.commonUtils.decrypt(encFilePath).then(p=>{})
+						}
+					}
 				}
 			}
+
 			//this.startProvider(params);
+		}
+		else{
+			//autoconfig doesnt exist but might have recently
+			//so we remove any encrypted creds that got generated for us
+			if(process.platform != 'darwin'){
+				if(typeof process.env.AKTAUTO != "undefined"){
+					const encFilePath = process.env.HOME+'/.HandyHost/keystore/'+process.env.AKTAUTO;
+					if(fs.existsSync(encFilePath)){
+						//remove the config if it exists
+						this.commonUtils.decrypt(encFilePath).then(p=>{})
+					}
+				}
+			}
 		}
 	}
 	setupProviderAutostart(params,doAutostart){
