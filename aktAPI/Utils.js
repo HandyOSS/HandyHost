@@ -516,8 +516,9 @@ export class AKTUtils{
 				const cleanup = spawn('bash',['./aktAPI/cleanupKnownHosts.sh',node.ip],{shell:true,env:process.env,cwd:process.env.PWD});
 				//cleanup ssh keys in case we talked with this IP before..
 				cleanup.on('close',()=>{
+					console.log('cleanup known hosts done')
 					if(process.platform == 'darwin'){
-						this.commonUtils.encrypt(this.commonUtils.escapeBashString(nodePW)).then(encPath=>{
+						this.commonUtils.encrypt(nodePW).then(encPath=>{
 							//cpid = spawn('./sshCopyIdAutomated.sh',[nodeUser,node.ip,nodePW,process.env.HOME+'/.ssh/handyhost'],{env:process.env,cwd:process.env.PWD+'/aktAPI'})
 							command = './sshCopyIdAutomated.sh';
 							args = [nodeUser,node.ip,encPath,process.env.HOME+'/.ssh/handyhost','/usr/local/opt/openssl@1.1/bin/openssl'];
@@ -534,6 +535,7 @@ export class AKTUtils{
 				})
 				
 				function finish(){
+					console.log('command',command)
 					cpid = spawn(command,args,{env:process.env,cwd:process.env.PWD+'/aktAPI'})
 					let hasError = false;
 					let errOut = '';
@@ -559,7 +561,7 @@ export class AKTUtils{
 						hostname.stdout.on('data',(d)=>{
 							out += d.toString();
 						})
-						hostame.stderr.on('data',(d)=>{
+						hostname.stderr.on('data',(d)=>{
 							hostnameErr += d.toString()
 						})
 						hostname.on('close',()=>{
