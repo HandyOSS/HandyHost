@@ -612,7 +612,7 @@ export class AKTClusterConfig{
 					const $select = $('<select class="styledSelect usbDevice" id="usbDevicex86"></select>')
 					usbs.map(usb=>{
 						const diskSize = typeof usb.meta.size == 'number' ? numeral(usb.meta.size).format('0.0b') : usb.meta.size;
-						const $option = $('<option value="'+usb.meta.device+'">'+usb.meta.model+' - '+diskSize+'</option>')
+						const $option = $('<option value="'+usb.meta.device+'" data-diskid="'+usb.meta.path+'">'+usb.meta.model+' - '+diskSize+'</option>')
 						$select.append($option);
 					})
 					$('#buildAX86BoxModal .chooseDeviceResult').html($select);
@@ -635,6 +635,7 @@ export class AKTClusterConfig{
 		});
 		$('#buildAX86BoxModal #finishHostx86').off('click').on('click',()=>{
 			const path = $('#buildAX86BoxModal #usbDevicex86 option:selected').val();
+			const diskID = $('#buildAX86BoxModal #usbDevicex86 option:selected').attr('data-diskid')
 			if($('#buildAX86BoxModal .finishHost').hasClass('nonActive')){
 				return;
 			}
@@ -650,14 +651,16 @@ export class AKTClusterConfig{
 				      'Content-Type': 'application/json'
 				    },
 				    method: "POST",
-				    body: JSON.stringify({path,pw:$('#sudoPW').val()})
+				    body: JSON.stringify({path,pw:$('#sudoPW').val(),id:diskID})
 				})
 				.then((res)=>{ console.log('success'); return res.json(); }).then(data=>{
 					$('#buildAX86BoxModal .finishHost').html('Create Ubuntu Auto-Installer');
+					$('#finishHostx86').removeClass('nonActive');
 					console.log('result',data);
 					if(typeof data.error == "undefined"){
 						$('#buildAX86BoxModal .autoConfig .confirmation').show();
 						$('#buildAX86BoxModal .autoConfig .error').hide();
+
 					}
 					else{
 						$('#buildAX86BoxModal .autoConfig .confirmation').hide();

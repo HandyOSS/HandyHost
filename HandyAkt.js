@@ -411,7 +411,7 @@ export class HandyAKT{
 				reject(err);
 			})
 		}
-		return this.k8sUtils.flashThumbDrive(parsed.path,parsed.pw);
+		return this.k8sUtils.flashThumbDrive(parsed.path,parsed.pw,parsed.id);
 	}
 	fetchAllOrderBids(requestBody){
 		const {parsed,err} = this.parseRequestBody(requestBody);

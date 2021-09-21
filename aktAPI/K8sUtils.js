@@ -631,37 +631,60 @@ export class K8sUtils{
 			});
 		})
 	}
-	flashThumbDrive(path,pw){
+	flashThumbDrive(path,pw,diskID){
 		//path = device path. first verify it's detachable media just to be paranoid..
+		console.log('flash params',path,pw,diskID)
 		return new Promise((resolve,reject)=>{
 			let shouldProceed = false;
 			const method = process.platform == 'darwin' ? this.diskUtils.getUSBFromDiskUtil : this.diskUtils.getThumbDrivesNEW;
-			method().then(usbDrives=>{
-				let devicePath;
-				usbDrives.map(usb=>{
-					if(usb.meta.device == path && usb.rm){
-						//is removable
-						devicePath = usb.meta.path;
-						shouldProceed = true;
+			const _this = this;
+			checkDrives(false,path,pw,diskID);
+			function checkDrives(hasAlreadyChecked,path,pw,diskID){
+				method().then(usbDrives=>{
+					let devicePath;
+					let needsRemounted = false;
+					usbDrives.map(usb=>{
+						if(usb.meta.device == path && usb.rm){
+							//is removable
+							devicePath = usb.meta.path;
+							shouldProceed = true;
+						}
+						else if(!hasAlreadyChecked && process.platform == 'darwin' && typeof usb.meta.device == "undefined" && usb.rm && diskID == usb.meta.path){
+							//its on mac and was previously unmounted, likely by failed dd invalid pw, lets mount it...
+							needsRemounted = true;
+							console.log('OSX: Re-Mounting drive '+diskID)
+							
+							const mount = spawn('diskutil',['mount',diskID]);
+							mount.on('close',()=>{
+								checkDrives(true,path,pw,diskID);
+							})
+						}
+					})
+					if(!needsRemounted){
+						if(!shouldProceed){
+							
+							reject({error:'Error Mounting USB'});
+							return;
+						}
+						else{
+							//ok lets flash the drive then
+							if(typeof devicePath != "undefined"){
+								_this.createUbuntuISO(devicePath,pw).then(data=>{
+									resolve(data)
+								}).catch(error=>{
+									console.log('error creating usb',error);
+									reject(error);
+								})
+							}
+							else{
+								reject({error:'Error Mounting USB'});
+							}
+						}
 					}
-				})
-
-				if(!shouldProceed){
-					reject('error');
-					return;
-				}
-				else{
-					//ok lets flash the drive then
-					if(typeof devicePath != "undefined"){
-						this.createUbuntuISO(devicePath,pw).then(data=>{
-							resolve(data)
-						})
-					}
-					else{
-						reject('error');
-					}
-				}
-			});
+					
+				});
+			}
+			
 		});
 	}
 	createUbuntuISO(devicePath,pw){
@@ -768,6 +791,7 @@ export class K8sUtils{
 		diskutil unmountDisk $1 && \
 		(echo "$3";) | sudo -S dd bs=$2 if=$HOME/.HandyHost/aktData/ubuntu-autoinstall-generator/ubuntu-autoinstaller.iso of=$1 conv=sync
 		*/
+		console.log('start mac flashing');
 		const unmount = spawn('diskutil',['unmountDisk',devicePath]);
 		unmount.on('close',()=>{
 			console.log('unmounted disk, now flashing USB ISO...');
@@ -784,7 +808,7 @@ export class K8sUtils{
 			let ddErr = '';
 			
 			//const dd = spawn(command,ddArgs,{shell:true,env:process.env,cwd:process.env.PWD});
-
+			dd.stdin.write(`${pw}\n`);
 			dd.stdout.on('data',d=>{
 				console.log('dd stdout output: ',d.toString());
 				ddOut += d.toString();
@@ -792,7 +816,11 @@ export class K8sUtils{
 			dd.stderr.on('data',d=>{
 				console.log('dd stderr output: ',d.toString());
 				ddErr += d.toString();
+				if(ddErr.indexOf('incorrect password attempt') >= 0){
+					dd.kill();
+				}
 			})
+			dd.stdin.end();
 			dd.on('close',()=>{
 				//TODO: If mac: check for password success else throw specific error
 				if(ddErr.indexOf('records in') == -1 && ddErr.indexOf('records out') == -1 && ddErr.indexOf('bytes') == -1 && ddErr.indexOf('copied') == -1){
@@ -802,6 +830,14 @@ export class K8sUtils{
 				else{
 					resolve({success:true})
 				}
+			})
+			dd.on('error',()=>{
+				console.log('dd died of error')
+				let message = ddErr;
+				if(ddErr.indexOf('incorrect password attempt') >= 0){
+					message = 'Incorrect Password';
+				}
+				reject({error:message});
 			})
 		});
 	}
