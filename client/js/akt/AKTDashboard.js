@@ -36,7 +36,7 @@ export class AKTDashboard {
 			this.marketAggregatesUpdate(data);
 		})
 		this.socket.on('k8sBuildLogs',data=>{
-			console.log('k8sBuildLogs',data);
+			//console.log('k8sBuildLogs',data);
 			this.nodeConfig.clusterConfig.updateLogs(data);
 			if(!$('#logs').hasClass('showing')){
 				//in case we refreshed
@@ -49,7 +49,7 @@ export class AKTDashboard {
 			console.log('k8sBuildLogStatus',data.part,data.status);
 			this.nodeConfig.clusterConfig.updateLogs('========= '+data.part+' is '+data.status+' ==========');
 			if(data.part == 'init'){
-				$('#logs .logsMessage').html('Kubernetes Cluster Installation is Finished!')
+				$('#logs .logsMessage').html('Kubernetes Cluster Installation is Finished!<br />Check your certificates and registration in the Dashboard and then start making $AKT')
 			}
 		})
 		this.socket.on('newNodeRegistered',(nodeData,clusterConfig)=>{
@@ -113,7 +113,7 @@ export class AKTDashboard {
 					' Instances';
 				}
 				msg = absVal+label+action;
-				$('#aktMain .options').append('<li id="changeMessage">'+msg+'</li>')
+				$('#aktMain .options ul').append('<li id="changeMessage">'+msg+'</li>')
 				$('li#changeMessage').fadeOut(15000);
 				setTimeout(()=>{
 					$('li#changeMessage').remove();

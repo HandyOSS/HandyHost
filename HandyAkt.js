@@ -41,7 +41,7 @@ export class HandyAKT{
 			//give env time to spin up and get rpc node
 			this.wallet.autostartProvider();
 
-		},10000)
+		},20000)
 		
 	}
 	checkClusterConfigExistence(){

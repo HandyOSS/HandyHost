@@ -633,7 +633,6 @@ export class K8sUtils{
 	}
 	flashThumbDrive(path,pw,diskID){
 		//path = device path. first verify it's detachable media just to be paranoid..
-		console.log('flash params',path,pw,diskID)
 		return new Promise((resolve,reject)=>{
 			let shouldProceed = false;
 			const method = process.platform == 'darwin' ? this.diskUtils.getUSBFromDiskUtil : this.diskUtils.getThumbDrivesNEW;
@@ -673,7 +672,11 @@ export class K8sUtils{
 									resolve(data)
 								}).catch(error=>{
 									console.log('error creating usb',error);
-									reject(error);
+									let message = error.error;
+									if(message.indexOf('incorrect password attempt') >= 0){
+										message = 'Incorrect Password';
+									}
+									reject({error:message});
 								})
 							}
 							else{
@@ -727,50 +730,20 @@ export class K8sUtils{
 								//ok it wrote it then, lets continue
 								const chunkSize = process.platform == 'darwin' ? '4m' : '4M';
 								console.log('device path',devicePath,generatorPath);
-								let script = './aktAPI/flashUbuntuISO.sh';
-								let command = 'bash';
-								let ddArgs = [
-									script,//'./aktAPI/flashUbuntuISO.sh',
-									devicePath,
-									chunkSize
-								];
-								if(process.platform == 'darwin'){
-									script = './aktAPI/flashUbuntuISO_MAC.sh';
-									/*
-									echo "Starting USB ISO Writing..." && \
-									diskutil unmountDisk $1 && \
-									(echo "$3";) | sudo -S dd bs=$2 if=$HOME/.HandyHost/aktData/ubuntu-autoinstall-generator/ubuntu-autoinstaller.iso of=$1 conv=sync
-									*/
-									//ddArgs.push(this.commonUtils.escapeBashString(pw)); //dd needs sudo on mac
+								
+								/*if(process.platform == 'darwin'){
 									this.createUbuntuISOMAC(devicePath,pw,chunkSize,resolve,reject);
 									return;
 								}
-
+								else{
+									this.createUbuntuISOLinux(devicePath,pw,chunkSize,resolve,reject);
+									return;
+								}*/
+								this.spawnCreateUbuntuISO(devicePath,pw,chunkSize,resolve,reject);
+								return;
 								
 								
-								let ddOut = '';
-								let ddErr = '';
 								
-								const dd = spawn(command,ddArgs,{shell:true,env:process.env,cwd:process.env.PWD});
-
-								dd.stdout.on('data',d=>{
-									console.log('dd stdout output: ',d.toString());
-									ddOut += d.toString();
-								})
-								dd.stderr.on('data',d=>{
-									console.log('dd stderr output: ',d.toString());
-									ddErr += d.toString();
-								})
-								dd.on('close',()=>{
-									//TODO: If mac: check for password success else throw specific error
-									if(ddErr.indexOf('records in') == -1 && ddErr.indexOf('records out') == -1 && ddErr.indexOf('bytes') == -1 && ddErr.indexOf('copied') == -1){
-										//is a real error
-										reject({error:ddErr})
-									}
-									else{
-										resolve({success:true})
-									}
-								})
 							}
 							else{
 								resolve({error:errs})
@@ -785,7 +758,60 @@ export class K8sUtils{
 			})
 		})
 	}
+	spawnCreateUbuntuISO(devicePath,pw,chunkSize,resolve,reject){
+		const args = [
+			'-S',
+			'dd',
+			`bs=${chunkSize}`,
+			`if=${process.env.HOME}/.HandyHost/aktData/ubuntu-autoinstall-generator/ubuntu-autoinstaller.iso`,
+			`of=${devicePath}`
+		]
+		if(process.platform == 'darwin'){
+			args.push('conv=sync');
+		}
+		else{
+			args.push('conv=fdatasync');
+			args.push('status=progress');
+		}
+		const dd = spawn('sudo',args);
+		let ddOut = '';
+		let ddErr = '';
+		
+		//const dd = spawn(command,ddArgs,{shell:true,env:process.env,cwd:process.env.PWD});
+		dd.stdin.write(`${pw}\n`);
+		dd.stdout.on('data',d=>{
+			console.log('dd stdout output: ',d.toString());
+			ddOut += d.toString();
+		})
+		dd.stderr.on('data',d=>{
+			console.log('dd stderr output: ',d.toString());
+			ddErr += d.toString();
+			if(ddErr.indexOf('incorrect password attempt') >= 0){
+				dd.kill();
+			}
+		})
+		dd.stdin.end();
+		dd.on('close',()=>{
+			//TODO: If mac: check for password success else throw specific error
+			if(ddErr.indexOf('records in') == -1 && ddErr.indexOf('records out') == -1 && ddErr.indexOf('bytes') == -1 && ddErr.indexOf('copied') == -1){
+				//is a real error
+				reject({error:ddErr})
+			}
+			else{
+				resolve({success:true})
+			}
+		})
+		dd.on('error',()=>{
+			console.log('dd died of error')
+			let message = ddErr;
+			if(ddErr.indexOf('incorrect password attempt') >= 0){
+				message = 'Incorrect Password';
+			}
+			reject({error:message});
+		})
+	}
 	createUbuntuISOMAC(devicePath,pw,chunkSize,resolve,reject){
+		//DEPRECATE ME
 		/*
 		echo "Starting USB ISO Writing..." && \
 		diskutil unmountDisk $1 && \
@@ -825,7 +851,11 @@ export class K8sUtils{
 				//TODO: If mac: check for password success else throw specific error
 				if(ddErr.indexOf('records in') == -1 && ddErr.indexOf('records out') == -1 && ddErr.indexOf('bytes') == -1 && ddErr.indexOf('copied') == -1){
 					//is a real error
-					reject({error:ddErr})
+					let message = ddErr;
+					if(ddErr.indexOf('incorrect password attempt') >= 0){
+						message = 'Incorrect Password';
+					}
+					reject({error:message})
 				}
 				else{
 					resolve({success:true})

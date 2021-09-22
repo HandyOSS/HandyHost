@@ -10,7 +10,7 @@ export class CommonUtils{
 	}
 	escapeBashString(str){
 		//escape strings for bash
-		return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|\#\&\~\"\'\`\ ]/g, "\\$&");
+		return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\!\|\#\&\~\"\'\`\ ]/g, "\\$&");
 	}
 	getSafePort(interimPorts){
 		//get a random port outside of the range that may be used in the services

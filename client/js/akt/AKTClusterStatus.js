@@ -106,6 +106,12 @@ export class AKTClusterStatus{
 		$el.append($q1);
 		$el.append($q2);
 		$el.append($q3);
+		//we device locked AKT from open bids/leases
+		const lockedBalance = (data.leasesActive + data.bidsOpen) * 50;
+		if(lockedBalance > 0){
+			$('.accountBalance .balance .locked').remove();
+			$('.accountBalance .balance').append('<div class="locked">Locked Collateral: '+lockedBalance+' AKT</div>')
+		}
 	}
 	renderRunInfo(statsData){
 		const $el = $('.runClusterInfo');
@@ -413,6 +419,7 @@ export class AKTClusterStatus{
 
 		let qr = balanceData.qr;
 		const $balance = $('.accountBalance',$el);
+
 		let img;
 		if(typeof qr != "undefined"){
 			img = `<img src="${qr}" />`;
@@ -434,9 +441,10 @@ export class AKTClusterStatus{
 			$('.balanceMeta',$balance).append('<div class="lowFundsNote">Note: Each contract will lock up 50AKT in collateral. Please add more funds to provide hosts.</div>')
 		}
 
-		if(lockedBalance > 0){
+		/*if(lockedBalance > 0){
 			$('.balance',$balance).append('<div class="locked">Locked Collateral: '+lockedBalance+' AKT</div>')
-		}
+		}*/
+
 		$('.walletAddress',$balance).off('click').on('click',()=>{
 			$('.walletAddress',$balance).select();
 		})

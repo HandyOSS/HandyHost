@@ -616,14 +616,18 @@ export class AKTClusterConfig{
 						$select.append($option);
 					})
 					$('#buildAX86BoxModal .chooseDeviceResult').html($select);
+					let placeholder = 'Your Linux Password'
+					let pwLabel = '<label for="sudoPW">*Note: Your Linux User Password is required to flash an attached USB device</label>'
 					if(platform == 'darwin'){
-						$('#buildAX86BoxModal .chooseDeviceResult').after(`
-							<div class="chooseDeviceResult">
-								<input type="password" id="sudoPW" class="styledInput" placeholder="Your MacOS Password" />
-								<label for="sudoPW">*Note: Your MacOS User Password is required to flash an attached USB device</label>
-							</div>
-						`)
+						placeholder = 'Your MacOS Password'
+						pwLabel = '<label for="sudoPW">*Note: Your MacOS User Password is required to flash an attached USB device</label>'
 					}
+					$('#buildAX86BoxModal .chooseDeviceResult').after(`
+						<div class="chooseDeviceResult">
+							<input type="password" id="sudoPW" class="styledInput" placeholder="${placeholder}" />
+							${pwLabel}
+						</div>
+					`)
 					if($('#buildAX86BoxModal .usbDevice option:selected').length > 0){
 						$('#buildAX86BoxModal #finishHostx86').removeClass('nonActive');
 					}

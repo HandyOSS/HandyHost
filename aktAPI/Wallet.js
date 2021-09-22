@@ -194,8 +194,8 @@ export class Wallet{
 				'keys', 'add', this.commonUtils.escapeBashString(walletName)
 			];
 			const s = spawn(`${process.env.HOME}/.HandyHost/aktData/bin/akash`,args,{shell:true,env:process.env,cwd:process.env.PWD+'/aktAPI'});
-			s.stdin.write(`${this.commonUtils.escapeBashString(pw)}\n`)
-			s.stdin.write(`${this.commonUtils.escapeBashString(pw)}\n`)
+			s.stdin.write(`${pw}\n`)
+			s.stdin.write(`${pw}\n`)
 			//const s = spawn('bash',args,{shell:true,env:process.env,cwd:process.env.PWD+'/aktAPI'});
 			//s.stdin.write('(echo derparoo;)');
 			s.stdout.on('data',d=>{
@@ -239,8 +239,8 @@ export class Wallet{
 			];
 			const s = spawn(`${process.env.HOME}/.HandyHost/aktData/bin/akash`,args,{shell:true,env:process.env,cwd:process.env.PWD+'/aktAPI'});
 			s.stdin.write(`${seed}\n`);
-			s.stdin.write(`${this.commonUtils.escapeBashString(pw)}\n`);
-			s.stdin.write(`${this.commonUtils.escapeBashString(pw)}\n`);
+			s.stdin.write(`${pw}\n`);
+			s.stdin.write(`${pw}\n`);
 			//const s = spawn('bash',args,{shell:true,env:process.env,cwd:process.env.PWD+'/aktAPI'});
 			//s.stdin.write('(echo derparoo;)');
 			s.stdout.on('data',d=>{
@@ -314,8 +314,8 @@ export class Wallet{
 				'--keyring-backend', 'file'
 			];
 			const s = spawn(`${process.env.HOME}/.HandyHost/aktData/bin/akash`,args,{shell:true,env:process.env,cwd:process.env.PWD+'/aktAPI'});
-			s.stdin.write(`${this.commonUtils.escapeBashString(pw)}\n`);
-			s.stdin.write(`${this.commonUtils.escapeBashString(pw)}\n`);
+			s.stdin.write(`${pw}\n`);
+			s.stdin.write(`${pw}\n`);
 			//const s = spawn('bash',args,{shell:true,env:process.env,cwd:process.env.PWD+'/aktAPI'});
 			//s.stdin.write('(echo derparoo;)');
 			s.stdout.on('data',d=>{
@@ -425,7 +425,7 @@ export class Wallet{
 			const s = spawn(`${process.env.HOME}/.HandyHost/aktData/bin/akash`,args,{shell:true,env:process.env,cwd:process.env.PWD+'/aktAPI'});
 			let output = '';
 			let errOutput = '';
-			s.stdin.write(`${this.commonUtils.escapeBashString(params.pw)}\n`)
+			s.stdin.write(`${params.pw}\n`)
 			s.stdout.on('data',d=>{
 				output += d.toString();
 			})
@@ -648,7 +648,7 @@ export class Wallet{
 			else{
 				opensslLoc = 'openssl'
 			}
-			this.commonUtils.encrypt(this.commonUtils.escapeBashString(params.pw)).then(pwLoc=>{
+			this.commonUtils.encrypt(params.pw).then(pwLoc=>{
 				const args = [pwLoc,this.commonUtils.escapeBashString(params.walletName),params.serverHost,params.cpuPrice,params.fees,opensslLoc];
 				const s = spawn('./runProviderAutomated.sh',args,{env:process.env,cwd:process.env.PWD+'/aktAPI',detached:true});
 				fs.writeFileSync(process.env.HOME+'/.HandyHost/aktData/provider.pid',s.pid.toString());
@@ -678,11 +678,11 @@ export class Wallet{
 				
 				let output = '';
 				s.stdout.on('data',d=>{
-					console.log('stdout',d.toString());
+					//console.log('stdout',d.toString());
 					output += d.toString();
 				})
 				s.stderr.on('data',d=>{
-					console.log('stderr run provider:',d.toString());
+					//console.log('stderr run provider:',d.toString());
 					output += d.toString();
 				})
 				s.on('close',()=>{
@@ -725,7 +725,7 @@ export class Wallet{
 			//confirm transaction before signing and broadcasting [y/N]: y
 			let createOut = '';
 			let errorOut = '';
-			this.commonUtils.encrypt(this.commonUtils.escapeBashString(params.pw)).then(encPath=>{
+			this.commonUtils.encrypt(params.pw).then(encPath=>{
 				const openssl = process.platform == 'darwin' ? '/usr/local/opt/openssl@1.1/bin/openssl' : 'openssl';
 				const fees = typeof params.fees != "undefined" ? (params.fees == "" ? '10000' : params.fees) : '10000';
 				const args = [encPath,this.commonUtils.escapeBashString(params.walletName),providerHost,fees,openssl];
@@ -740,7 +740,7 @@ export class Wallet{
 				})
 				s.on('close',()=>{
 					console.log('cert output',output)
-					//console.log('cert err? ',errOutput);
+					console.log('cert err? ',errOutput);
 					//all done, check if we did it..
 					let successful = false;
 					let message = '';

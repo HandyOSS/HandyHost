@@ -27,8 +27,8 @@ export class DVPNSetup{
 			];
 
 			const s = spawn('docker',args,{shell:true,env:process.env,cwd:process.env.PWD});
-			s.stdin.write(`${this.utils.escapeBashString(pw)}\n`)
-			s.stdin.write(`${this.utils.escapeBashString(pw)}\n`)
+			s.stdin.write(`${pw}\n`)
+			s.stdin.write(`${pw}\n`)
 			//const s = spawn('bash',args,{shell:true,env:process.env,cwd:process.env.PWD});
 			//s.stdin.write('(echo derparoo;)');
 			s.stdout.on('data',d=>{
@@ -68,8 +68,8 @@ export class DVPNSetup{
 				
 				const s = spawn('docker',args,{shell:true,env:process.env,cwd:process.env.PWD})
 				s.stdin.write(`${seed}\n`);
-				s.stdin.write(`${this.utils.escapeBashString(pw)}\n`);
-				s.stdin.write(`${this.utils.escapeBashString(pw)}\n`);
+				s.stdin.write(`${pw}\n`);
+				s.stdin.write(`${pw}\n`);
 				//const s = spawn('bash',args,{shell:true,env:process.env,cwd:process.env.PWD});
 				s.stdout.on('data',d=>{
 					output += d.toString();
@@ -338,8 +338,8 @@ export class DVPNSetup{
 				'sentinel-dvpn-node', 'process', 'keys', 'list'
 			];
 			const s = spawn('docker',args,{shell:true,env:process.env,cwd:process.env.PWD});
-			s.stdin.write(`${this.utils.escapeBashString(pw)}\n`);
-			s.stdin.write(`${this.utils.escapeBashString(pw)}\n`);
+			s.stdin.write(`${pw}\n`);
+			s.stdin.write(`${pw}\n`);
 			//const s = spawn('bash',args,{shell:true,env:process.env,cwd:process.env.PWD});
 			//s.stdin.write('(echo derparoo;)');
 			s.stdout.on('data',d=>{
@@ -635,7 +635,7 @@ export class DVPNSetup{
 				let hasReturned = false;
 				
 				const s = spawn('docker',args,{shell:true,env:process.env,cwd:process.env.PWD,detached:true});
-				s.stdin.write(`${this.utils.escapeBashString(pw)}\n`);
+				s.stdin.write(`${pw}\n`);
 				s.stdout.on('data',d=>{
 					socketIONamespace.to('dvpn').emit('logs',d.toString());
 					output += d.toString();
