@@ -35,8 +35,15 @@ export class SiaWalletConfig{
 					if(!wallet.encrypted && !wallet.unlocked && !wallet.rescanning){
 						//is a new install, we need to make a wallet
 						console.log('wallet chain',wallet,chain);
-						console.log('time for new wallet creation');
-						this.showInitModal(chain.synced);
+						if(typeof wallet.encrypted == "undefined" && typeof wallet.unlocked == "undefined" && typeof wallet.rescanning == "undefined"){
+							$('#walletInitModal').hide();
+							console.log('no wallet data');
+						}
+						else{
+							console.log('time for new wallet creation');
+							this.showInitModal(chain.synced);
+						}
+						
 					}
 					else{
 						$('#walletInitModal').hide();

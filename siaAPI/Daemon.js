@@ -70,7 +70,24 @@ export class Daemon{
 		});*/
 	}
 	getVersion(){
-		return siacCommand('daemon/version','GET');/*.then(d=>{
+		/*return new Promise((resolve,reject)=>{
+			//after update, version isnt displayed right
+			//so well hit siad directly
+			let out = '';
+			const ver = spawn('siad',['version'])
+			ver.stdout.on('data',d=>{
+				out += d.toString();
+			})
+			ver.stderr.on('data',d=>{
+				console.log('error fetching siad version',d.toString());
+			})
+			ver.on('close',()=>{
+				out = out.replace('siad v','').trim();
+				resolve(out);
+			});
+		})*/
+		return siacCommand('daemon/version','GET');
+		/*.then(d=>{
 			console.log('daemon version stats',d);
 		}).catch(e=>{
 			console.error('ERROR GETTING DAEMON VERSION INFO',e);

@@ -2,13 +2,13 @@
 #bootstrap encrypted keys into the app for local development on linux
 #macos uses keychain for creds
 ROOTHOME=/root
-USERHOME=/home/$SUDO_USER
-USER=$SUDO_USER
+USERHOME=/root
+USER=root
 pidfile=$USERHOME/.HandyHost/localdev.pid
 logfile=$USERHOME/.HandyHost/localdev.log
 NVM_DIR=$USERHOME/.nvm
 source $USERHOME/.bashrc
-export NVM_DIR="/home/$USER/.nvm"
+export NVM_DIR="/$USER/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
 
@@ -28,7 +28,7 @@ moveDaemonKey "akt"
 moveDaemonKey "dvpn"
 
 
-ENVS=""
+ENVS="HANDYHOST_BOOTSTRAPPED=true"
 if [[ -s $ROOTHOME/.handy/sc ]] ; then
     SCLOC=$(uuidgen)
     echo "$(openssl rsautl -inkey $ROOTHOME/.handy/handyhost.key -decrypt -in $ROOTHOME/.handy/sc)" | openssl rsautl -pubin -inkey $USERHOME/.HandyHost/keystore/handyhost.pub -encrypt -pkcs -out "$USERHOME/.HandyHost/keystore/$SCLOC"
@@ -57,15 +57,19 @@ trap ctrl_c INT
 
 function ctrl_c() {
     echo "** killing app"
-    su - $USER -c "source /home/$USER/.bashrc && source /home/$USER/.profile && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" && cd $PWD && nvm use &&$ENVS forever stop $(cat $pidfile)"
+    bash -c "source /$USER/.bashrc && source /$USER/.profile && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" && cd $PWD && nvm use &&$ENVS forever stop $(cat $pidfile)"
 }
-
-su - $USER -c "source /home/$USER/.bashrc && source /home/$USER/.profile && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" && cd $PWD && nvm use &&$ENVS forever start --pidFile $pidfile -l $logfile -a app.js" && \
+ACTION="start"
+if [[ ! -z $1 ]] ; then
+    ACTION="$1"
+fi
+echo "ACTION IS $ACTION"
+bash -c "source /$USER/.bashrc && source /$USER/.profile && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" && cd $PWD && nvm use &&$ENVS forever $ACTION --pidFile $pidfile -l $logfile -a app.js" && \
 ENVS=""
 
 
 echo 'to stop sentinel docker:'
-echo 'docker stop $(docker ps -a -q --filter ancestor=sentinel-dvpn-node --format="{{.ID}}")'
+echo 'sudo docker stop $(docker ps -a -q --filter ancestor=sentinel-dvpn-node --format="{{.ID}}")'
 echo 'to stop handyhost app:'
-echo "forever stop \$(cat $pidfile)"
+echo "sudo forever stop \$(cat $pidfile)"
 echo "logs are at: $logfile"

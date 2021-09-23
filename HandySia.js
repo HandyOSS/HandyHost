@@ -45,7 +45,7 @@ export class HandySia{
 			return false;
 		}
 		this.daemon.getVersion().then(data=>{
-			//console.log('fetched version',data);
+			console.log('fetched version',data);
 			this.consensus.getChainStatus().then(d=>{
 				//console.log('chain stats',d);
 				if(typeof process.env.SCAUTO != "undefined"){
@@ -366,13 +366,62 @@ export class HandySia{
 				})
 			break;
 			case 'updateSia':
-				this.daemon.updateDaemon().then(data=>{
+				this.updateSia().then(data=>{
 					resolve(data);
 				}).catch(error=>{
 					reject(error);
 				})
 			break;
 		}
+	}
+	updateSia(){
+		return new Promise((resolve,reject)=>{
+			const _this = this;
+			console.log('starting update',new Date())
+			this.daemon.updateDaemon().then(done=>{
+				done("");
+			}).catch(e=>{
+				console.log("update done?",e);
+				if(e == ""){
+					done(e);
+				}
+				else{
+					reject({error:e});
+				}
+				//reject(e);
+			})
+
+			function done(e){
+				console.log('update is done',new Date());
+				resolve({message:"Update Finished. Restarting Sia (may take ~30-45 seconds)..."})
+				if(process.platform == 'darwin'){
+					//restart things
+					//trySpawningSiad()
+					_this.daemon.haltSiad().then(d=>{
+						console.log('halted siad, restarting now');
+						_this.trySpawningSiad();
+						
+					});
+				}
+				else{
+					//systemctl restart
+					_this.daemon.haltSiad().then(d=>{
+						console.log('halted siad');
+						if(typeof process.env.HANDYHOST_BOOTSTRAPPED != "undefined"){
+							console.log('restart handyhost bootstrap dev')
+							spawn('sudo',['bash','./localdev_bootstrap.sh','restart'],{env:process.env,pwd:process.env.PWD});
+						}
+						else{
+							console.log('systemctl restart');
+							spawn('sudo',['systemctl','restart','handyhost'])	
+						}
+							
+					});
+					
+				}
+			}
+		})
+		
 	}
 	getSiaPorts(){
 		return new Promise((resolve,reject)=>{
@@ -686,7 +735,28 @@ export class HandySia{
 		return this.wallet.sendCoins(amountHastings,destination);
 	}
 	getQRCode(address){
-		return QRCode.toDataURL(address);
+
+		if(address == "undefined"){
+			return new Promise((resolve,reject)=>{
+				//get new address
+				this.wallet.getLatestAddress().then(data=>{
+					QRCode.toDataURL(data.address).then(qrResp=>{
+						resolve(qrResp);
+					}).catch(e=>{
+						reject(e);
+					})
+					
+				}).catch(error=>{
+					console.log('err',error);
+					reject(error);
+				})
+			})
+			
+		}
+		else{
+			return QRCode.toDataURL(address);
+		}
+		
 	}
 	getLatestAddress(){
 		return new Promise((resolve,reject)=>{
@@ -923,7 +993,7 @@ export class HandySia{
 			let dir;
 			if(path.length == 0){
 				//new listing
-				dir = process.env.HOME;
+				dir = '/';//process.env.HOME;
 			}
 			else{
 				dir = decodeURIComponent(path);
@@ -1027,6 +1097,14 @@ export class HandySia{
 							cherries.collateralbudget = hostConfig.internalsettings.collateralbudget;
 							cherries.lockedcollateral = hostConfig.financialmetrics.lockedstoragecollateral;
 							cherries.acceptingcontracts = hostConfig.internalsettings.acceptingcontracts;
+							//verify updates havent already been installed
+							if(updateAvailable.available){
+								if(updateAvailable.version == versionD){
+									//ok we already updated
+									//siac doesnt report it correctly after an update has been run..
+									updateAvailable.available = false;
+								}
+							}
 							this.ioNamespace.to('sia').emit('update',{
 								chain:chainData,
 								wallet:walletData,

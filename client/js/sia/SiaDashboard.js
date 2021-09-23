@@ -126,15 +126,23 @@ export class SiaDashboard {
 			if($('#updateSCModal').hasClass('isUpdating')){
 				return false;
 			}
-			$('#updateAKT .foreground, #updateAKT .background').html('🚀 Updating 🚀');
-			$('#updateAKT').addClass('isUpdating');
+			$('#updateSC .foreground, #updateSC .background').html('🚀 Updating 🚀');
+			$('#updateSC').addClass('isUpdating');
 			fetch('/api/sia/updateSia').then(d=>d.json()).then(d=>{
-				$('.updateInfo').html('SUCCESSFULLY UPDATED!!')
+				if(d.error){
+					$('.updateInfo').html(d.error);
+				}
+				else{
+					$('.options li#updateSia').hide();
+					$('.updateInfo').html(d.message);
+				}
+				
+
 				setTimeout(()=>{
 					$('#updateSCModal').hide();//.removeClass('showing');
-					$('#updateAKT').removeClass('isUpdating');
-					$('#updateAKT .foreground, #updateAKT .background').html('Update 🚀');
-				},2000);
+					$('#updateSC').removeClass('isUpdating');
+					$('#updateSC .foreground, #updateSC .background').html('Update 🚀');
+				},10000);
 			});
 
 		})
@@ -246,7 +254,13 @@ export class SiaDashboard {
 		})
 		this.utils.getIP().then(data=>{
 			$('.options #ipDisplay').remove();
-			$('.options').append('<div id="ipDisplay">Network URL: <span>'+data.ip+':'+data.port+'</span></div>')
+			$('.options').append(`
+				<div id="ipDisplay">
+					Network URL: 
+					<span>http://${data.ip}:${data.port}</span>
+					<span>https://${data.ip}:${data.sslPort}</span>
+				</div>
+			`);
 		})
 		this.initMobileMenu();
 	}
