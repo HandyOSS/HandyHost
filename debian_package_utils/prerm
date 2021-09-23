@@ -1,6 +1,4 @@
 #!/bin/bash
-if [[ -d /etc/init.d/handyhost ]] ; then
-	sudo systemctl stop handyhost && \
-	sudo rm /etc/init.d/handyhost && \
-	sudo systemctl daemon-refresh
+if [[ -s /etc/init.d/handyhost ]] ; then
+	sudo systemctl stop handyhost
 fi

@@ -15,23 +15,24 @@
 NAME=handyhost                            
 SOURCE_DIR=/opt/handyhost
 SOURCE_NAME=app.js
-USER=TARGETUSERNAME
+USER="root"
 USERGROUP="$(id -gn $USER)"
-USERHOME="/home/$USER"
+USERHOME="$(eval echo ~$USER)"
 NODE_ENVIROMENT=production
-ROOTHOME="/root"
+ROOTHOME="$(eval echo ~root)"
+export HOME=$USERHOME
 pidfile=/var/log/$NAME.pid
 logfile=/var/log/$NAME.log
 forever=forever
-source /home/$USER/.bashrc
-export NVM_DIR="/home/$USER/.nvm"
+source "$USERHOME/.bashrc"
+export NVM_DIR="$USERHOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
 
 moveDaemonKey(){
     if [[ -s "$USERHOME/.HandyHost/keystore/daemon_$1" ]] ; then
         #client wants a launch daemon, lets move that pubkey to root area
-        echo $(openssl rsautl -inkey "$ROOTHOME/.handy/handyhost.key" -decrypt -in "$USERHOME/.HandyHost/keystore/daemon_$1") | openssl rsautl -pubin -inkey $ROOTHOME/.handy/handyhost.pub -encrypt -pkcs -out "$ROOTHOME/.handy/$1"
+        echo $(openssl rsautl -inkey "$ROOTHOME/.handy/handyhost.key" -decrypt -in "$USERHOME/.HandyHost/keystore/daemon_$1") | openssl rsautl -pubin -inkey "$ROOTHOME/.handy/handyhost.pub" -encrypt -pkcs -out "$ROOTHOME/.handy/$1"
         rm "$USERHOME/.HandyHost/keystore/daemon_$1" && \
         chown "root:root" "$ROOTHOME/.handy/$1" && \
         chmod 0600 "$ROOTHOME/.handy/$1"
@@ -68,7 +69,12 @@ doCommand(){
         ENVS+=" DVPNAUTO=$DVPNLOC"
     fi
 
-    su - $USER -c "source /home/$USER/.bashrc && source /home/$USER/.profile && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" && cd $SOURCE_DIR && nvm use &&$ENVS $forever $1 --pidFile $pidfile -l $logfile -a $SOURCE_NAME" && \
+    if [ $USER = "root" ] ; then
+
+        bash -c "source $USERHOME/.bashrc && source $USERHOME/.profile && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" && cd $SOURCE_DIR && nvm use &&$ENVS $forever $1 --pidFile $pidfile -l $logfile -a $SOURCE_NAME"
+    else
+        su - $USER -c "source $USERHOME/.bashrc && source $USERHOME/.profile && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" && cd $SOURCE_DIR && nvm use &&$ENVS $forever $1 --pidFile $pidfile -l $logfile -a $SOURCE_NAME"
+    fi
     ENVS=""
     #RETVAL=$?
 }
@@ -97,12 +103,20 @@ restart() {
 
 status() {
     echo "Status for $NAME:"
-    su - $USER -c "source /home/$USER/.bashrc && source /home/$USER/.profile && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" && cd $SOURCE_DIR && nvm use && $forever list --pidFile $pidfile -l $logfile -a $SOURCE_NAME"
+    if [ $USER = "root" ] ; then
+        source $USERHOME/.bashrc && source $USERHOME/.profile && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" && cd $SOURCE_DIR && nvm use && $forever list --pidFile $pidfile -l $logfile -a $SOURCE_NAME
+    else
+        su - $USER -c "source $USERHOME/.bashrc && source $USERHOME/.profile && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" && cd $SOURCE_DIR && nvm use && $forever list --pidFile $pidfile -l $logfile -a $SOURCE_NAME"
+    fi
 }
 
 stop() {
     echo -n "Shutting down $NAME node instance : "
-    su - $USER -c "source /home/$USER/.bashrc && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" && cd $SOURCE_DIR && nvm use && $forever stop $(cat $pidfile)"
+    if [ $USER = "root" ] ; then
+        source $USERHOME/.bashrc && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" && cd $SOURCE_DIR && nvm use && $forever stop $(cat $pidfile)
+    else
+        su - $USER -c "source $USERHOME/.bashrc && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" && cd $SOURCE_DIR && nvm use && $forever stop $(cat $pidfile)"
+    fi        
 }
 
 case "$1" in

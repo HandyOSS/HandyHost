@@ -19,7 +19,6 @@ mkdir -p $SYSROOT/usr/share/applications && \
 mkdir -p $SYSROOT/usr/share/doc/handyhost && \
 mkdir -p $SYSROOT/usr/share/icons/hicolor/scalable/apps && \
 mkdir -p $SYSROOT/usr/share/icons/hicolor/48x48/apps && \
-#cp ./handyhost.conf $SYSROOT/etc/init/handyhost.conf && \
 cp ./handyhost.init $SYSROOT/etc/init.d/handyhost && \
 cp ./copyright $SYSROOT/usr/share/doc/handyhost/copyright && \
 cp ./README $SYSROOT/usr/share/doc/handyhost/README && \

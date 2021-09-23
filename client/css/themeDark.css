@@ -15,7 +15,9 @@ html.darkTheme #serviceBackground,
 html.darkTheme .mainPanel,
 html.darkTheme #walletInitModal,
 html.darkTheme .pathSelectModal,
-html.darkTheme .modalWrap{
+html.darkTheme .modalWrap,
+html.darkTheme #hostInfoModal
+{
 	filter:invert(1);
 }
 /*body{

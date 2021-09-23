@@ -1,9 +1,28 @@
 #!/bin/bash
 pwd="/opt/handyhost"
 
-USERNAME="$SUDO_USER"
-USERHOME="/home/$SUDO_USER"
+#USERNAME="$SUDO_USER"
+USERNAME="$USER"
+USERHOME="$(eval echo ~$USERNAME)"
 USERGROUP="$(id -gn $USERNAME)"
+
+echo "USERHOME pre validation $USERHOME"
+if [ $USERHOME = "/root" ] ; then
+  echo "USERHOME IS ROOT"
+  echo "RUNNING AS $USER"
+  #deb file can be run thru double click
+  #in which case the app is installed as root
+  USER="root"
+  USERNAME="$USER"
+  USERHOME="$(eval echo ~$USER)"
+  USERGROUP="$(id -gn $USERNAME)"
+  HOME="$USERHOME"
+else
+  echo "USERHOME ISSET $USERHOME"
+fi
+
+
+
 architecture=$(dpkg --print-architecture)
 
 sudo chown -R "$USERNAME:$USERGROUP" $pwd && \
@@ -13,17 +32,30 @@ else
   profile_file="$USERHOME/.bash_profile"
 fi
 source $profile_file && \
-
+echo -e "RUNNING USER IS: $USER" && \
+echo -e "USERHOME: $USERHOME" && \
+echo -e "USERNAME: $USERNAME" && \
 ##install nvm
 source $USERHOME/.bashrc && \
 if [[ ! -s "$USERHOME/.nvm" ]] ; then
     # Install nvm
-    su - $USERNAME -c "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash"
+    if [ $USERNAME = "root" ] ; then
+      cd $USERHOME && \
+      git clone https://github.com/nvm-sh/nvm.git $USERHOME/.nvm && 
+      cd $USERHOME/.nvm && \
+      git checkout v0.38.0
+      #curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash
+    else
+      su - $USERNAME -c "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash"
+    fi
 fi
+echo "NVM installation complete" && \
 export NVM_DIR="$USERHOME/.nvm" && \
 NVM_DIR="$USERHOME/.nvm" && \
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" && \
+echo "INSTALL NVM VERSION $(cat $pwd/.nvmrc)" && \
+cd $pwd && nvm install $(cat $pwd/.nvmrc)
 
 echo -e "########## \x1b[92mInstalling HandyHost Dependencies...\x1b[0m ##########" && \
 
@@ -62,13 +94,33 @@ if [[ ! -d "$USERHOME/.HandyHost/keystore" ]] ; then
   chmod 0644 "$USERHOME/.HandyHost/keystore/daemon.pub"
 fi
 
-cd $pwd && \
-su - $USERNAME -c "source $USERHOME/.bashrc && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" && cd $pwd && nvm install $(cat $pwd/.nvmrc) && nvm use && npm install --build-from-source --python=/usr/bin/python3" && \
+cd $pwd
+if [ $USERNAME = "root" ] ; then
+  VER=$(cat $pwd/.nvmrc)
+  echo "VERSION TARGET: $VER" && \
+  cd $pwd && nvm install "$VER" && \
+  source $USERHOME/.bashrc && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" && cd $pwd && nvm install "$VER" && nvm use && npm install --build-from-source --python=/usr/bin/python3
+
+else
+  su - $USERNAME -c "source $USERHOME/.bashrc && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" && cd $pwd && nvm install $(cat $pwd/.nvmrc) && nvm use && npm install --build-from-source --python=/usr/bin/python3"
+
+fi
+
+VER=$(cat $pwd/.nvmrc)
+echo "VERSION TARGET: $VER" && \
+nvm install "$VER" && \
+
 nvm use && \
 npm install -g bower && \
 npm install -g forever && \
-cd $pwd/client && \
-su - $USERNAME -c "cd $pwd && source $USERHOME/.bashrc && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" && cd $pwd && nvm install $(cat $pwd/.nvmrc) && nvm use && cd $pwd/client && bower install" && \
+cd $pwd/client
+if [ $USERNAME = "root" ] ; then
+  cd $pwd && source $USERHOME/.bashrc && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" && cd $pwd && nvm install $(cat $pwd/.nvmrc) && nvm use && cd $pwd/client && bower install --allow-root
+
+else
+  su - $USERNAME -c "cd $pwd && source $USERHOME/.bashrc && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" && cd $pwd && nvm install $(cat $pwd/.nvmrc) && nvm use && cd $pwd/client && bower install"
+fi
+
 sudo chown -R "$USERNAME:$USERGROUP" $USERHOME/.HandyHost && \
 
 echo -e "########## \x1b[92mInstalling Sia\x1b[0m ##########" && \
@@ -94,12 +146,26 @@ else
 	git fetch --all && \
 	git pull
 fi
-su - $USERNAME -c "cd $USERHOME/.HandyHost/siaRepo && make dependencies && make" && \
-if ! grep -q 'usr/local/go/bin' "${profile_file}" ; then
+
+#export GOPATH="$USERHOME/go"
+if [ $USERNAME = "root" ] ; then
+  export PATH=$PATH:/usr/local/go/bin:${USERHOME}/go/bin
+  source $profile_file && \
+  export HOME="$USERHOME" && \
+  cd $USERHOME/.HandyHost/siaRepo && make dependencies && make
+else
+  su - $USERNAME -c "cd $USERHOME/.HandyHost/siaRepo && make dependencies && make"
+fi
+
+if ! grep -q "${USERHOME}/go/bin" "${profile_file}" ; then
   echo "###Editing ${profile_file} to add go env variables###"
   echo "export PATH=$PATH:/usr/local/go/bin:${USERHOME}/go/bin" >> "${profile_file}"
   source $profile_file
 fi
+# if ! grep -q "export GOPATH" "${profile_file}" ; then
+#   echo "export GOPATH=$USERHOME/go" >> "${profile_file}"
+#   source $profile_file
+# fi
 
 echo -e "########## \x1b[92mInstalling DVPN\x1b[0m ##########" && \
 
@@ -218,15 +284,13 @@ curl https://raw.githubusercontent.com/ovrclk/akash/master/godownloader.sh | sh 
 echo -e "########## \x1b[92mDONE INSTALLING!\x1b[0m ##########" && \
 cd $pwd && \
 nvm use && \
-#sudo chown "$USERNAME:$USERGROUP" /etc/init/handyhost.conf && \
 sudo chown -R "$USERNAME:$USERGROUP" $USERHOME/go && \
 sudo chown -R "$USERNAME:$USERGROUP" $pwd && \
 sudo chown -R "$USERNAME:$USERGROUP" $USERHOME/.HandyHost && \
-sudo sed s"/TARGETUSERNAME/${USERNAME}/" -i /etc/init.d/handyhost && \
-sudo systemctl daemon-reload && \
+#sudo sed s"/TARGETUSERNAME/${USERNAME}/" -i /etc/init.d/handyhost && \
+#sudo systemctl daemon-reload && \
 sudo update-rc.d handyhost defaults && \
 sudo systemctl restart handyhost && \
-#sed s"/USERGID/${USERGROUP}/" -i /etc/init/handyhost.conf && \
 node rainbow.js && \
 echo -e "\x1b[92mHandyHost is  now running on: http://localhost:8008\x1b[0m" && \
 echo -e "\x1b[92mHandyHost is also running on: https://localhost:58008\x1b[0m (self-signed certificate)" && \

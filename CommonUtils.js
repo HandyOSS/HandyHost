@@ -202,7 +202,7 @@ export class CommonUtils{
 			const args = ['rsautl', '-pubin', '-inkey', pubPath, '-encrypt', '-pkcs','-out',encryptedOutPath];
 			
 			const enc = spawn(openssl,args)
-			enc.stdin.write(value);
+			enc.stdin.write(`${value}`);
 			let resp = '';
 			enc.stdout.on('data',d=>{
 				//console.log('stdout',d.toString());
@@ -231,6 +231,13 @@ export class CommonUtils{
 			dec.on('close',()=>{
 				if(!isDaemon){
 					fs.unlinkSync(encpath);
+				}
+				if(out.length > 0){
+					if(out[out.length-1] == '\n'){
+						//in some cases can add a newline to end of string...
+						//and the gui doesnt allow newlines in fields
+						out = out.slice(0,-1);
+					}
 				}
 				resolve(out);
 			})
@@ -300,19 +307,6 @@ export class CommonUtils{
 				resolve(out);
 			})
 			
-			/* | openssl rsautl -pubin -inkey ~/.ssh/handyhost.pub.pem -encrypt -pkcs \
-   			| openssl enc -base64 \*/
-		})
-	}
-	decryptSHTEST(encpath){
-		const keyPath = process.env.HOME+'/.HandyHost/keystore/handyhost.key';
-		console.log('enpath',encpath);
-		const b = spawn('bash',['./testDecrypt.sh',keyPath,encpath]);
-		b.stdout.on('data',d=>{
-			console.log('decrypt stdout',d.toString());
-		})
-		b.stderr.on('data',d=>{
-			console.log('decrypt stderr',d.toString());
 		})
 	}
 }
