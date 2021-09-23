@@ -2,6 +2,7 @@
 HANDYHOST_DIR=$PWD
 UPDATED_DIR=$HOME/.HandyHost/HandyHostUpdate
 HANDYHOST_PID=$3
+USERHOME="$HOME"
 if [[ -s "$HOME/.bash_profile" ]] ; then
 	source "$HOME/.bash_profile"
 fi
@@ -26,8 +27,8 @@ cd $UPDATED_DIR && \
 git clone $URL . && \
 git checkout "$1" && \
 #skip rebuilding sqlite3 if we can.....
-cp -r $HANDYHOST_DIR/node_modules ./node_modules && \
-mv update.sh ./update.new.sh && \
+cp -r "$HANDYHOST_DIR/node_modules" "$UPDATED_DIR/node_modules" && \
+mv "$UPDATED_DIR/update.sh" "$UPDATED_DIR/update.new.sh" && \
 
 if [[ -d "$USERHOME/.nvm" ]] ; then
 	#has nvm
