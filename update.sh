@@ -3,6 +3,7 @@ HANDYHOST_DIR=$PWD
 UPDATED_DIR=$HOME/.HandyHost/HandyHostUpdate
 HANDYHOST_PID=$3
 USERHOME="$HOME"
+
 if [[ -s "$HOME/.bash_profile" ]] ; then
 	source "$HOME/.bash_profile"
 fi
@@ -12,6 +13,10 @@ fi
 if [[ -s "$HOME/.bashrc" ]] ; then
 	source "$HOME/.bashrc"
 fi
+
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+
 
 if [[ -s /var/log/handyhost.pid ]]; then
 	HANDYHOST_PID=$(cat /var/log/handyhost.pid)
