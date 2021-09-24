@@ -17,10 +17,13 @@ if [[ -s "$HOME/.zshrc" ]] ; then
 fi
 
 source $profile_file
+if [ $1 = "local" ] ; then 
+	pwd="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+else
+	pwd="/Applications/HandyHost/HandyHost" #set to applications dir
+fi
 
-pwd="/Applications/HandyHost/HandyHost" #set to applications dir
-
-echo "PWD: ${PWD}"
+echo "Installer PWD: $pwd"
 
 if [[ -s "$USERHOME/.HandyHost/handyhost.pid" ]] ; then
 	HANDYHOSTPID="$(cat $USERHOME/.HandyHost/handyhost.pid)"
@@ -29,6 +32,13 @@ if [[ -s "$USERHOME/.HandyHost/handyhost.pid" ]] ; then
 		echo "###### STOPPING EXISTING HANDYHOST ######" && \
 		kill $HANDYHOSTPID
 	fi
+fi
+
+if [[ "$(uname -m)" == "arm64" ]]
+then
+  homebrew_prefix_default=/opt/homebrew
+else
+  homebrew_prefix_default=/usr/local
 fi
 
 echo "########## Installing HandyHost Dependencies... ##########"
@@ -52,14 +62,21 @@ echo "########## Installing HandyHost Dependencies... ##########"
 which -s brew
 if [[ $? != 0 ]] ; then
     # Install Homebrew
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-    if ! grep -q 'usr/local/bin' "${profile_file}" ; then
-	  echo "###Editing ${profile_file} to add /usr/local/bin variables###"
-	  echo "export PATH=$PATH:/usr/local/bin" >> "${profile_file}"
-	  source $profile_file
-	fi
+    echo "******* HOMEBREW IS REQUIRED, EXITING ***********"
+    exit 1;
+    # BREWGROUP=$(ls -ld "/usr/local/bin" | awk '{print $4}')
+    # git clone https://github.com/Homebrew/brew "$homebrew_prefix_default/Homebrew" && \
+    # chown -R $USERNAME:$BREWGROUP "$homebrew_prefix_default/Homebrew" && \
+    # ln -s "$homebrew_prefix_default/Homebrew/bin/brew" "$homebrew_prefix_default/bin"
+
+    
 else
 	echo "Homebrew Already Installed. Skipping Install."
+	if ! grep -q "$homebrew_prefix_default/bin" "${profile_file}" ; then
+	  echo "###Editing ${profile_file} to add $homebrew_prefix_default/bin variables###"
+	  echo "export PATH=$PATH:$homebrew_prefix_default/bin" >> "${profile_file}"
+	  source $profile_file
+	fi
 	echo "Updating Homebrew..."
 	su - $USERNAME -c "brew update"
 fi
@@ -70,18 +87,18 @@ if [[ $? != 0 ]] ; then
 	PYTHON="$(which python3)"
 fi
 
-if [[ ! -d "/usr/local/opt/nvm" ]] ; then
+if [[ ! -d "$homebrew_prefix_default/opt/nvm" ]] ; then
     # Install nvm
     echo "installing nvm" && \
     su - $USERNAME -c "brew install nvm" && \
-    mkdir "$HOME/.nvm"
+    mkdir "$USERHOME/.nvm"
 else
 	echo "nvm was present"
 fi
-export NVM_DIR=$HOME/.nvm && \
-[ -s "/usr/local/opt/nvm/nvm.sh" ] && \. "/usr/local/opt/nvm/nvm.sh" && \
-[ -s "/usr/local/opt/nvm/etc/bash_completion.d/nvm" ] && \. "/usr/local/opt/nvm/etc/bash_completion.d/nvm" && \
-
+export NVM_DIR=$USERHOME/.nvm && \
+[ -s "$homebrew_prefix_default/opt/nvm/nvm.sh" ] && \. "$homebrew_prefix_default/opt/nvm/nvm.sh" && \
+[ -s "$homebrew_prefix_default/opt/nvm/etc/bash_completion.d/nvm" ] && \. "$homebrew_prefix_default/opt/nvm/etc/bash_completion.d/nvm" && \
+echo "Configuring HandyHost in $pwd" && \
 NPMVERSION="$(cat $pwd/.nvmrc)"
 echo "NPM VERSION TO INSTALL ${NPMVERSION}" && \
 echo "PYTHON VERSION IS ${PYTHON}" && \
@@ -89,12 +106,12 @@ cd $pwd && \
 nvm install $NPMVERSION && \
 nvm use && \
 sudo chown -R "$USERNAME:$USERGROUP" $pwd && \
-su - $USERNAME -c "[ -s \"/usr/local/opt/nvm/nvm.sh\" ] && \. \"/usr/local/opt/nvm/nvm.sh\" && cd $pwd && nvm install $NPMVERSION && nvm use && npm config set python $PYTHON && cd $pwd && npm install --build-from-source --python=$PYTHON" && \
+su - $USERNAME -c "[ -s \"$homebrew_prefix_default/opt/nvm/nvm.sh\" ] && \. \"$homebrew_prefix_default/opt/nvm/nvm.sh\" && cd $pwd && nvm install $NPMVERSION && nvm use && npm config set python $PYTHON && cd $pwd && npm install --build-from-source --python=$PYTHON" && \
 sudo chown -R "$USERNAME:$USERGROUP" ./node_modules && \
 sudo npm install -g bower && \
 BOWER=$(which bower) && \
 echo "Bower: $BOWER" && \
-su - $USERNAME -c "[ -s \"/usr/local/opt/nvm/nvm.sh\" ] && \. \"/usr/local/opt/nvm/nvm.sh\" && cd $pwd && nvm install $NPMVERSION && nvm use && cd $pwd/client && $BOWER install" && \
+su - $USERNAME -c "[ -s \"$homebrew_prefix_default/opt/nvm/nvm.sh\" ] && \. \"$homebrew_prefix_default/opt/nvm/nvm.sh\" && cd $pwd && nvm install $NPMVERSION && nvm use && cd $pwd/client && $BOWER install" && \
 mkdir -p $HOME/.HandyHost && \
 sudo chown -R "$USERNAME:$USERGROUP" $HOME/.HandyHost && \
 
@@ -146,10 +163,12 @@ fi
 
 which -s docker
 if [[ $? != 0 ]] ; then
-	echo "Installing Docker..."
-	su - $USERNAME -c "brew install --cask docker" && \
-	xattr -d -r com.apple.quarantine /Applications/Docker.app && \
-	sudo open -a /Applications/Docker.app
+	echo "****** DOCKER NOT FOUND, EXITING ********"
+	exit 1;
+	# echo "Installing Docker..."
+	# su - $USERNAME -c "brew install --cask docker" && \
+	# xattr -d -r com.apple.quarantine /Applications/Docker.app && \
+	# sudo open -a /Applications/Docker.app
 else
 	echo "Docker Already Installed. Skipping."
 	echo "Starting Docker, this may take a minute..."
@@ -270,27 +289,30 @@ echo "installing akash software..." && \
 cd $HOME/.HandyHost/aktData && \
 curl https://raw.githubusercontent.com/ovrclk/akash/master/godownloader.sh | sh -s -- "v$AKASH_VERSION" && \
 sudo chown -R "$USERNAME:$USERGROUP" $pwd/aktAPI && \
-sudo chown -R "$USERNAME:$USERGROUP" $HOME/.HandyHost/aktData && \
+sudo chown -R "$USERNAME:$USERGROUP" $HOME/.HandyHost/aktData
 
-echo "Building HandyHost.app" && \
-cd "/Applications/HandyHost" && \
-which -s platypus
-if [[ $? != 0 ]] ; then
-	echo "Installing Platypus"
-	su - $USERNAME -c "brew install --cask platypus" && \
-	xattr -d -r com.apple.quarantine /Applications/Platypus.app && \
-	su - $USERNAME -c "brew install platypus" && \
-	su - $USERNAME -c "brew link platypus"
+if [ ! $1 = "local" ] ; then 
+	echo "Building HandyHost.app" && \
+	cd "/Applications/HandyHost" && \
+	which -s platypus
+	if [[ $? != 0 ]] ; then
+		echo "Installing Platypus"
+		su - $USERNAME -c "brew install --cask platypus" && \
+		xattr -d -r com.apple.quarantine /Applications/Platypus.app && \
+		su - $USERNAME -c "brew install platypus" && \
+		su - $USERNAME -c "brew link platypus"
+	else
+		echo "Platypus Installed. Skipping."
+	fi
+	if [[ -d "/Applications/HandyHost/HandyHost.app" ]] ; then
+		echo "removing old HandyHost App Build" && \
+		rm -rf "/Applications/HandyHost/HandyHost.app"
+	fi
+
+	platypus -P /Applications/HandyHost/HandyHost/MacOS_Resources/HandyHost.platypus HandyHost.app && \
+	echo "Done Compiling HandyHost.app"
 else
-	echo "Platypus Installed. Skipping."
+	echo "Finished setting up local build"
 fi
-if [[ -d "/Applications/HandyHost/HandyHost.app" ]] ; then
-	echo "removing old HandyHost App Build" && \
-	rm -rf "/Applications/HandyHost/HandyHost.app"
-fi
-
-platypus -P /Applications/HandyHost/HandyHost/MacOS_Resources/HandyHost.platypus HandyHost.app && \
-echo "Done Compiling HandyHost.app" && \
-
 node $pwd/rainbow.js && \
 exit 0

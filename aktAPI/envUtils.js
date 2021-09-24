@@ -9,14 +9,21 @@ export AKASH_NODE="$(curl -s "$AKASH_NET/rpc-nodes.txt" | shuf -n 1)"
 export AKASH_MONIKER="$(cat ~/.HandyHost/aktData/moniker)"
 */
 export class EnvUtils{
-	constructor(){
+	constructor(skipCheckInterval){
 		this.AKASH_NETWORK = 'mainnet';
 		this.AKASH_NET = 'https://raw.githubusercontent.com/ovrclk/net/master/'+this.AKASH_NETWORK
 		this.KUBECONFIG = process.env.HOME+'/.HandyHost/aktData/admin.conf';
 		this.httpsHost = 'raw.githubusercontent.com';
 		this.httpsPathBase = '/ovrclk/net/master/'+this.AKASH_NETWORK;
-		this.trySetEnv();
-		this.setRPCNodeOnInterval();
+		
+		if(typeof doCheckInterval == "undefined" || !skipCheckInterval){
+			//sometimes we just want to call things adhoc.
+			//marketplace runs the interval in this case
+			//and provider needs to reset things if an rpc node falls over
+			this.trySetEnv();
+			this.setRPCNodeOnInterval();
+		}
+		
 	}
 	trySetEnv(){
 		let envTimeout;

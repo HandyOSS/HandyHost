@@ -5,12 +5,14 @@ import generator from 'project-name-generator';
 import {AKTUtils} from './Utils.js';
 import QRCode from 'qrcode';
 import {CommonUtils} from '../CommonUtils.js';
+import {EnvUtils} from './envUtils.js';
 
 export class Wallet{
 	constructor(){
 		this.utils = new AKTUtils();
 		this.commonUtils = new CommonUtils();
 		this.AKASH_NETWORK = 'mainnet';
+		this.envUtils = new EnvUtils(true); //adhoc reset our rpc node on fall overs...
 	}
 	getState(){
 		return new Promise((resolve,reject)=>{
@@ -739,8 +741,9 @@ export class Wallet{
 			//so we encrypt to a readonly file and pass to the expect script
 			//the expect script deletes the encrypted file after reading it.
 			let opensslLoc;
-			if(process.platform == 'darwin'){
-				opensslLoc = '/usr/local/opt/openssl@1.1/bin/openssl'
+			const homebrewPrefixMAC = process.arch == 'arm64' ? '/opt/homebrew' : '/usr/local';
+		  	if(process.platform == 'darwin'){
+				opensslLoc = homebrewPrefixMAC+'/opt/openssl@1.1/bin/openssl'
 			}
 			else{
 				opensslLoc = 'openssl'
@@ -789,18 +792,36 @@ export class Wallet{
 					clearTimeout(returnTimeout);
 					clearInterval(logInterval);
 					resolve({success:false,error:output});
-					if(fs.existsSync(process.env.HOME+'/.HandyHost/aktData/provider.pid')){
-						fs.unlinkSync(process.env.HOME+'/.HandyHost/aktData/provider.pid');
+					
+					if(this.providerWasHalted){
+						//let it die
+						this.providerWasHalted = false;
+						if(fs.existsSync(process.env.HOME+'/.HandyHost/aktData/provider.pid')){
+							fs.unlinkSync(process.env.HOME+'/.HandyHost/aktData/provider.pid');
+						}
 					}
-				})
-				s.on('error',(e)=>{
-					console.log('provider had error',e);
+					else{
+						fs.appendFileSync(logsPath,"\n###########  RESTARTING PROVIDER ###########\n",'utf8');
+					
+						//accidental death, likely due to RPC errors
+						//keep things alive
+						this.envUtils.setEnv().then(()=>{
+							//ok we set the env
+							this.startProvider(params);
+						}).catch(e=>{
+							console.log('error setting new envs',e);
+							//try spawning again anyway
+							this.startProvider(params);
+						})
+
+					}
 				})
 			});
 				
 		});
 	}
 	haltProvider(){
+		this.providerWasHalted = true;
 		return new Promise((resolve,reject)=>{
 			const pidPath = process.env.HOME+'/.HandyHost/aktData/provider.pid';
 			if(fs.existsSync(pidPath)){
@@ -828,8 +849,9 @@ export class Wallet{
 			let createOut = '';
 			let errorOut = '';
 			this.commonUtils.encrypt(params.pw).then(encPath=>{
-				const openssl = process.platform == 'darwin' ? '/usr/local/opt/openssl@1.1/bin/openssl' : 'openssl';
-				const fees = typeof params.fees != "undefined" ? (params.fees == "" ? '10000' : params.fees) : '10000';
+				const homebrewPrefixMAC = process.arch == 'arm64' ? '/opt/homebrew' : '/usr/local';
+		  		const openssl = process.platform == 'darwin' ? homebrewPrefixMAC+'/opt/openssl@1.1/bin/openssl' : 'openssl';
+		  		const fees = typeof params.fees != "undefined" ? (params.fees == "" ? '10000' : params.fees) : '10000';
 				const args = [encPath,this.commonUtils.escapeBashString(params.walletName),providerHost,fees,openssl];
 				let output = '';
 				let errOutput = '';

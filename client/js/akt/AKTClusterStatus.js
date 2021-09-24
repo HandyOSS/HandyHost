@@ -51,6 +51,10 @@ export class AKTClusterStatus{
 		}
 		if(typeof address == "undefined"){
 			address = "No Configuration Found";
+			$('.runClusterInfo').hide();
+		}
+		else{
+			$('.runClusterInfo').show();
 		}
 		const regionName = statsData.providerData.regionName;
 		const nodeCount = statsData.nodeCount;

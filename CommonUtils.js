@@ -179,7 +179,8 @@ export class CommonUtils{
 		  	//create certs
 		  	const keyPath = process.env.HOME+'/.HandyHost/keystore/handyhost.key';
 		  	const pubPath = process.env.HOME+'/.HandyHost/keystore/handyhost.pub';
-		  	const openssl = process.platform == 'darwin' ? '/usr/local/opt/openssl@1.1/bin/openssl' : 'openssl';
+		  	const homebrewPrefixMAC = process.arch == 'arm64' ? '/opt/homebrew' : '/usr/local';
+		  	const openssl = process.platform == 'darwin' ? homebrewPrefixMAC+'/opt/openssl@1.1/bin/openssl' : 'openssl';
 		  	const create = spawn(openssl,['genrsa', '-out', keyPath, '4096']);
 		  	create.on('close',()=>{
 		  		const createPub = spawn(openssl,['rsa', '-in', keyPath, '-pubout', '-out', pubPath])
@@ -198,7 +199,8 @@ export class CommonUtils{
 			const basePath = process.env.HOME+'/.HandyHost/keystore/';
 			const pubPath = basePath+pubKeyName;
 			const encryptedOutPath = isForDaemon ? basePath+'daemon_'+daemonServiceName : basePath+'k'+(new Date().getTime());
-			const openssl = process.platform == 'darwin' ? '/usr/local/opt/openssl@1.1/bin/openssl' : 'openssl';
+			const homebrewPrefixMAC = process.arch == 'arm64' ? '/opt/homebrew' : '/usr/local';
+		  	const openssl = process.platform == 'darwin' ? homebrewPrefixMAC+'/opt/openssl@1.1/bin/openssl' : 'openssl';
 			const args = ['rsautl', '-pubin', '-inkey', pubPath, '-encrypt', '-pkcs','-out',encryptedOutPath];
 			
 			const enc = spawn(openssl,args)
@@ -222,8 +224,9 @@ export class CommonUtils{
 	decrypt(encpath,isDaemon){
 		return new Promise((resolve,reject)=>{
 			const keyPath = process.env.HOME+'/.HandyHost/keystore/handyhost.key';
-			const openssl = process.platform == 'darwin' ? '/usr/local/opt/openssl@1.1/bin/openssl' : 'openssl';
-			const dec = spawn(openssl,['rsautl','-inkey',keyPath, '-decrypt', '-in', encpath]);
+			const homebrewPrefixMAC = process.arch == 'arm64' ? '/opt/homebrew' : '/usr/local';
+		  	const openssl = process.platform == 'darwin' ? homebrewPrefixMAC+'/opt/openssl@1.1/bin/openssl' : 'openssl';
+		  	const dec = spawn(openssl,['rsautl','-inkey',keyPath, '-decrypt', '-in', encpath]);
 			let out = '';
 			dec.stdout.on('data',d=>{
 				out += d.toString();
@@ -290,8 +293,8 @@ export class CommonUtils{
 		return new Promise((resolve,reject)=>{
 			const basePath = process.env.HOME+'/.HandyHost/keystore/';
 			const encryptedOutPath = basePath+'temp'+(new Date().getTime());
-			const openssl = process.platform == 'darwin' ? '/usr/local/opt/openssl@1.1/bin/openssl' : 'openssl';
-			
+			const homebrewPrefixMAC = process.arch == 'arm64' ? '/opt/homebrew' : '/usr/local';
+		  	const openssl = process.platform == 'darwin' ? homebrewPrefixMAC+'/opt/openssl@1.1/bin/openssl' : 'openssl';
 			const enc = spawn(openssl,['rsautl','-pubin','-inkey',process.env.HOME+'/.HandyHost/keystore/daemon.pub', '-encrypt','-pkcs']);
 			const toBase64 = spawn(openssl,['enc','-base64']);
 			enc.stdin.write(`${value}`);

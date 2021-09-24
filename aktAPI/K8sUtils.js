@@ -742,7 +742,13 @@ export class K8sUtils{
 									this.createUbuntuISOLinux(devicePath,pw,chunkSize,resolve,reject);
 									return;
 								}*/
-								this.spawnCreateUbuntuISO(devicePath,pw,chunkSize,resolve,reject);
+								if(process.platform == 'darwin'){
+									this.spawnCreateUbuntuISOMAC(devicePath,pw,chunkSize,resolve,reject);
+								}
+								else{
+									this.spawnCreateUbuntuISO(devicePath,pw,chunkSize,resolve,reject);
+								}
+								
 								return;
 								
 								
@@ -767,15 +773,11 @@ export class K8sUtils{
 			'dd',
 			`bs=${chunkSize}`,
 			`if=${process.env.HOME}/.HandyHost/aktData/ubuntu-autoinstall-generator/ubuntu-autoinstaller.iso`,
-			`of=${devicePath}`
+			`of=${devicePath}`,
+			'conv=fdatasync',
+			'status=progress'
 		]
-		if(process.platform == 'darwin'){
-			args.push('conv=sync');
-		}
-		else{
-			args.push('conv=fdatasync');
-			args.push('status=progress');
-		}
+		
 		const dd = spawn('sudo',args);
 		let ddOut = '';
 		let ddErr = '';
@@ -813,13 +815,8 @@ export class K8sUtils{
 			reject({error:message});
 		})
 	}
-	createUbuntuISOMAC(devicePath,pw,chunkSize,resolve,reject){
-		//DEPRECATE ME
-		/*
-		echo "Starting USB ISO Writing..." && \
-		diskutil unmountDisk $1 && \
-		(echo "$3";) | sudo -S dd bs=$2 if=$HOME/.HandyHost/aktData/ubuntu-autoinstall-generator/ubuntu-autoinstaller.iso of=$1 conv=sync
-		*/
+	spawnCreateUbuntuISOMAC(devicePath,pw,chunkSize,resolve,reject){
+		//big difference here is that mac needs to unmount the disk first...
 		console.log('start mac flashing');
 		const unmount = spawn('diskutil',['unmountDisk',devicePath]);
 		unmount.on('close',()=>{

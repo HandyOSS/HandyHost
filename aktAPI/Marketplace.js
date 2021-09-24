@@ -21,7 +21,7 @@ export class Marketplace{
 				output += d.toString();
 			})
 			s.stderr.on('data',d=>{
-				console.log('error',d.toString());
+				console.log('AKT: getOrders error',d.toString());
 				errOut += d.toString();
 			});
 			s.on('close',()=>{
@@ -55,7 +55,7 @@ export class Marketplace{
 				output += d.toString();
 			})
 			s.stderr.on('data',d=>{
-				console.log('error',d.toString());
+				console.log('AKT: getOrder error',d.toString());
 				errOut += d.toString();
 			});
 			s.on('close',()=>{
@@ -96,7 +96,7 @@ export class Marketplace{
 				output += d.toString();
 			})
 			s.stderr.on('data',d=>{
-				console.log('error',d.toString());
+				console.log('AKT: getBids error',d.toString());
 				errOut += d.toString();
 			});
 			s.on('close',()=>{
@@ -136,7 +136,7 @@ export class Marketplace{
 				output += d.toString();
 			})
 			s.stderr.on('data',d=>{
-				console.log('error',d.toString());
+				console.log('AKT: getLeases error',d.toString());
 				errOut += d.toString();
 			});
 			s.on('close',()=>{
@@ -216,36 +216,65 @@ export class Marketplace{
 	}
 	getAggregatesQuery(args){
 		return new Promise((resolve,reject)=>{
-			let output = '';
-			let errOut = '';
-			
-			const s = spawn('./bin/akash',args,{shell:true,env:process.env,cwd:process.env.HOME+'/.HandyHost/aktData'});
-			s.stdout.on('data',d=>{
-				output += d.toString();
-			})
-			s.stderr.on('data',d=>{
-				console.log('error',d.toString());
-				errOut += d.toString();
-			});
-			s.on('close',()=>{
-				if(errOut != ''){
-					reject({error:errOut});
-					this.envUtils.trySetEnv(); //reset env on fail
-				}
-				else{
-					let json = {};
-					try{
-						json = JSON.parse(output);
-					}
-					catch(e){
-						reject({error:output})
-					}
-					resolve(json.pagination.total);
-				}
-			});
+			this.tryAggregatesQuery(args,resolve,reject,0)
 		}).catch(error=>{
 			this.envUtils.trySetEnv(); //reset env on fail
 		})
+	}
+	tryAggregatesQuery(args,resolve,reject,attemptCount){
+		let output = '';
+		let errOut = '';
+		
+		const s = spawn('./bin/akash',args,{shell:true,env:process.env,cwd:process.env.HOME+'/.HandyHost/aktData'});
+		s.stdout.on('data',d=>{
+			output += d.toString();
+		})
+		s.stderr.on('data',d=>{
+			console.log('AKT: get aggregates query error',d.toString());
+			errOut += d.toString();
+		});
+		s.on('close',()=>{
+			if(errOut != ''){
+				if(errOut.indexOf('Error: post failed') >= 0 && errOut.indexOf('EOF') >= 0){
+					//rpc error, retry...
+					if(attemptCount >= 10){
+						console.log('reset env attempt is too many, failing now...')
+						reject({error:errOut})
+						return;
+					}
+					console.log('RPC request failed, reset env and try again...')
+					this.envUtils.setEnv().then(()=>{
+						console.log('reset env attempt',attemptCount)
+						setTimeout(()=>{
+							this.tryAggregatesQuery(args,resolve,reject,attemptCount+1);
+						},1000)
+						
+					}).catch(e=>{
+						console.log('failed to reset env, retrying...')
+						setTimeout(()=>{
+							this.tryAggregatesQuery(args,resolve,reject,attemptCount+1);
+						},1000)
+						
+					}); //reset env on fail
+				}
+				else{
+					reject({error:errOut});
+				}
+				
+				
+			}
+			else{
+				let json = {};
+				try{
+					json = JSON.parse(output);
+				}
+				catch(e){
+					reject({error:output})
+				}
+				console.log('aggregates query was successful');
+				resolve(json.pagination.total);
+			}
+		});
 	}
 	getCurrentChainHeight(){
 		return new Promise((resolve,reject)=>{
@@ -283,6 +312,7 @@ export class Marketplace{
 			orderData
 		};
 		*/
+		//no need to update this for rpc goodness, we cant place manual bids rn..
 		return new Promise((resolve,reject)=>{
 			
 			/*const args = [
@@ -452,42 +482,73 @@ export class Marketplace{
 	}
 	fetchAllOrderBids(bid,params){
 		////bid.bid.bid_id.owner+'/'+bid.bid.bid_id.dseq+'/'+bid.bid.bid_id.gseq+'/'+bid.bid.bid_id.oseq;
+		
 		return new Promise((resolve,reject)=>{
-			console.log('get all bids params',bid,params);
-			const orderLimit = typeof params.limit == "undefined" ? 25 : params.limit;
-			let args = ['query', 'market', 'bid', 'list','--owner',bid.bid.bid_id.owner,'--dseq',bid.bid.bid_id.dseq,'--gseq',bid.bid.bid_id.gseq,'--oseq',bid.bid.bid_id.oseq,'--limit',orderLimit,'--output','json','--count-total'];
-			if(typeof params.page != "undefined"){
-				args.push('--page',params.page)
-			}
-			const s = spawn('./bin/akash',args,{shell:true,env:process.env,cwd:process.env.HOME+'/.HandyHost/aktData'});
-			let output = '';
-			let errOut = '';
-			s.stdout.on('data',d=>{
-				output += d.toString();
-			})
-			s.stderr.on('data',d=>{
-				console.log('error',d.toString());
-				errOut += d.toString();
-			});
-			s.on('close',()=>{
-				if(errOut != ''){
-					this.envUtils.trySetEnv(); //reset env on fail
-					reject({error:errOut});
-				}
-				else{
-					let json = {};
-					try{
-						json = JSON.parse(output);
-					}
-					catch(e){
-						reject({error:output})
-					}
-					resolve(json);
-				}
-			})
+			this.tryFetchAllOrderBids(bid,params,resolve,reject,0);
 		}).catch(error=>{
 			this.envUtils.trySetEnv(); //reset env on fail
 		});
+	}
+	tryFetchAllOrderBids(bid,params,resolve,reject,attemptCount){
+		console.log('get all bids params',bid,params);
+		const orderLimit = typeof params.limit == "undefined" ? 25 : params.limit;
+		let args = ['query', 'market', 'bid', 'list','--owner',bid.bid.bid_id.owner,'--dseq',bid.bid.bid_id.dseq,'--gseq',bid.bid.bid_id.gseq,'--oseq',bid.bid.bid_id.oseq,'--limit',orderLimit,'--output','json','--count-total'];
+		if(typeof params.page != "undefined"){
+			args.push('--page',params.page)
+		}
+		const s = spawn('./bin/akash',args,{shell:true,env:process.env,cwd:process.env.HOME+'/.HandyHost/aktData'});
+		let output = '';
+		let errOut = '';
+		s.stdout.on('data',d=>{
+			output += d.toString();
+		})
+		s.stderr.on('data',d=>{
+			console.log('AKT: fetchAllOrderBids error',d.toString());
+			errOut += d.toString();
+		});
+		s.on('close',()=>{
+			if(errOut != ''){
+				/*this.envUtils.trySetEnv(); //reset env on fail
+				reject({error:errOut});*/
+				if(errOut.indexOf('Error: post failed') >= 0 && errOut.indexOf('EOF') >= 0){
+					//rpc error, retry...
+					if(attemptCount >= 10){
+						console.log('reset env attempt is too many, failing now...')
+						reject({error:errOut})
+						return;
+					}
+					console.log('RPC request failed, reset env and try again...')
+					this.envUtils.setEnv().then(()=>{
+						console.log('reset env attempt',attemptCount)
+						setTimeout(()=>{
+							this.tryFetchAllOrderBids(bid,params,resolve,reject,attemptCount+1)
+							//this.tryAggregatesQuery(args,resolve,reject,attemptCount+1);
+						},1000)
+						
+					}).catch(e=>{
+						console.log('failed to reset env, retrying...')
+						setTimeout(()=>{
+							this.tryFetchAllOrderBids(bid,params,resolve,reject,attemptCount+1)
+							//this.tryAggregatesQuery(args,resolve,reject,attemptCount+1);
+						},1000)
+						
+					}); //reset env on fail
+				}
+				else{
+					reject({error:errOut});
+				}
+			}
+			else{
+				let json = {};
+				try{
+					json = JSON.parse(output);
+				}
+				catch(e){
+					reject({error:output})
+				}
+				resolve(json);
+			}
+		})
 	}
 
 }
