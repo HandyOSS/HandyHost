@@ -779,10 +779,12 @@ export class Wallet{
 					output += d.toString();
 				})
 				s.stderr.on('data',d=>{
-					//console.log('stderr run provider:',d.toString());
+					console.log('stderr run provider:',d.toString());
 					output += d.toString();
 				})
 				s.on('close',()=>{
+					console.log('provider is closed');
+					fs.appendFileSync(logsPath,"\n###########  PROVIDER WAS CLOSED ###########\n",'utf8');
 					hasReturned = true;
 					clearTimeout(returnTimeout);
 					clearInterval(logInterval);
@@ -790,6 +792,9 @@ export class Wallet{
 					if(fs.existsSync(process.env.HOME+'/.HandyHost/aktData/provider.pid')){
 						fs.unlinkSync(process.env.HOME+'/.HandyHost/aktData/provider.pid');
 					}
+				})
+				s.on('error',(e)=>{
+					console.log('provider had error',e);
 				})
 			});
 				
