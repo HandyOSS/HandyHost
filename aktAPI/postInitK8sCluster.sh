@@ -5,12 +5,13 @@ echo "INGRESS NODE NAME $3" && \
 echo "MASTER IP $4" && \
 cd "$HOME/.HandyHost/aktData"
 if [[ -s "$HOME/.ssh/known_hosts" ]] ; then
+	ssh-keygen -f "${HOME}/.ssh/known_hosts" -R "${4}"
 	ssh-keygen -f "${HOME}/.ssh/known_hosts" -R "${2}"
 fi
 
-ssh -i "$HOME/.ssh/handyhost" -o StrictHostKeyChecking=accept-new $1@$2 'bash --login echo "" | sudo chown ansible:ansible /etc/kubernetes/admin.conf && exit' && \
+ssh -i "$HOME/.ssh/handyhost" -o StrictHostKeyChecking=accept-new $1@$4 'bash --login echo "" | sudo chown ansible:ansible /etc/kubernetes/admin.conf && exit' && \
 #ssh -oStrictHostKeyChecking=accept-new -i "$HOME/.ssh/handyhost" $1@$2 'bash --login echo "" | sudo chown ansible:ansible /etc/kubernetes/admin.conf && exit' && \
-scp -i "$HOME/.ssh/handyhost" $1@$2:/etc/kubernetes/admin.conf ./ && \
+scp -i "$HOME/.ssh/handyhost" $1@$4:/etc/kubernetes/admin.conf ./ && \
 if [[ "$OSTYPE" == "darwin"* ]]; then
 	#nice macOS sed slightly different vs linux
 	sed -i'.original' -e 's/127.0.0.1/'"$4"'/g' admin.conf && \
