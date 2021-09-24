@@ -1,8 +1,8 @@
 #!/bin/bash
 pwd="$PWD"
 
-USERNAME="$SUDO_USER" ###if you want to run the application as your user, uncomment this
-#USERNAME="$USER" ##if you want to run everything as root, uncomment this
+#USERNAME="$SUDO_USER" ###if you want to run the application as your user, uncomment this
+USERNAME="$USER" ###if you want to run everything as root, uncomment this
 
 USERHOME="$(eval echo ~$USERNAME)"
 USERGROUP="$(id -gn $USERNAME)"
