@@ -84,3 +84,19 @@ Althought we go farther than most Sia services recommendations by encrypting any
 Why all the tldr;? To host some of these services (Sia, for instance), your wallet needs to be unlocked at all times to pay collateral deposits and fees. Traditionally Sia recommends to pass wallet unlock keys to the application by environment variables and store the keys safely on disk at rest. You don't want to miss out on income because your computer restarted overnight... 
 We go an extra step further than the recommendations and encrypt the unlock keys at rest, and only provide an encrypted key location to the HandyHost application on startup. After the application has decrypted and used the passwords, the temporary encrypted key file is deleted.
 I'm still not crazy about the idea but it's about as good as it gets for running a daemon that needs to auto-startup without you sitting at the keyboard.
+
+
+### Testing/Private development things
+To test the in-app updates while the repo is still private, we need to set our github access token to an environment variable in our .profile. Depending on which user you run the app as (default = root), you will want to dump this line into the .profile of the appropriate runner of the HandyHost Daemon.
+
+```sudo echo "export HANDYHOST_PRIVATE_REPO_TOKEN=ghp_jQX....2gP" >> /root/.profile```
+
+And if the daemon is already running, you will want to ```sudo systemctl restart handyhost``` to reload your token.
+
+Upon doing so, you will see a link in the left-hand options menu in the app to update HandyHost from within the app.
+
+Below are instructions on how to get your github access token.
+
+### To use in-app updater:
+1. since the repo is still private we need a github personal access token. In github, go to the very top right of the screen to show your options. Then goto Settings. Scroll down the left options and click "Developer Settings", then in the subsequent left menu click "Personal Access Tokens" and then click the button for "Generate New Token". Then use settings: "90 days", Select top level scope for "Repo" which should check all the repo boxes under it. Then "Generate Token". Now copy the token from the following screen, should look like ```ghp_123456abcd.....efef123``` and plug that into the command line like::
+```sudo echo "export HANDYHOST_PRIVATE_REPO_TOKEN=ghp_jQX....2gP" >> /root/.profile```
