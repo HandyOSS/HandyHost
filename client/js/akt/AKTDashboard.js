@@ -50,6 +50,9 @@ export class AKTDashboard {
 			this.nodeConfig.clusterConfig.updateLogs('========= '+data.part+' is '+data.status+' ==========');
 			if(data.part == 'init'){
 				$('#logs .logsMessage').html('Kubernetes Cluster Installation is Finished!<br />Check your certificates and registration in the Dashboard and then start making $AKT')
+				setTimeout(()=>{
+					this.clusterStatus.fetchStats();
+				},5000)
 			}
 		})
 		this.socket.on('newNodeRegistered',(nodeData,clusterConfig)=>{
@@ -66,6 +69,34 @@ export class AKTDashboard {
 		})
 		this.socket.on('HandyHostIsUpToDate',data=>{
 			$('.options li#handyhostUpdatesWarning').hide();
+		})
+		this.socket.on('providerRegistrationEvent',data=>{
+			console.log('is provider up to date?',data);
+			if(!data.hasValidRegistration){
+				//show .option for registration
+				//if !exists we know to create vs update
+				const action = data.exists ? 'update' : 'create';
+				$('.options #providerRegistrationWarning').attr('data-wallet',data.wallet);
+				$('.options #providerRegistrationWarning').attr('data-action',action)
+				if(action == 'create'){
+					$('.options #providerRegistrationWarning .action').html('');
+				}
+				else{
+					$('.options #providerRegistrationWarning .action').html('Update');	
+				}
+				$('.options #providerRegistrationWarning').show();
+			}
+			else{
+				$('.options #providerRegistrationWarning').hide();
+			}
+			if(!data.hasValidCertificate){
+				//show .option for cert gen
+				$('.options #providerCertificateWarning').attr('data-wallet',data.wallet);
+				$('.options #providerCertificateWarning').show();
+			}
+			else{
+				$('.options #providerCertificateWarning').hide();
+			}
 		})
 		
 	}
@@ -293,6 +324,18 @@ export class AKTDashboard {
 				break;
 				case 'handyhostUpdatesWarning':
 					_this.showHandyHostUpdateModal();
+				break;
+				case 'providerRegistrationWarning':
+					if($('#providerRegistrationWarning').attr('data-action') == 'create'){
+						_this.clusterStatus.showRegistrationModal(false,$('#providerRegistrationWarning').attr('data-wallet'));
+					}
+					else{
+						//update
+						_this.clusterStatus.showRegistrationModal(true,$('#providerRegistrationWarning').attr('data-wallet'));
+					}
+				break;
+				case 'providerCertificateWarning':
+					_this.clusterStatus.showRegistrationModal(false,$('#providerCertificateWarning').attr('data-wallet'),true);
 				break;
 			}
 			

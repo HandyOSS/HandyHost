@@ -244,3 +244,7 @@ a.aktStatusPageLink{
 	font-weight: 200;
 }
 
+#generateCertWrap{
+	display: none;
+}
+

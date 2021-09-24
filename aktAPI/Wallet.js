@@ -290,18 +290,8 @@ export class Wallet{
 			outputData.mnemonic = lines[lines.length-1].trim();
 			
 	    }
-	    fs.writeFileSync(`${process.env.HOME}/.HandyHost/aktData/.nodeEnv`,walletName,'utf8');
-	    process.env.AKT_ACCT_NAME = walletName;
-	    /*const newConfigParam = {
-	    	node:{
-	    		node:{
-	    			from:`"${walletName}"`
-	    		}
-	    	}
-	    };
-	    this.updateConfigs(newConfigParam).then(d=>{
-	    	resolve(outputData);
-	    });*/
+	    
+
 	    resolve(outputData);
 	}
 	getKeyList(pw){
@@ -404,7 +394,83 @@ export class Wallet{
 			
 		})
 	}
-
+	getProviderRegistrationStatus(){
+		return new Promise((resolve,reject)=>{
+			const configPath = process.env.HOME+'/.HandyHost/aktData/clusterConfig.json';
+			if(!fs.existsSync(configPath)){
+				resolve(false);
+				return;
+			}
+			const configJSON = JSON.parse(fs.readFileSync(configPath,'utf8'))
+			if(typeof configJSON.provider == "undefined"){
+				resolve(false);
+				return;
+			}
+			const address = configJSON.provider.providerWalletAddress;
+			const args = ['query', 'provider', 'get', address, '--output', 'json'];
+			let regOut = '';
+			let regErr = '';
+			const getRegs = spawn('./bin/akash',args,{shell:true,env:process.env,cwd:process.env.HOME+'/.HandyHost/aktData'})
+			getRegs.stdout.on('data',d=>{
+				regOut += d.toString();
+			})
+			getRegs.stderr.on('data',d=>{
+				regErr += d.toString();
+				console.log('get registration stderr',d.toString());
+			})
+			getRegs.on('close',()=>{
+				if(regErr.indexOf('invalid provider') >= 0){
+					reject(false);
+					//socketIONamespace.to('akt').emit('providerRegistrationEvent',{dasValidRegistration:false, exists:false, hasValidCertificate: providerHasGeneratedCert,wallet:configJSON.provider.providerWalletAddress});
+				}
+				else{
+					let json = {};
+					try{
+						json = JSON.parse(regOut);
+					}
+					catch(e){
+						console.log('couldnt parse stdout',regOut);
+						reject(false);
+						return;
+					}
+					if(Object.keys(json).length > 0){
+						//ok compare and notify if needed
+						const config = json;
+						
+						let isMatch = true;
+						if(config.host_uri != `https://${configJSON.provider.providerIP}:8443`){
+							isMatch = false;
+						}
+						const region = config.attributes.find(d=>{return d.key == 'region';})
+						const host = config.attributes.find(d=>{return d.key == 'host';});
+						if(typeof region == "undefined"){
+							isMatch = false;
+						}
+						else{
+							if(region.value != configJSON.provider.regionName){
+								isMatch = false;
+							}
+						}
+						if(typeof host == "undefined"){
+							isMatch = false;
+						}else{
+							if(host.value != configJSON.provider.clusterName){
+								isMatch = false;
+							}
+						}
+						if(!isMatch){
+							
+							resolve(false);
+						}
+						else{
+							fs.writeFileSync(process.env.HOME+'/.HandyHost/aktData/providerReceipt.'+configJSON.provider.providerWalletAddress+'.json',JSON.stringify(config),'utf8');
+							resolve(true);
+						}
+					}
+				}
+			});
+		})
+	}
 	registerProvider(params,mode,providerHost){
 		return new Promise((resolve,reject)=>{
 			//console.log('register called',params,mode);
@@ -446,8 +512,39 @@ export class Wallet{
 						})
 					}
 					else{
-						reject({error:true,message:errOutput});
-						return;
+						//todo: catch timeouts...
+						//timed out waiting for tx to be included in a block
+						if(errOutput.indexOf('timed out waiting for tx to be included in a block') >= 0){
+							const timesToCheck = 10;
+							let iterations = 0;
+							console.log('timed out waiting for tx...');
+							const checkInterval = setInterval(()=>{
+								//check for next 5 blocks
+								this.getProviderRegistrationStatus().then(isRegistered=>{
+									console.log('check interval',iterations);
+									if(isRegistered){
+										resolve({success:true,message:"Successfully Registered Provider"})
+										clearInterval(checkInterval);
+									}
+									else{
+										iterations++;
+										if(iterations >= timesToCheck){
+											clearInterval(checkInterval);
+											reject({error:true,message:"Waited 10 blocks for transaction to be included in a block, registration was not updated..."})
+										}
+									}
+								}).catch(e=>{
+									iterations++;
+									console.log('error fetching provider registration',e);
+								})
+							},8000)
+						}
+						else{
+							reject({error:true,message:errOutput});
+							return;
+						}
+						
+						
 					}
 				}
 				else{

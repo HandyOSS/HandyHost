@@ -32,6 +32,10 @@
 	display:none;
 }
 
+.options #providerRegistrationWarning, .options #providerCertificateWarning{
+	display: none;
+}
+
 .updateInfo{
 	font-size: 18px;
 }

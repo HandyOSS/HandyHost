@@ -74,13 +74,13 @@ export class AKTClusterStatus{
 		/*if(typeof leasesClosed == "undefined"){
 			leasesClosed = 0;
 		}*/
-		leasesClosed = leasesClosed >= 1000 ? numeral(leasesClosed).format('0.0a') : leasesClosed;
+		leasesClosed = parseInt(leasesClosed) >= 1000 ? numeral(leasesClosed).format('0.0a') : leasesClosed;
 		let leasesActive = data.leasesActive || 0;
-		leasesActive = leasesActive >= 1000 ? numeral(leasesActive).format('0.0a') : leasesActive;
+		leasesActive = parseInt(leasesActive) >= 1000 ? numeral(leasesActive).format('0.0a') : leasesActive;
 		let bidsOpen = data.bidsOpen || 0;
-		bidsOpen = bidsOpen >= 1000 ? numeral(bidsOpen).format('0.0a') : bidsOpen;
+		bidsOpen = parseInt(bidsOpen) >= 1000 ? numeral(bidsOpen).format('0.0a') : bidsOpen;
 		let bidsClosed = data.bidsClosed || 0;
-		bidsClosed = bidsClosed >= 1000 ? numeral(bidsClosed).format('0.0a') : bidsClosed;
+		bidsClosed = parseInt(bidsClosed) >= 1000 ? numeral(bidsClosed).format('0.0a') : bidsClosed;
 		const $q0 = $(`
 		<div class="quadrant">
 			<div class="quadTitle">Leases Active</div>
@@ -107,7 +107,8 @@ export class AKTClusterStatus{
 		$el.append($q2);
 		$el.append($q3);
 		//we device locked AKT from open bids/leases
-		const lockedBalance = (data.leasesActive + data.bidsOpen) * 50;
+		const lockedBalance = (parseInt(data.leasesActive) + parseInt(data.bidsOpen)) * 50;
+		
 		if(lockedBalance > 0){
 			$('.accountBalance .balance .locked').remove();
 			$('.accountBalance .balance').append('<div class="locked">Locked Collateral: '+lockedBalance+' AKT</div>')
@@ -118,8 +119,9 @@ export class AKTClusterStatus{
 		$el.html('<div class="subtitle">Akash Provider Registration Status</div>');
 		if(statsData.providerIsRegistered){
 			//heyo we registered
-			$el.append('<div class="isregistered"><span class="emoji">✅</span> Provider is Registered <a class="aktStatusPageLink" href="https://www.mintscan.io/akash/txs/'+statsData.providerReceiptTX+'" target="_blank">View Transaction in Explorer</a></div>')
+			$el.append('<div class="isregistered"><span class="emoji">✅</span> Provider is Registered </div>')
 			$el.append('<div class="updateRegistration"><a class="aktStatusPageLink">Update Registration?</a></div>')
+			$('.options #providerRegistrationWarning').hide();
 		}
 		else{
 			//not yet registered..
@@ -129,6 +131,7 @@ export class AKTClusterStatus{
 		if(statsData.providerHasGeneratedCert){
 			$el.append('<div class="hasGeneratedCert"><span class="emoji">✅</span> Provider has Generated Akash Certificate</div>');
 			$el.append('<div class="regenCertificate"><a class="aktStatusPageLink">Re-Generate Certificate?</a></div>')
+			$('.options #providerCertificateWarning').hide();
 		}
 		else{
 			$el.append('<div class="hasGeneratedCert"><span class="emoji">⚠️</span> No Akash Server Certificate Found for Your Address</div>');
@@ -463,6 +466,9 @@ export class AKTClusterStatus{
 		$('.walletModalContent').removeClass('showing');
 		$('#registrationModal').hide();
 		$('#unlockRegPW').val('');
+		$('#regFees').val('');
+		$('#runFees').val('');
+		$('#cpuPrive').val('');
 		$( "#generateCert" ).prop('checked', false );
 		$('.registerProviderModal .checkboxWrap').show();
 		$('.walletUtil').addClass('showing');
@@ -515,6 +521,12 @@ export class AKTClusterStatus{
 				}
 				else{
 					this.verifyRegistration(data.message);
+					if(!isGenerateCertOnly){
+						$('.options #providerRegistrationWarning').hide();
+					}
+					else{
+						$('.options #providerCertificateWarning').hide();
+					}
 				}
 				$('#registerSave .foreground').html(label);
 				$('#registerSave .background').html(label);

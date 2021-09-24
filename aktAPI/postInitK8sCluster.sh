@@ -3,8 +3,11 @@
 #./postInitK8sCluster.sh ansible akashnode1.local akashnode1 192.168.0.17
 echo "INGRESS NODE NAME $3" && \
 echo "MASTER IP $4" && \
-cd "$HOME/.HandyHost/aktData" && \
-ssh-keygen -f "${HOME}/.ssh/known_hosts" -R "${2}" && \
+cd "$HOME/.HandyHost/aktData"
+if [[ -s "$HOME/.ssh/known_hosts" ]] ; then
+	ssh-keygen -f "${HOME}/.ssh/known_hosts" -R "${2}"
+fi
+
 ssh -i "$HOME/.ssh/handyhost" -o StrictHostKeyChecking=accept-new $1@$2 'bash --login echo "" | sudo chown ansible:ansible /etc/kubernetes/admin.conf && exit' && \
 #ssh -oStrictHostKeyChecking=accept-new -i "$HOME/.ssh/handyhost" $1@$2 'bash --login echo "" | sudo chown ansible:ansible /etc/kubernetes/admin.conf && exit' && \
 scp -i "$HOME/.ssh/handyhost" $1@$2:/etc/kubernetes/admin.conf ./ && \

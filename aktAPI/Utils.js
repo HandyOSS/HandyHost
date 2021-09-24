@@ -596,7 +596,7 @@ export class AKTUtils{
 			
 		})
 	}
-	saveClusterConfig(configJSON,configPath){
+	saveClusterConfig(configJSON,configPath,socketIONamespace){
 		return new Promise((resolve,reject)=>{
 			if(typeof configJSON.provider != "undefined"){
 				if(Object.keys(configJSON.provider).length > 0){
@@ -609,6 +609,80 @@ export class AKTUtils{
 					yaml += `${tab}- key: host\n`;
 					yaml += `${tab}  value: ${configJSON.provider.clusterName}\n`;
 					fs.writeFileSync(this.providerYAMLPath,yaml,'utf8');
+					//we need to verify that the registration needs or does not need to be updated
+					if(typeof socketIONamespace != "undefined"){
+						//this is the save event that needs to ping the client if they need to update..
+						const args = ['query', 'provider', 'get', configJSON.provider.providerWalletAddress, '--output', 'json'];
+						let regOut = '';
+						let regErr = '';
+						const getRegs = spawn('./bin/akash',args,{shell:true,env:process.env,cwd:process.env.HOME+'/.HandyHost/aktData'})
+						getRegs.stdout.on('data',d=>{
+							regOut += d.toString();
+						})
+						getRegs.stderr.on('data',d=>{
+							regErr += d.toString();
+							console.log('get registration stderr',d.toString());
+						})
+						getRegs.on('close',()=>{
+							console.log('regout',regOut);
+							console.log('regerr',regErr);
+							const providerHasGeneratedCert = fs.existsSync(process.env.HOME+'/.akash/'+configJSON.provider.providerWalletAddress+'.pem');
+				
+							if(regErr.indexOf('invalid provider') >= 0){
+								socketIONamespace.to('akt').emit('providerRegistrationEvent',{dasValidRegistration:false, exists:false, hasValidCertificate: providerHasGeneratedCert,wallet:configJSON.provider.providerWalletAddress});
+							}
+							else{
+								let json = {};
+								try{
+									json = JSON.parse(regOut);
+								}
+								catch(e){
+									console.log('couldnt parse stdout',regOut);
+								}
+								if(Object.keys(json).length > 0){
+									//ok compare and notify if needed
+									const config = json;
+									
+									let shouldNotify = false;
+									if(config.host_uri != `https://${configJSON.provider.providerIP}:8443`){
+										shouldNotify = true;
+									}
+									const region = config.attributes.find(d=>{return d.key == 'region';})
+									const host = config.attributes.find(d=>{return d.key == 'host';});
+									if(typeof region == "undefined"){
+										shouldNotify = true;
+									}
+									else{
+										if(region.value != configJSON.provider.regionName){
+											shouldNotify = true;
+										}
+									}
+									if(typeof host == "undefined"){
+										shouldNotify = true;
+									}else{
+										if(host.value != configJSON.provider.clusterName){
+											shouldNotify = true;
+										}
+									}
+									console.log('should we notify of a registration change?',shouldNotify);
+									if(!shouldNotify){
+										//check if config file exists for UI checkboxes..
+										
+										if(!fs.existsSync(process.env.HOME+'/.HandyHost/aktData/providerReceipt.'+configJSON.provider.providerWalletAddress+'.json')){
+											fs.writeFileSync(process.env.HOME+'/.HandyHost/aktData/providerReceipt.'+configJSON.provider.providerWalletAddress+'.json',JSON.stringify(config),'utf8');
+										}
+										socketIONamespace.to('akt').emit('providerRegistrationEvent',{hasValidRegistration:true, exists:true, hasValidCertificate: providerHasGeneratedCert,wallet:configJSON.provider.providerWalletAddress});
+									}
+									else{
+										if(fs.existsSync(process.env.HOME+'/.HandyHost/aktData/providerReceipt.'+configJSON.provider.providerWalletAddress+'.json')){
+											fs.unlinkSync(process.env.HOME+'/.HandyHost/aktData/providerReceipt.'+configJSON.provider.providerWalletAddress+'.json');
+										}
+										socketIONamespace.to('akt').emit('providerRegistrationEvent',{hasValidRegistration:false, exists:true, hasValidCertificate: providerHasGeneratedCert,wallet:configJSON.provider.providerWalletAddress});
+									}
+								}
+							}
+						})
+					}
 				}
 			}
 			fs.writeFileSync(configPath,JSON.stringify(configJSON,null,2),'utf8');

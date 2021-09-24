@@ -20,16 +20,7 @@ export class HandyAKT{
 		catch(e){
 			//folder already exists
 		}
-		let acctName;
-		try{
-			acctName = fs.readFileSync(`${process.env.HOME}/.HandyHost/aktData/.nodeEnv`,'utf8');
-		}
-		catch(e){}
 		
-		if(typeof acctName != "undefined"){
-			process.env.AKT_ACCT_NAME = acctName.replace(/\n/g,'');
-			//try startup here since we have already inited
-		}
 		this.checkClusterConfigExistence();
 		this.handyUtils = new CommonUtils();
 		this.utils = new AKTUtils(this.clusterConfigFilePath);
@@ -606,13 +597,15 @@ export class HandyAKT{
 				statsOut.providerHasGeneratedCert = fs.existsSync(process.env.HOME+'/.akash/'+providerData.providerWalletAddress+'.pem');
 				if(typeof providerData.providerWalletAddress != "undefined"){
 					if(fs.existsSync(process.env.HOME+'/.HandyHost/aktData/providerReceipt.'+providerData.providerWalletAddress+'.json')){
-						const receipt = JSON.parse(fs.readFileSync(process.env.HOME+'/.HandyHost/aktData/providerReceipt.'+providerData.providerWalletAddress+'.json','utf8'))
+						//const receipt = JSON.parse(fs.readFileSync(process.env.HOME+'/.HandyHost/aktData/providerReceipt.'+providerData.providerWalletAddress+'.json','utf8'))
 						//https://www.mintscan.io/akash/txs/FB427B253030607DF2548F6C568F17D73E91A7E6CD962087F33360D68461A1F4
-						const {tx,wallet} = this.wallet.getMetaFromTransaction(receipt);
+						/*const {tx,wallet} = this.wallet.getMetaFromTransaction(receipt);
 						if(wallet == providerData.providerWalletAddress){
 							statsOut.providerIsRegistered = true;
 							statsOut.providerReceiptTX = tx;
-						}
+						}*/
+						statsOut.providerIsRegistered = true;
+						statsOut.providerReceiptTX = "deprecated";
 						
 					};
 				}
@@ -772,7 +765,7 @@ export class HandyAKT{
 				reject(err);
 			})
 		}
-		return this.utils.saveClusterConfig(parsed,this.clusterConfigFilePath);
+		return this.utils.saveClusterConfig(parsed,this.clusterConfigFilePath,this.ioNamespace);
 		
 	}
 	getWallets(requestBody){

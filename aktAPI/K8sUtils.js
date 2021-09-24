@@ -193,8 +193,9 @@ export class K8sUtils{
 			let finished = 0;
 			const finCount = allIPs.length;
 			allIPs.map(ip=>{
-				const args = ['./aktAPI/cleanupKnownHosts.sh',ip];
-				const cleanup = spawn('bash',args,{shell:true,env:process.env,cwd:process.env.PWD});
+				const command = './aktAPI/cleanupKnownHosts.sh';
+				const args = [ip];
+				const cleanup = spawn(command,args,{env:process.env,cwd:process.env.PWD});
 				cleanup.stdout.on('data',d=>{
 					console.log('cleanup stdout',ip,d.toString())
 				})
@@ -214,9 +215,9 @@ export class K8sUtils{
 	postInitNewCluster(socketIONamespace,masterNodeName,masterUser,masterIP,masterMDNS,ingressNodeName){
 		///./postInitK8sCluster.sh ansible akashnode1.local akashnode1 192.168.0.17
 		return new Promise((resolve,reject)=>{
-
-			const args = ['./aktAPI/postInitK8sCluster.sh',masterUser,masterMDNS,ingressNodeName,masterIP];
-			const postProcess = spawn('bash',args,{shell:true,env:process.env,cwd:process.env.PWD});
+			const command = './aktAPI/postInitK8sCluster.sh'
+			const args = [masterUser,masterMDNS,ingressNodeName,masterIP];
+			const postProcess = spawn(command,args,{env:process.env,cwd:process.env.PWD});
 			postProcess.stdout.on('data',d=>{
 				socketIONamespace.to('akt').emit('k8sBuildLogs','POST INSTALL: '+d.toString());
 			})
@@ -282,7 +283,7 @@ export class K8sUtils{
 				});
 				socketIONamespace.to('akt').emit('k8sBuildLogs','Setting up Metrics Server');
 				fs.writeFileSync(process.env.HOME+'/.HandyHost/aktData/akash_cluster_resources/metrics-server-handyhost.yaml',output.join('---\n'),'utf8');
-				const applyKubectl = spawn('./installMetricsServer.sh',[],{shell:true,env:process.env,cwd:process.env.PWD+'/aktAPI'});
+				const applyKubectl = spawn('./installMetricsServer.sh',[],{env:process.env,cwd:process.env.PWD+'/aktAPI'});
 				applyKubectl.stdout.on('data',d=>{
 					socketIONamespace.to('akt').emit('k8sBuildLogs','POST INSTALL: '+d.toString());
 				})
@@ -301,7 +302,7 @@ export class K8sUtils{
 	teardownOldCluster(socketIONamespace){
 		return new Promise((resolve,reject)=>{
 			const args = []
-			const teardown = spawn('./teardownK8sCluster.sh',args,{shell:true,env:process.env,cwd:process.env.PWD+'/aktAPI'});
+			const teardown = spawn('./teardownK8sCluster.sh',args,{env:process.env,cwd:process.env.PWD+'/aktAPI'});
 			teardown.stdout.on('data',d=>{
 				socketIONamespace.to('akt').emit('k8sBuildLogs',d.toString());
 			});
@@ -317,8 +318,9 @@ export class K8sUtils{
 	}
 	initNewCluster(socketIONamespace){
 		return new Promise((resolve,reject)=>{
-			const args = ['./aktAPI/initK8sCluster.sh']
-			const init = spawn('bash',args,{shell:true,env:process.env,cwd:process.env.PWD});
+			const command = './aktAPI/initK8sCluster.sh';
+			const args = [];
+			const init = spawn(command,args,{env:process.env,cwd:process.env.PWD});
 			init.stdout.on('data',d=>{
 				socketIONamespace.to('akt').emit('k8sBuildLogs',d.toString());
 			});
@@ -356,9 +358,10 @@ export class K8sUtils{
 						finished++;
 						if(finished == targetNames.length){
 							//now get realtime stats
-							const realtimeArgs = ['./aktAPI/getK8sTop.sh'];
+							const command = './aktAPI/getK8sTop.sh';
+							const realtimeArgs = [];
 							let topOutput = '';
-							const top = spawn('bash',realtimeArgs,{shell:true,env:process.env,cwd:process.env.PWD});
+							const top = spawn(command,realtimeArgs,{env:process.env,cwd:process.env.PWD});
 							top.stdout.on('data',d=>{
 								topOutput += d.toString();
 							})
@@ -398,7 +401,7 @@ export class K8sUtils{
 									}
 								});
 								let podsOut = '';
-								const getPods = spawn('bash',['./aktAPI/getRunningPodList.sh'],{shell:true,env:process.env,cwd:process.env.PWD});
+								const getPods = spawn('./aktAPI/getRunningPodList.sh',[],{env:process.env,cwd:process.env.PWD});
 								getPods.stdout.on('data',d=>{
 									podsOut += d.toString();
 								})
@@ -453,8 +456,8 @@ export class K8sUtils{
 	}
 	getNodeStats(nodeName){
 		return new Promise((resolve,reject)=>{
-			const args = ['./aktAPI/getK8sClusterStats.sh',nodeName];
-			const getStats = spawn('bash',args,{shell:true,env:process.env,cwd:process.env.PWD});
+			const args = [nodeName];
+			const getStats = spawn('./aktAPI/getK8sClusterStats.sh',args,{env:process.env,cwd:process.env.PWD});
 			let output = '';
 			let errOut = '';
 			getStats.stdout.on('data',d=>{
@@ -709,13 +712,13 @@ export class K8sUtils{
 						fs.writeFileSync(generatorPath+'/user-data',cloudInitOutput,'utf8');
 						//ok now to generate the ISO...
 						console.log('device path',devicePath);
-						let args = ['./aktAPI/generateUbuntuAutoinstallerISO.sh'];
+						let command = './aktAPI/generateUbuntuAutoinstallerISO.sh';
 						if(process.platform == 'darwin'){
-							args = ['./aktAPI/generateUbuntuAutoinstallerISO_MAC.sh'];
+							command = './aktAPI/generateUbuntuAutoinstallerISO_MAC.sh';
 						}
 						let output = '';
 						let errs = '';
-						const autogen = spawn('bash',args,{shell:true,env:process.env,cwd:process.env.PWD});
+						const autogen = spawn(command,[],{env:process.env,cwd:process.env.PWD});
 						autogen.stdout.on('data',d=>{
 							console.log('autogen stdout output: ',d.toString());
 							output += d.toString();
