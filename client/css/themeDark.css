@@ -72,8 +72,8 @@ html.darkTheme #qrModal
 	fill: #50E2DD !important;
 }
 .darkTheme .donutChart.dvpnDonut g.pie path.on{
-	fill: #1d9eec !important;
-	filter:invert(1);
+	fill: #E26113 !important;
+	/*filter:invert(1);*/
 
 }
 .darkTheme .donutChart g.pie path:not(.on) {
@@ -224,9 +224,19 @@ html.darkTheme #qrModal
 	filter:invert(1);
 }
 
-.darkTheme #streamgraph path.stream{
-	filter:invert(1);
-}
+/*.darkTheme #streamgraph path.stream{
+	fill: attr(data-inverse);
+}*/
+.darkTheme #streamgraph path.stream.color8{fill: #f7cf94 !important;}
+.darkTheme #streamgraph path.stream.color7{fill: #f7ae63 !important;}
+.darkTheme #streamgraph path.stream.color6{fill: #de8e4a !important;}
+.darkTheme #streamgraph path.stream.color5{fill: #bd6d39 !important;}
+.darkTheme #streamgraph path.stream.color4{fill: #945129 !important;}
+.darkTheme #streamgraph path.stream.color3{fill: #61351e !important;}
+.darkTheme #streamgraph path.stream.color2{fill: #392410 !important;}
+.darkTheme #streamgraph path.stream.color1{fill: #211408 !important;}
+.darkTheme #streamgraph path.stream.color0{fill: #080400 !important;}
+
 .darkTheme .createNewData .error{
 	filter:invert(1);
 }

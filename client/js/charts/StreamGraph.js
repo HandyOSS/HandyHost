@@ -1,3 +1,4 @@
+import {invertColor} from './InvertColor.js';
 export class StreamGraph{
 	constructor($el){
 		this.$el = $el;
@@ -21,7 +22,7 @@ export class StreamGraph{
 			})
 		}
 		console.log('timestamps???',timestamps)
-		if(timestamps == 0){
+		if(timestamps == 0 && typeof this.getQueryString()['testStreamgraph'] == "undefined"){
 			//no data
 			$('.sectionErrorMessage',this.$el).show();
 			$('svg',this.$el).hide();
@@ -49,6 +50,11 @@ export class StreamGraph{
 		    .domain([d3.min(series, d => d3.min(d, d => d[0])), d3.max(series, d => d3.max(d, d => d[1]))])
 		    .range([height - 30, 10]);
 		const color = d3.schemeBlues[9];
+		/*let out= ''
+		for(let i=0;i<9;i++){
+			out += '.darkTheme #streamgraph path.stream.color'+i+'{fill: '+invertColor(color[8-i])+'};\n'
+		}
+		console.log('css',out);*/
 		const ticks = d3.axisBottom(x)
 			.ticks(8)
 			.tickSizeOuter(0)
@@ -83,7 +89,17 @@ export class StreamGraph{
 					})
 					.transition()
 					.duration(300)
-					.attr("fill", (d,i) => color[8-i])
+					.attr("fill", function(d,i) {
+						const colorI = 8-i;
+						let out = color[colorI];
+						for(let x = 0; x < 9; x ++){
+							d3.select(this).classed('color'+x,x == colorI);
+						}
+						return out;
+					})
+					.attr('data-inverse',(d,i)=>{
+						return invertColor(color[8-i]);
+					})
 					.attr("d", area)
 			/*.append("title")
 				.text(({key}) => key);*/
@@ -197,14 +213,22 @@ export class StreamGraph{
 
 		const maxTime = parseInt(this.startOf(moment(),1,'minute').format('X'));
 		let minTime = this.getMinTime(data);//maxTime.clone().subtract(2,'days');
+		if(this.getQueryString()['testStreamgraph'] == 'true'){
+			minTime = parseInt(moment(maxTime,'X').subtract(2,'days').format('X'));
+		}
+		console.log('time diff hours',moment().diff(moment(minTime,'X'),'hours'))
 		if(moment().diff(moment(minTime,'X'),'hours') <= 2){
-			minTime = moment(maxTime,'X').subtract('48','hours');
+			minTime = parseInt(moment(maxTime,'X').subtract('48','hours').format('X'));
 		}
 		let minsPerBin = 15;
-		if(moment(maxTime).diff(moment(minTime),'minutes')/2 <= 120){
+		if(moment(maxTime,'X').diff(moment(minTime,'X'),'minutes')/2 <= 120){
 			minsPerBin = 2;
 		} 
-		for(let i=minTime;i<=maxTime;i+=(minsPerBin*60)){
+		console.log('minmax',minTime,maxTime);
+		console.log('new diff hours',moment(maxTime,'X').diff(moment(minTime,'X'),'hours'))
+		
+		for(let v=minTime;v<=maxTime;v+=(minsPerBin*60)){
+			let i = this.startOf(moment(v,'X'),minsPerBin,'minute').format('X')
 			bins[i] = {
 				time:i
 			};
@@ -216,40 +240,45 @@ export class StreamGraph{
 					sum:0
 				}
 			});
-			/*const upR0 = Math.random() * 1000000;
-			const downR0 = Math.random() * 1000000;
-			const upR1 = Math.random() * 1000000;
-			const downR1 = Math.random() * 1000000;
-			const upR2 = Math.random() * 1000000;
-			const downR2 = Math.random() * 1000000;
-			bins[i][22] = upR0+downR0;
-			bins[i]['22_data'] = {
-				sum:upR0+downR0,
-				up:upR0,
-				down:downR0
+			if(this.getQueryString()['testStreamgraph'] == 'true'){
+		
+				//for test data in a sparse graph:::
+				const upR0 = Math.floor(Math.random() * 1000000);
+				const downR0 = Math.floor(Math.random() * 1000000);
+				const upR1 = Math.floor(Math.random() * 1000000);
+				const downR1 = Math.floor(Math.random() * 1000000);
+				const upR2 = Math.floor(Math.random() * 1000000);
+				const downR2 = Math.floor(Math.random() * 1000000);
+				bins[i][22] = upR0+downR0;
+				bins[i]['22_data'] = {
+					sum:upR0+downR0,
+					up:upR0,
+					down:downR0
+				}
+				bins[i][44] = upR1+downR1;
+				bins[i]['44_data'] = {
+					sum:upR1+downR1,
+					up:upR1,
+					down:downR1
+				}
+				bins[i][66] = upR2+downR2;
+				bins[i]['66_data'] = {
+					sum:upR2+downR2,
+					up:upR2,
+					down:downR2
+				}
 			}
-			bins[i][44] = upR1+downR1;
-			bins[i]['44_data'] = {
-				sum:upR1+downR1,
-				up:upR1,
-				down:downR1
-			}
-			bins[i][66] = upR2+downR2;
-			bins[i]['66_data'] = {
-				sum:upR2+downR2,
-				up:upR2,
-				down:downR2
-			}*/
 		};
 		console.log('bins',data,bins,minTime,maxTime);
-		return bins;
+		return {rows:bins,roundMins:minsPerBin};
 	}
 	modelData(data){
-		const rows = this.prefillBins(data);
+		const {rows,roundMins} = this.prefillBins(data);
 		
 		Object.keys(data).map(subscriberID=>{
 			Object.keys(data[subscriberID]).map(timestamp=>{
-				let roundMins = Object.keys(data[subscriberID]).length <= 120 ? 2 : 15;
+				//let roundMins = Object.keys(data[subscriberID]).length <= 120 ? 2 : 15;
+				console.log('roundMins in data',roundMins)
 				let rounded = this.startOf(moment(timestamp,'X'),roundMins,'minute').format('X');//moment(timestamp,'X').startOf('hour').format('X');
 				if(typeof rows[rounded] == "undefined"){
 					rows[rounded] = {
@@ -277,13 +306,18 @@ export class StreamGraph{
 				
 			});
 		})
-		console.log('rows',rows);
+		//console.log('rows',rows);
 		const rowsArray = Object.keys(rows).map(ts=>{
 			return rows[ts];
 		});
+		//console.log('rowsarray',rowsArray);
+		let keys = Object.keys(data);
+		if(this.getQueryString()['testStreamgraph'] == 'true'){
+			keys = Object.keys(data).concat([22,44,66]);
+		}
 		return d3.stack()
-			.keys(Object.keys(data))
-			//.keys(Object.keys(data).concat([22,44,66]))
+			//.keys(Object.keys(data))
+			.keys(keys) //testing with sparse data in graph
 			//.keys([5,22,44,66])
 			//.offset(d3.stackOffsetNone)
 			.offset(d3.stackOffsetSilhouette)
@@ -291,5 +325,27 @@ export class StreamGraph{
 			/*.offset(d3.stackOffsetWiggle)
 		    .order(d3.stackOrderInsideOut)*/
 	  	(rowsArray);
+	}
+	getQueryString(){
+		// This function is anonymous, is executed immediately and 
+		// the return value is assigned to QueryString!
+		let query_string = {};
+		const query = window.location.search.substring(1);
+		let vars = query.split("&");
+		for (let i=0;i<vars.length;i++) {
+			const pair = vars[i].split("=");
+			// If first entry with this name
+			if (typeof query_string[pair[0]] === "undefined") {
+				query_string[pair[0]] = decodeURIComponent(pair[1]);
+				// If second entry with this name
+			} else if (typeof query_string[pair[0]] === "string") {
+				const arr = [ query_string[pair[0]],decodeURIComponent(pair[1]) ];
+				query_string[pair[0]] = arr;
+				// If third or later entry with this name
+			} else {
+				query_string[pair[0]].push(decodeURIComponent(pair[1]));
+			}
+		} 
+		return query_string;
 	}
 }
