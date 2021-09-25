@@ -92,6 +92,7 @@ export class SiaWalletConfig{
 		});
 	}
 	showSiaPortsModal(data){
+		//todo validate ports against ports redlist
 		if(typeof data.ip != "undefined"){
 			$('.setPortsModal .welcomeBody .ip').html(data.ip);
 		}
@@ -113,16 +114,72 @@ export class SiaWalletConfig{
 		$('#walletInitModal').show();
 
 		$('.setPortsModal #savePorts').off('click').on('click',()=>{
+			//validate redlist
 			const rpcPort = $('#ports #rpcPort').val() == '' ? '9981' : $('#ports #rpcPort').val();
 			const hostPort = $('#ports #hostPort').val() == '' ? '9982' : $('#ports #hostPort').val();
 			const muxPort = $('#ports #muxPort').val() == '' ? '9983' : $('#ports #muxPort').val();
 			const muxWSPort = $('#ports #muxWSPort').val() == '' ? '9984' : $('#ports #muxWSPort').val();
+			const portsIndex = {};
+			portsIndex[rpcPort] = '#rpcPort';
+			portsIndex[hostPort] = '#hostPort';
+			portsIndex[muxPort] = '#muxPort';
+			portsIndex[muxWSPort] = '#muxWSPort';
+			let hasValidationErrors = false;
+			$('#ports .validation.error').remove();
+			if(typeof data.redlist != "undefined"){
+				console.log('ports in',data.redlist);
+				Object.keys(data.redlist.default).map(port=>{
+					if(port.indexOf(':') == -1){
+						//not a range
+						if(typeof portsIndex[port] != "undefined"){
+							//ERROR
+							hasValidationErrors = true;
+							$(`#ports ${portsIndex[port]}`).before('<div class="validation error">* reserved port</div>')
+						}
+					}
+					else{
+						let rangeArray = port.split(':').map(v=>{
+							return parseInt(v);
+						});
+						Object.keys(portsIndex).map(p=>{
+							let targetPort = parseInt(p);
+							if(p >= rangeArray[0] && p <= rangeArray[1]){
+								//ERROR
+								hasValidationErrors = true;
+								$(`#ports ${portsIndex[p.toString()]}`).before('<div class="validation error">* reserved port ('+port+')</div>')
+							}
+						})
+					}
+				});
+				Object.keys(data.redlist.custom).map(port=>{
+					if(data.redlist.custom[port].service == "SC"){
+						return; //dont care about SC
+					}
+					if(typeof portsIndex[port] != "undefined"){
+						//ERROR
+						hasValidationErrors = true;
+						$(`#ports ${portsIndex[port]}`).before('<div class="validation error">* reserved port</div>')
+					}
+				})
+			}
+			if(hasValidationErrors){
+				return;
+			}
+			//done validating
+			
+			if($('.setPortsModal #savePorts').hasClass('cancel')){
+				//already saving
+				return;
+			}
+			
 			const out = {
 				rpc:rpcPort,
 				host:hostPort,
 				mux:muxPort,
 				muxWS:muxWSPort
 			};
+			$('.setPortsModal #savePorts .foreground, .setPortsModal #savePorts .background').html('Starting Sia...')
+			$('.setPortsModal #savePorts').removeClass('save').addClass('cancel');
 			fetch('/api/sia/setPorts',
 			{
 			    headers: {
@@ -134,9 +191,13 @@ export class SiaWalletConfig{
 			})
 			.then((res)=>{ console.log('success'); return res.json(); }).then(data=>{
 				console.log('res data',data);
-				$('.setPortsModal').removeClass('showing');
-				$('#walletInitModal').hide();
-				this.initWallet();
+				setTimeout(()=>{
+					//give sia a few seconds to init
+					$('.setPortsModal').removeClass('showing');
+					$('#walletInitModal').hide();
+					this.initWallet();
+				},3000)
+				
 			})
 			.catch((res)=>{ console.log('error submitting',res) })
 		})

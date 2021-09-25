@@ -18,6 +18,10 @@
 	margin-top: -100%;
 	transition: margin-top 0.4s linear;
 }
+.setPortsModal .validation.error{
+	padding: 0px !important;
+    margin: 0px 2px !important;
+}
 .walletUtil.showing, .newWalletInfo.showing, .seedImportMessage.showing, .setPortsModal.showing{
 	margin-top:0px;
 }

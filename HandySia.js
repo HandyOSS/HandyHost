@@ -19,22 +19,12 @@ export class HandySia{
 		this.host = new Host();
 		this.daemon = new Daemon();
 		this.handyUtils = new CommonUtils();
-		/*try{
+		try{
 			fs.mkdirSync(`${process.env.HOME}/.HandyHost/siaData`,{recursive:true})
 		}
 		catch(e){
 			//folder already exists
 		}
-		let unlockPW;
-		try{
-			unlockPW = fs.readFileSync(`${process.env.HOME}/.HandyHost/siaData/.walletEnv`,'utf8');
-		}
-		catch(e){}
-		
-		if(typeof unlockPW != "undefined"){
-			process.env.SIA_WALLET_PASSWORD = unlockPW.replace(/\n/g,'').trim();
-		}*/
-
 		
 		this.trySpawningSiad();
 		//this.consensus.getChainStatus();
@@ -547,6 +537,7 @@ export class HandySia{
 			
 			
 		}).catch(error=>{
+			console.log('caught err',error);
 			reject(error);
 		})
 		
