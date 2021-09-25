@@ -99,7 +99,7 @@ if [ $USERNAME = "root" ] ; then
   VER=$(cat $pwd/.nvmrc)
   echo "VERSION TARGET: $VER" && \
   cd $pwd && nvm install "$VER" && \
-  source $USERHOME/.bashrc && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" && cd $pwd && nvm install "$VER" && nvm use && npm install --build-from-source --python=/usr/bin/python3
+  source $USERHOME/.bashrc && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" && cd $pwd && nvm install "$VER" && nvm use && npm config set user 0 && npm config set unsafe-perm true && npm install --build-from-source --python=/usr/bin/python3
 
 else
   su - $USERNAME -c "source $USERHOME/.bashrc && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" && cd $pwd && nvm install $(cat $pwd/.nvmrc) && nvm use && npm install --build-from-source --python=/usr/bin/python3"

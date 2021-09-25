@@ -9,7 +9,7 @@ More of our tutorials and explainers about each service can be found on our [You
 
 ### Installation (Ubuntu Desktop 64-bit)
 There is a compiled .deb package that can be found in Releases. There are many apt dependencies and thus you will have to install thru dpkg and apt like:
-```sudo dpkg -i handyhost_vX.X.X.deb || sudo apt install -f```
+```sudo dpkg -i handyhost_vX.X.X.deb || sudo apt install -f -y```
 On subsequent debian installs you can likely just double click the .deb file (assuming no new apt dependencies). 
 The Debian package will install HandyHost as a daemon which can be spawned/unspawned like:
 ```sudo systemctl restart handyhost``` (stop | start | restart)
