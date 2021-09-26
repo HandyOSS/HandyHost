@@ -12,6 +12,7 @@ import QRCode from 'qrcode';
 
 export class HandySia{
 	constructor(){
+		this.ioNamespaces = {};
 		this.siaPortsPath = process.env.HOME+'/.HandyHost/siaData/siaPorts.json';
 		this.redlistPortsPath = process.env.HOME+'/.HandyHost/ports.json';
 		this.wallet = new Wallet();
@@ -1010,31 +1011,32 @@ export class HandySia{
 		}
 		return {parsed,err};
 	}
-	addSocketNamespace(ioNamespace){
+	addSocketNamespace(ioNamespace,serverName){
 		
+
 		//console.log('init sia sockets');
-		this.ioNamespace = ioNamespace;
-		this.ioNamespace.adapter.on("create-room", (room) => {
+		this.ioNamespaces[serverName] = {namespace:ioNamespace};
+		this.ioNamespaces[serverName].namespace.adapter.on("create-room", (room) => {
 		  if(room.indexOf('sia') == 0){
 		  	//start a Socket listener for this room
-		  	this.initSocketListener(room);
+		  	this.initSocketListener(room,serverName);
 		  }
 		});
 
-		this.ioNamespace.adapter.on("delete-room", (room) => {
+		this.ioNamespaces[serverName].namespace.adapter.on("delete-room", (room) => {
 		  //console.log(`room deleted ${room}`);
 		  if(room.indexOf('sia') == 0){
 		  	//stop a Socket listener for this room
-		  	this.removeSocketListener(room);
+		  	this.removeSocketListener(room,serverName);
 		  }
 		});
-		/*this.ioNamespace.adapter.on("join-room", (room, id) => {
+		/*this.ioNamespaces[serverName].adapter.on("join-room", (room, id) => {
 		  console.log(`socket ${id} has joined room ${room}`);
 		});
-		this.ioNamespace.adapter.on("leave-room", (room, id) => {
+		this.ioNamespaces[serverName].adapter.on("leave-room", (room, id) => {
 		  console.log(`socket ${id} has left room ${room}`);
 		});*/
-		this.ioNamespace.on('connection',(socket)=>{
+		this.ioNamespaces[serverName].namespace.on('connection',(socket)=>{
 			this.addSocketConnection(socket);
 		});
 	}
@@ -1045,35 +1047,36 @@ export class HandySia{
 		})
 
 	}
-	initSocketListener(room){
-		if(typeof this.socketRoomInterval == "undefined"){
+	initSocketListener(room,serverName){
+
+		if(typeof this.ioNamespaces[serverName].socketRoomInterval == "undefined"){
 			//spin up an interval to send out stats
-			this.socketRoomInterval = setInterval(()=>{
-				this.sendSocketUpdates();
-				this.checkForUpdates();
+			this.ioNamespaces[serverName].socketRoomInterval = setInterval(()=>{
+				this.sendSocketUpdates(serverName);
+				this.checkForUpdates(serverName);
 			},60000);
-			this.checkForUpdates(); //check right away
+			this.checkForUpdates(serverName); //check right away
 		}
 	}
-	checkForUpdates(){
+	checkForUpdates(serverName){
 		this.handyUtils.checkForUpdates().then(data=>{
 			//console.log('HandyHost versionData',data);
 			if(!data.isUpToDate){
-				this.ioNamespace.to('sia').emit('HandyHostUpdatesAvailable',data);
+				this.ioNamespaces[serverName].namespace.to('sia').emit('HandyHostUpdatesAvailable',data);
 			}
 			else{
-				this.ioNamespace.to('sia').emit('HandyHostIsUpToDate',data);
+				this.ioNamespaces[serverName].namespace.to('sia').emit('HandyHostIsUpToDate',data);
 			}
 		}).catch(error=>{
 			console.log('error checking for handyhost updates',error);
 		})
 	}
-	removeSocketListener(room){
+	removeSocketListener(room,serverName){
 		//everybody left the room, kill the update interval
-		clearInterval(this.socketRoomInterval);
-		delete this.socketRoomInterval;
+		clearInterval(this.ioNamespaces[serverName].socketRoomInterval);
+		delete this.ioNamespaces[serverName].socketRoomInterval;
 	}
-	sendSocketUpdates(){
+	sendSocketUpdates(serverName){
 		let walletData,chainData;
 		this.wallet.getWalletInfo().then(data=>{
 			walletData = data;
@@ -1096,7 +1099,7 @@ export class HandySia{
 									updateAvailable.available = false;
 								}
 							}
-							this.ioNamespace.to('sia').emit('update',{
+							this.ioNamespaces[serverName].namespace.to('sia').emit('update',{
 								chain:chainData,
 								wallet:walletData,
 								daemon: versionD,

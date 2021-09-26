@@ -75,7 +75,7 @@ export class K8sUtils{
 		})
 		
 	}
-	createKubernetesInventory(configPath,socketIONamespace){
+	createKubernetesInventory(configPath,socketIONamespaces){
 		return new Promise((resolve,reject)=>{
 
 			const configJSON = JSON.parse(fs.readFileSync(configPath,'utf8'));
@@ -170,12 +170,19 @@ export class K8sUtils{
 			console.log('built config',config);
 			fs.writeFileSync(process.env.HOME+'/.HandyHost/aktData/inventory.yaml',config,'utf8');
 			//TODO write to file, build & launch k8s
-			this.teardownOldCluster(socketIONamespace).then(()=>{
-				socketIONamespace.to('akt').emit('k8sBuildLogStatus',{part:'teardown',status:'finished'})
-				this.initNewCluster(socketIONamespace).then(()=>{
+			this.teardownOldCluster(socketIONamespaces).then(()=>{
+				Object.keys(socketIONamespaces).map(serverName=>{
+					socketIONamespaces[serverName].namespace.to('akt').emit('k8sBuildLogStatus',{part:'teardown',status:'finished'});
+				})
+				//socketIONamespace.to('akt').emit('k8sBuildLogStatus',{part:'teardown',status:'finished'})
+				
+				this.initNewCluster(socketIONamespaces).then(()=>{
 					this.cleanupKnownHosts(allIPs).then(()=>{
-						this.postInitNewCluster(socketIONamespace,masterNodeName,masterUser,masterIP,masterMDNS,ingressNode).then(()=>{
-							socketIONamespace.to('akt').emit('k8sBuildLogStatus',{part:'init',status:'finished'})
+						this.postInitNewCluster(socketIONamespaces,masterNodeName,masterUser,masterIP,masterMDNS,ingressNode).then(()=>{
+							Object.keys(socketIONamespaces).map(serverName=>{
+								socketIONamespaces[serverName].namespace.to('akt').emit('k8sBuildLogStatus',{part:'init',status:'finished'})
+							})
+							//socketIONamespace.to('akt').emit('k8sBuildLogStatus',{part:'init',status:'finished'})
 							resolve({success:true})
 						});
 					});
@@ -212,20 +219,26 @@ export class K8sUtils{
 			
 		})
 	}
-	postInitNewCluster(socketIONamespace,masterNodeName,masterUser,masterIP,masterMDNS,ingressNodeName){
+	postInitNewCluster(socketIONamespaces,masterNodeName,masterUser,masterIP,masterMDNS,ingressNodeName){
 		///./postInitK8sCluster.sh ansible akashnode1.local akashnode1 192.168.0.17
 		return new Promise((resolve,reject)=>{
 			const command = './aktAPI/postInitK8sCluster.sh'
 			const args = [masterUser,masterMDNS,ingressNodeName,masterIP];
 			const postProcess = spawn(command,args,{env:process.env,cwd:process.env.PWD});
 			postProcess.stdout.on('data',d=>{
-				socketIONamespace.to('akt').emit('k8sBuildLogs','POST INSTALL: '+d.toString());
+				Object.keys(socketIONamespaces).map(serverName=>{
+					socketIONamespaces[serverName].namespace.to('akt').emit('k8sBuildLogs','POST INSTALL: '+d.toString());
+				})
+				//socketIONamespace.to('akt').emit('k8sBuildLogs','POST INSTALL: '+d.toString());
 			})
 			postProcess.stderr.on('data',d=>{
-				socketIONamespace.to('akt').emit('k8sBuildLogs','POST INSTALL: '+d.toString());
+				Object.keys(socketIONamespaces).map(serverName=>{
+					socketIONamespaces[serverName].namespace.to('akt').emit('k8sBuildLogs','POST INSTALL: '+d.toString());
+				})
+				//socketIONamespace.to('akt').emit('k8sBuildLogs','POST INSTALL: '+d.toString());
 			})
 			postProcess.on('close',()=>{
-				this.installMetricsServer(socketIONamespace).then(()=>{
+				this.installMetricsServer(socketIONamespaces).then(()=>{
 					resolve();
 				})
 				
@@ -251,7 +264,7 @@ export class K8sUtils{
 			
 		});
 	}
-	installMetricsServer(socketIONamespace){
+	installMetricsServer(socketIONamespaces){
 		return new Promise((installResolve,installReject)=>{
 			new Promise((resolve,reject)=>{
 				const url = 'https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml';
@@ -281,14 +294,23 @@ export class K8sUtils{
 					}
 					output.push(yaml.dump(d));
 				});
-				socketIONamespace.to('akt').emit('k8sBuildLogs','Setting up Metrics Server');
+				Object.keys(socketIONamespaces).map(serverName=>{
+					socketIONamespaces[serverName].namespace.to('akt').emit('k8sBuildLogs','Setting up Metrics Server');
+				})
+				//socketIONamespace.to('akt').emit('k8sBuildLogs','Setting up Metrics Server');
 				fs.writeFileSync(process.env.HOME+'/.HandyHost/aktData/akash_cluster_resources/metrics-server-handyhost.yaml',output.join('---\n'),'utf8');
 				const applyKubectl = spawn('./installMetricsServer.sh',[],{env:process.env,cwd:process.env.PWD+'/aktAPI'});
 				applyKubectl.stdout.on('data',d=>{
-					socketIONamespace.to('akt').emit('k8sBuildLogs','POST INSTALL: '+d.toString());
+					Object.keys(socketIONamespaces).map(serverName=>{
+						socketIONamespaces[serverName].namespace.to('akt').emit('k8sBuildLogs','POST INSTALL: '+d.toString());
+					})
+					//socketIONamespace.to('akt').emit('k8sBuildLogs','POST INSTALL: '+d.toString());
 				})
 				applyKubectl.stderr.on('data',d=>{
-					socketIONamespace.to('akt').emit('k8sBuildLogs','POST INSTALL: '+d.toString());
+					Object.keys(socketIONamespaces).map(serverName=>{
+						socketIONamespaces[serverName].namespace.to('akt').emit('k8sBuildLogs','POST INSTALL: '+d.toString());
+					})
+					//socketIONamespace.to('akt').emit('k8sBuildLogs','POST INSTALL: '+d.toString());
 				})
 				applyKubectl.on('close',()=>{
 					installResolve();
@@ -299,16 +321,22 @@ export class K8sUtils{
 			})
 		});
 	}
-	teardownOldCluster(socketIONamespace){
+	teardownOldCluster(socketIONamespaces){
 		return new Promise((resolve,reject)=>{
 			const args = []
 			const teardown = spawn('./teardownK8sCluster.sh',args,{env:process.env,cwd:process.env.PWD+'/aktAPI'});
 			teardown.stdout.on('data',d=>{
-				socketIONamespace.to('akt').emit('k8sBuildLogs',d.toString());
+				Object.keys(socketIONamespaces).map(serverName=>{
+					socketIONamespaces[serverName].namespace.to('akt').emit('k8sBuildLogs',d.toString());
+				})
+				//socketIONamespace.to('akt').emit('k8sBuildLogs',d.toString());
 			});
 			teardown.stderr.on('data',d=>{
 				console.log('teardown err',d.toString());
-				socketIONamespace.to('akt').emit('k8sBuildLogs',d.toString());
+				Object.keys(socketIONamespaces).map(serverName=>{
+					socketIONamespaces[serverName].namespace.to('akt').emit('k8sBuildLogs',d.toString());
+				})
+				//socketIONamespace.to('akt').emit('k8sBuildLogs',d.toString());
 			});
 			teardown.on('close',()=>{
 				console.log('teardown close');
@@ -316,16 +344,22 @@ export class K8sUtils{
 			})
 		});
 	}
-	initNewCluster(socketIONamespace){
+	initNewCluster(socketIONamespaces){
 		return new Promise((resolve,reject)=>{
 			const command = './aktAPI/initK8sCluster.sh';
 			const args = [];
 			const init = spawn(command,args,{env:process.env,cwd:process.env.PWD});
 			init.stdout.on('data',d=>{
-				socketIONamespace.to('akt').emit('k8sBuildLogs',d.toString());
+				Object.keys(socketIONamespaces).map(serverName=>{
+					socketIONamespaces[serverName].namespace.to('akt').emit('k8sBuildLogs',d.toString());
+				})
+				//socketIONamespace.to('akt').emit('k8sBuildLogs',d.toString());
 			});
 			init.stderr.on('data',d=>{
-				socketIONamespace.to('akt').emit('k8sBuildLogs',d.toString());
+				Object.keys(socketIONamespaces).map(serverName=>{
+					socketIONamespaces[serverName].namespace.to('akt').emit('k8sBuildLogs',d.toString());
+				})
+				//socketIONamespace.to('akt').emit('k8sBuildLogs',d.toString());
 			});
 			init.on('close',()=>{
 				//TODO: copy kubernetes access keys locally, 
@@ -910,7 +944,7 @@ export class K8sUtils{
 			}
 		})
 	}
-	addUbuntuAutoinstalledNode(ipAddress,moniker,socketIONamespace){
+	addUbuntuAutoinstalledNode(ipAddress,moniker,socketIONamespaces){
 		//ok thumbdrive flashed ubuntu onto a new node.
 		//that node contacted us to acquire a hostname
 		//so we need to add it to the configs now
@@ -932,7 +966,10 @@ export class K8sUtils{
 		console.log('added node to config',ipAddress,moniker);
 		setTimeout(()=>{
 			//give the USB time to unmount and the node time to restart..
-			socketIONamespace.to('akt').emit('newNodeRegistered',clusterConfig.preConfiguredNVMe[moniker],clusterConfig);
+			Object.keys(socketIONamespaces).map(serverName=>{
+				socketIONamespaces[serverName].namespace.to('akt').emit('newNodeRegistered',clusterConfig.preConfiguredNVMe[moniker],clusterConfig);
+			})
+			//socketIONamespace.to('akt').emit('newNodeRegistered',clusterConfig.preConfiguredNVMe[moniker],clusterConfig);
 		},30000);
 		
 		//TODO socket io message about this new node

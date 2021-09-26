@@ -13,12 +13,12 @@ export class APIHelper{
 		this.dvpn = new HandyDVPN();
 		this.akt = new HandyAKT();
 	}
-	initSocketConnection(httpServer){
-		this.io = new Server(httpServer);
+	initSocketConnection(httpServer,serverName){
+		const io = new Server(httpServer);
 
-		this.initSiaSockets()
-		this.initDVPNSockets();	
-		this.initAKTSockets();
+		this.initSiaSockets(io,serverName)
+		this.initDVPNSockets(io,serverName);	
+		this.initAKTSockets(io,serverName);
 	}
 
 	get(requestPath,requestBody){
@@ -73,14 +73,14 @@ export class APIHelper{
 		}
 		
 	}
-	initSiaSockets(){
-		this.sia.addSocketNamespace(this.io.of('/sia'));
+	initSiaSockets(io,serverName){
+		this.sia.addSocketNamespace(io.of('/sia'),serverName);
 	}
-	initDVPNSockets(){
-		this.dvpn.addSocketNamespace(this.io.of('/dvpn'));
+	initDVPNSockets(io,serverName){
+		this.dvpn.addSocketNamespace(io.of('/dvpn'),serverName);
 	}
-	initAKTSockets(){
-		this.akt.addSocketNamespace(this.io.of('/akt'));
+	initAKTSockets(io,serverName){
+		this.akt.addSocketNamespace(io.of('/akt'),serverName);
 	}
 	initPorts(){
 		//check if default ports redlist exists

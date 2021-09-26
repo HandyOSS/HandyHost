@@ -503,7 +503,7 @@ export class DVPNSetup{
 			})
 		})
 	}
-	autostartDVPN(socketIONamespace){
+	autostartDVPN(socketIONamespaces){
 		const autostartFile = process.env.HOME+'/.HandyHost/sentinelData/autostart';
 		const _this = this;
 		
@@ -512,16 +512,16 @@ export class DVPNSetup{
 				console.log('is dvpn running ??',running);
 				if(!running){
 					if(typeof process.env.DVPNAUTO != "undefined"){
-						getEncPayload(socketIONamespace,running);
+						getEncPayload(socketIONamespaces,running);
 					}
 					else{
 						//could be macos
 						if(process.platform == 'darwin'){
-							getMacPayload(socketIONamespace,running)
+							getMacPayload(socketIONamespaces,running)
 						}
 						else{
 							if(typeof process.env.DVPNAUTO != "undefined"){
-								getEncPayload(socketIONamespace,true);
+								getEncPayload(socketIONamespaces,true);
 							}
 							console.log('no dvpn autostart credentials found')
 						}
@@ -531,23 +531,23 @@ export class DVPNSetup{
 				else{
 					console.log('autostart: dvpn is already running');
 					if(typeof process.env.DVPNAUTO != "undefined"){
-						getEncPayload(socketIONamespace,running);
+						getEncPayload(socketIONamespaces,running);
 					}
 				}
 			}).catch(e=>{
 				/*const params = JSON.parse(fs.readFileSync(autostartFile,'utf8'));
 				this.launchDVPN(params.pw,socketIONamespace);*/
 				if(typeof process.env.DVPNAUTO != "undefined"){
-					getEncPayload(socketIONamespace,false);
+					getEncPayload(socketIONamespaces,false);
 				}
 				else{
 					//could be macos
 					if(process.platform == 'darwin'){
-						getMacPayload(socketIONamespace)
+						getMacPayload(socketIONamespaces)
 					}
 					else{
 						if(typeof process.env.DVPNAUTO != "undefined"){
-							getEncPayload(socketIONamespace,true);
+							getEncPayload(socketIONamespaces,true);
 						}
 						console.log('no dvpn autostart credentials found')
 					}
@@ -559,7 +559,7 @@ export class DVPNSetup{
 			if(process.platform != 'darwin'){
 				if(typeof process.env.DVPNAUTO != "undefined"){
 					//clear out the credential that may be here
-					getEncPayload(socketIONamespace,true);
+					getEncPayload(socketIONamespaces,true);
 				}
 			}
 		}
@@ -604,7 +604,7 @@ export class DVPNSetup{
 			}
 		}
 	}
-	launchDVPN(pw,socketIONamespace){
+	launchDVPN(pw,socketIONamespaces){
 		return new Promise((resolve,reject)=>{
 			this.getPorts().then(ports=>{
 				console.log('should start dvpn',ports)
@@ -637,7 +637,10 @@ export class DVPNSetup{
 				const s = spawn('docker',args,{shell:true,env:process.env,cwd:process.env.PWD,detached:true});
 				s.stdin.write(`${pw}\n`);
 				s.stdout.on('data',d=>{
-					socketIONamespace.to('dvpn').emit('logs',d.toString());
+					Object.keys(socketIONamespaces).map(serverName=>{
+						socketIONamespaces[serverName].namespace.to('dvpn').emit('logs',d.toString());
+					})
+					//socketIONamespace.to('dvpn').emit('logs',d.toString());
 					output += d.toString();
 					lineCount++;
 					if(lineCount >= 100){
@@ -657,15 +660,22 @@ export class DVPNSetup{
 						output = output.split('\n').slice(-20).join('\n');
 					}
 					fs.writeFileSync(`${process.env.HOME}/.HandyHost/sentinelData/hostLogs`,output,'utf8')
-				    socketIONamespace.to('dvpn').emit('logs',d.toString());
+				    Object.keys(socketIONamespaces).map(serverName=>{
+						socketIONamespaces[serverName].namespace.to('dvpn').emit('logs',d.toString());
+					})
+				    //socketIONamespace.to('dvpn').emit('logs',d.toString());
 				    //reject({'error':d.toString()})
 				});
 				s.stdin.end();
 				s.on('close',d=>{
 					hasFailed = true;
 					//console.log('closed',output);
-					socketIONamespace.to('dvpn').emit('logs',"\nDVPN NODE STOPPED\n");
-				    socketIONamespace.to('dvpn').emit('status','disconnected');
+					Object.keys(socketIONamespaces).map(serverName=>{
+						socketIONamespaces[serverName].namespace.to('dvpn').emit('logs',"\nDVPN NODE STOPPED\n");
+						socketIONamespaces[serverName].namespace.to('dvpn').emit('status','disconnected');
+					})
+					//socketIONamespace.to('dvpn').emit('logs',"\nDVPN NODE STOPPED\n");
+				    //socketIONamespace.to('dvpn').emit('status','disconnected');
 				    if(!hasReturned){
 				    	resolve({closed:output});
 					}
@@ -674,7 +684,10 @@ export class DVPNSetup{
 					//will pipe output to socket.io before this may fire
 					if(!hasFailed){
 						hasReturned = true;
-						socketIONamespace.to('dvpn').emit('launched');
+						Object.keys(socketIONamespaces).map(serverName=>{
+							socketIONamespaces[serverName].namespace.to('dvpn').emit('launched');
+						})
+						//socketIONamespace.to('dvpn').emit('launched');
 						resolve({status:'launched'});
 					}
 				},1000)

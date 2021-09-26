@@ -597,7 +597,7 @@ export class AKTUtils{
 			
 		})
 	}
-	saveClusterConfig(configJSON,configPath,socketIONamespace){
+	saveClusterConfig(configJSON,configPath,socketIONamespaces){
 		return new Promise((resolve,reject)=>{
 			if(typeof configJSON.provider != "undefined"){
 				if(Object.keys(configJSON.provider).length > 0){
@@ -611,7 +611,7 @@ export class AKTUtils{
 					yaml += `${tab}  value: ${configJSON.provider.clusterName}\n`;
 					fs.writeFileSync(this.providerYAMLPath,yaml,'utf8');
 					//we need to verify that the registration needs or does not need to be updated
-					if(typeof socketIONamespace != "undefined"){
+					if(typeof socketIONamespaces != "undefined"){
 						//this is the save event that needs to ping the client if they need to update..
 						const args = ['query', 'provider', 'get', configJSON.provider.providerWalletAddress, '--output', 'json'];
 						let regOut = '';
@@ -630,7 +630,10 @@ export class AKTUtils{
 							const providerHasGeneratedCert = fs.existsSync(process.env.HOME+'/.akash/'+configJSON.provider.providerWalletAddress+'.pem');
 				
 							if(regErr.indexOf('invalid provider') >= 0){
-								socketIONamespace.to('akt').emit('providerRegistrationEvent',{dasValidRegistration:false, exists:false, hasValidCertificate: providerHasGeneratedCert,wallet:configJSON.provider.providerWalletAddress});
+								Object.keys(socketIONamespaces).map(serverName=>{
+									socketIONamespaces[serverName].namespace.to('akt').emit('providerRegistrationEvent',{dasValidRegistration:false, exists:false, hasValidCertificate: providerHasGeneratedCert,wallet:configJSON.provider.providerWalletAddress});
+								})
+								//socketIONamespace.to('akt').emit('providerRegistrationEvent',{dasValidRegistration:false, exists:false, hasValidCertificate: providerHasGeneratedCert,wallet:configJSON.provider.providerWalletAddress});
 							}
 							else{
 								let json = {};
@@ -672,13 +675,19 @@ export class AKTUtils{
 										if(!fs.existsSync(process.env.HOME+'/.HandyHost/aktData/providerReceipt.'+configJSON.provider.providerWalletAddress+'.json')){
 											fs.writeFileSync(process.env.HOME+'/.HandyHost/aktData/providerReceipt.'+configJSON.provider.providerWalletAddress+'.json',JSON.stringify(config),'utf8');
 										}
-										socketIONamespace.to('akt').emit('providerRegistrationEvent',{hasValidRegistration:true, exists:true, hasValidCertificate: providerHasGeneratedCert,wallet:configJSON.provider.providerWalletAddress});
+										Object.keys(socketIONamespaces).map(serverName=>{
+											socketIONamespaces[serverName].namespace.to('akt').emit('providerRegistrationEvent',{hasValidRegistration:true, exists:true, hasValidCertificate: providerHasGeneratedCert,wallet:configJSON.provider.providerWalletAddress});
+										})
+										//socketIONamespace.to('akt').emit('providerRegistrationEvent',{hasValidRegistration:true, exists:true, hasValidCertificate: providerHasGeneratedCert,wallet:configJSON.provider.providerWalletAddress});
 									}
 									else{
 										if(fs.existsSync(process.env.HOME+'/.HandyHost/aktData/providerReceipt.'+configJSON.provider.providerWalletAddress+'.json')){
 											fs.unlinkSync(process.env.HOME+'/.HandyHost/aktData/providerReceipt.'+configJSON.provider.providerWalletAddress+'.json');
 										}
-										socketIONamespace.to('akt').emit('providerRegistrationEvent',{hasValidRegistration:false, exists:true, hasValidCertificate: providerHasGeneratedCert,wallet:configJSON.provider.providerWalletAddress});
+										Object.keys(socketIONamespaces).map(serverName=>{
+											socketIONamespaces[serverName].namespace.to('akt').emit('providerRegistrationEvent',{hasValidRegistration:false, exists:true, hasValidCertificate: providerHasGeneratedCert,wallet:configJSON.provider.providerWalletAddress});
+										})
+										//socketIONamespace.to('akt').emit('providerRegistrationEvent',{hasValidRegistration:false, exists:true, hasValidCertificate: providerHasGeneratedCert,wallet:configJSON.provider.providerWalletAddress});
 									}
 								}
 							}
@@ -709,15 +718,21 @@ export class AKTUtils{
 			})
 		});
 	}
-	updateAkashToLatest(socketIONamespace){
+	updateAkashToLatest(socketIONamespaces){
 		return new Promise((resolve,reject)=>{
 			const args = ['./install.sh'];
 			const updater = spawn('bash',args,{shell:true,env:process.env,cwd:process.env.PWD+'/aktAPI'});
 			updater.stdout.on('data',d=>{
-				socketIONamespace.to('akt').emit('akashInstallLogs',d.toString());
+				Object.keys(socketIONamespaces).map(serverName=>{
+					socketIONamespaces[serverName].namespace.to('akt').emit('akashInstallLogs',d.toString());
+				})
+				//socketIONamespace.to('akt').emit('akashInstallLogs',d.toString());
 			})
 			updater.stderr.on('data',d=>{
-				socketIONamespace.to('akt').emit('akashInstallLogs',d.toString());
+				Object.keys(socketIONamespaces).map(serverName=>{
+					socketIONamespaces[serverName].namespace.to('akt').emit('akashInstallLogs',d.toString());
+				})
+				//socketIONamespace.to('akt').emit('akashInstallLogs',d.toString());
 			})
 			updater.on('close',()=>{
 				resolve({updated:true});

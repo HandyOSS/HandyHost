@@ -10,6 +10,7 @@ import {spawn} from 'child_process';
 
 export class HandyDVPN{
 	constructor(){
+		this.ioNamespaces = {};
 		this.redlistPortsPath = process.env.HOME+'/.HandyHost/ports.json';
 		this.daemon = new Daemon();
 		this.dvpnSetup = new DVPNSetup();
@@ -42,103 +43,101 @@ export class HandyDVPN{
 		},100);
 		setTimeout(()=>{
 			//give some time to spin up before autostarting
-			this.dvpnSetup.autostartDVPN(this.ioNamespace); //make sure io exists before we autostart
+			this.dvpnSetup.autostartDVPN(this.ioNamespaces); //make sure io exists before we autostart
 		},5000);
 	}
-	addSocketNamespace(ioNamespace){
-		//this.io.of('/dvpn')
-		//console.log('init dvpn sockets');
-		this.ioNamespace = ioNamespace;
-		this.ioNamespace.adapter.on("create-room", (room) => {
+	addSocketNamespace(ioNamespace,serverName){
+		//console.log('init sia sockets');
+		this.ioNamespaces[serverName] = {namespace:ioNamespace};
+		this.ioNamespaces[serverName].namespace.adapter.on("create-room", (room) => {
 		  if(room.indexOf('dvpn') == 0){
 		  	//start a Socket listener for this room
-		  	this.initSocketListener(room);
+		  	this.initSocketListener(room,serverName);
 		  }
 		});
 
-		this.ioNamespace.adapter.on("delete-room", (room) => {
+		this.ioNamespaces[serverName].namespace.adapter.on("delete-room", (room) => {
 		  //console.log(`room deleted ${room}`);
 		  if(room.indexOf('dvpn') == 0){
 		  	//stop a Socket listener for this room
-		  	this.removeSocketListener(room);
+		  	this.removeSocketListener(room,serverName);
 		  }
 		});
-		/*this.ioNamespace.adapter.on("join-room", (room, id) => {
+		/*this.ioNamespaces[serverName].adapter.on("join-room", (room, id) => {
 		  console.log(`socket ${id} has joined room ${room}`);
 		});
-		this.ioNamespace.adapter.on("leave-room", (room, id) => {
+		this.ioNamespaces[serverName].adapter.on("leave-room", (room, id) => {
 		  console.log(`socket ${id} has left room ${room}`);
 		});*/
-		//console.log('setup connection events');
-		this.ioNamespace.on('connection',(socket)=>{
-			this.addSocketConnection(socket);
+		this.ioNamespaces[serverName].namespace.on('connection',(socket)=>{
+			this.addSocketConnection(socket,serverName);
 		});
 	}
-	addSocketConnection(socket){
+	addSocketConnection(socket,serverName){
 		socket.emit('register');
 		socket.on('subscribe',()=>{
 			socket.join('dvpn');
-			this.checkForUpdates();
+			this.checkForUpdates(serverName);
 		})
 
 	}
-	checkForUpdates(){
+	checkForUpdates(serverName){
 		this.updateHelper.checkForUpdates().then(data=>{
 			if(Object.keys(data).length > 0){
 				if(data.current != data.all[data.all.length-1]){
-					this.ioNamespace.to('dvpn').emit('updatesAvailable',data);
+					this.ioNamespaces[serverName].namespace.to('dvpn').emit('updatesAvailable',data);
 				}
 				else{
-					this.ioNamespace.to('dvpn').emit('nodeIsUpToDate');
+					this.ioNamespaces[serverName].namespace.to('dvpn').emit('nodeIsUpToDate');
 				}
 			}
 		})
 		this.handyUtils.checkForUpdates().then(data=>{
 			console.log('HandyHost versionData',data);
 			if(!data.isUpToDate){
-				this.ioNamespace.to('dvpn').emit('HandyHostUpdatesAvailable',data);
+				this.ioNamespaces[serverName].namespace.to('dvpn').emit('HandyHostUpdatesAvailable',data);
 			}
 			else{
-				this.ioNamespace.to('dvpn').emit('HandyHostIsUpToDate',data);
+				this.ioNamespaces[serverName].namespace.to('dvpn').emit('HandyHostIsUpToDate',data);
 			}
 		}).catch(error=>{
 			console.log('error checking for handyhost updates',error);
 		})
 		//this.ioNamespace.to('dvpn').emit('updatesAvailable',data);
 	}
-	retrieveAnalytics(){
+	retrieveAnalytics(serverName){
 		this.dvpnStats.getActiveSessionAnalytics().then(data=>{
-			this.ioNamespace.to('dvpn').emit('sessionAnalytics',data.json,data.timeseries);
+			this.ioNamespaces[serverName].namespace.to('dvpn').emit('sessionAnalytics',data.json,data.timeseries);
 		}).catch(error=>{
-			this.ioNamespace.to('dvpn').emit('sessionAnalytics',{},{});
+			this.ioNamespaces[serverName].namespace.to('dvpn').emit('sessionAnalytics',{},{});
 		})
 	}
-	initSocketListener(room){
+	initSocketListener(room,serverName){
 		//TODO: add when we get more stats on nodes..
-		if(typeof this.updateCheckRoomInterval == "undefined"){
+		if(typeof this.ioNamespaces[serverName].updateCheckRoomInterval == "undefined"){
 			//spin up an interval to send out stats
-			this.updateCheckRoomInterval = setInterval(()=>{
-				this.checkForUpdates();
+			this.ioNamespaces[serverName].updateCheckRoomInterval = setInterval(()=>{
+				this.checkForUpdates(serverName);
 			},60 * 1000 * 60); //hourly check for updates
 		}
-		if(typeof this.sessionAnalyticsInterval == "undefined"){
-			this.sessionAnalyticsInterval = setInterval(()=>{
-				this.retrieveAnalytics();
+		if(typeof this.ioNamespaces[serverName].sessionAnalyticsInterval == "undefined"){
+			this.ioNamespaces[serverName].sessionAnalyticsInterval = setInterval(()=>{
+				this.retrieveAnalytics(serverName);
 			},30*1000); //every 30s
 		}
 
 	}
-	removeSocketListener(room){
+	removeSocketListener(room,serverName){
 		//everybody left the room, kill the update interval
 		/*clearInterval(this.socketRoomInterval);
 		delete this.socketRoomInterval;*/
-		if(typeof this.updateCheckRoomInterval != "undefined"){
-			clearInterval(this.updateCheckRoomInterval);
-			delete this.updateCheckRoomInterval;
+		if(typeof this.ioNamespaces[serverName].updateCheckRoomInterval != "undefined"){
+			clearInterval(this.ioNamespaces[serverName].updateCheckRoomInterval);
+			delete this.ioNamespaces[serverName].updateCheckRoomInterval;
 		}
-		if(typeof this.sessionAnalyticsInterval != "undefined"){
-			clearInterval(this.sessionAnalyticsInterval);
-			delete this.sessionAnalyticsInterval;
+		if(typeof this.ioNamespaces[serverName].sessionAnalyticsInterval != "undefined"){
+			clearInterval(this.ioNamespaces[serverName].sessionAnalyticsInterval);
+			delete this.ioNamespaces[serverName].sessionAnalyticsInterval;
 		}
 	}
 	sendSocketUpdates(){
@@ -211,7 +210,7 @@ export class HandyDVPN{
 			break;
 			case 'updateDVPN':
 				this.dvpnSetup.stopDVPN().then(()=>{
-					this.updateHelper.updateDVPN(this.ioNamespace).then(()=>{
+					this.updateHelper.updateDVPN(this.ioNamespaces).then(()=>{
 						this.checkForUpdates();
 						resolve({finished:true});
 					}).catch(error=>{
@@ -270,7 +269,7 @@ export class HandyDVPN{
 		console.log('config autostart start');
 		this.dvpnSetup.configureAutostart(parsed);
 		console.log('config autostart finished');
-		return this.dvpnSetup.launchDVPN(parsed.pw,this.ioNamespace);
+		return this.dvpnSetup.launchDVPN(parsed.pw,this.ioNamespaces);
 	}
 	getWallets(requestBody){
 		const {parsed,err} = this.parseRequestBody(requestBody);

@@ -49,7 +49,7 @@ const httpServer = http.createServer(function(request, response) {
 }).listen(parseInt(port, 10));
 
 
-api.initSocketConnection(httpServer);
+api.initSocketConnection(httpServer,'http');
 function startHttpsServer(){
   const options = {
     key: fs.readFileSync(process.env.HOME+'/.HandyHost/handyhost_server.key'),
@@ -58,7 +58,7 @@ function startHttpsServer(){
   const httpsServer = https.createServer(options,function(request, response) { 
     handleServerRequest(request,response);
   }).listen(parseInt(httpsPort, 10));
-  api.initSocketConnection(httpsServer);
+  api.initSocketConnection(httpsServer,'https');
 }
 
 function handleServerRequest(request,response){

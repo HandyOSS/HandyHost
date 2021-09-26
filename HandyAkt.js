@@ -12,7 +12,7 @@ import {CommonUtils} from './CommonUtils.js';
 
 export class HandyAKT{
 	constructor(){
-		
+		this.ioNamespaces = {};
 		this.clusterConfigFilePath = process.env.HOME+'/.HandyHost/aktData/clusterConfig.json';
 		try{
 			fs.mkdirSync(`${process.env.HOME}/.HandyHost/aktData`,{recursive:true})
@@ -41,32 +41,30 @@ export class HandyAKT{
 			fs.writeFileSync(this.clusterConfigFilePath,'{}','utf8');
 		}
 	}
-	addSocketNamespace(ioNamespace){
-		//this.io.of('/dvpn')
-		//console.log('init akt sockets');
-		this.ioNamespace = ioNamespace;
-		this.ioNamespace.adapter.on("create-room", (room) => {
+	addSocketNamespace(ioNamespace,serverName){
+		//console.log('init sia sockets');
+		this.ioNamespaces[serverName] = {namespace:ioNamespace};
+		this.ioNamespaces[serverName].namespace.adapter.on("create-room", (room) => {
 		  if(room.indexOf('akt') == 0){
 		  	//start a Socket listener for this room
-		  	this.initSocketListener(room);
+		  	this.initSocketListener(room,serverName);
 		  }
 		});
 
-		this.ioNamespace.adapter.on("delete-room", (room) => {
+		this.ioNamespaces[serverName].namespace.adapter.on("delete-room", (room) => {
 		  //console.log(`room deleted ${room}`);
 		  if(room.indexOf('akt') == 0){
 		  	//stop a Socket listener for this room
-		  	this.removeSocketListener(room);
+		  	this.removeSocketListener(room,serverName);
 		  }
 		});
-		/*this.ioNamespace.adapter.on("join-room", (room, id) => {
+		/*this.ioNamespaces[serverName].adapter.on("join-room", (room, id) => {
 		  console.log(`socket ${id} has joined room ${room}`);
 		});
-		this.ioNamespace.adapter.on("leave-room", (room, id) => {
+		this.ioNamespaces[serverName].adapter.on("leave-room", (room, id) => {
 		  console.log(`socket ${id} has left room ${room}`);
 		});*/
-		//console.log('setup connection events');
-		this.ioNamespace.on('connection',(socket)=>{
+		this.ioNamespaces[serverName].namespace.on('connection',(socket)=>{
 			this.addSocketConnection(socket);
 		});
 	}
@@ -77,49 +75,49 @@ export class HandyAKT{
 		})
 
 	}
-	initSocketListener(room){
+	initSocketListener(room,serverName){
 		//TODO: add when we get more stats on nodes..
-		if(typeof this.socketRoomInterval == "undefined"){
+		if(typeof this.ioNamespaces[serverName].socketRoomInterval == "undefined"){
 			//spin up an interval to send out stats
-			this.socketRoomInterval = setInterval(()=>{
-				this.sendSocketUpdates();
+			this.ioNamespaces[serverName].socketRoomInterval = setInterval(()=>{
+				this.sendSocketUpdates(serverName);
 			},60000);
 		}
-		if(typeof this.marketQueryInterval == "undefined"){
-			this.marketQueryInterval = setInterval(()=>{
+		if(typeof this.ioNamespaces[serverName].marketQueryInterval == "undefined"){
+			this.ioNamespaces[serverName].marketQueryInterval = setInterval(()=>{
 				this.getMarketAggregates().then(data=>{
-					this.ioNamespace.to('akt').emit('marketAggregatesUpdate',data);
+					this.ioNamespaces[serverName].namespace.to('akt').emit('marketAggregatesUpdate',data);
 				}).catch(error=>{
 					console.log('error fetching market aggregates',error);
 				});
-				this.checkForUpdates();
+				this.checkForUpdates(serverName);
 			},180000);
-			this.checkForUpdates(); //check right away
+			this.checkForUpdates(serverName); //check right away
 		}
 	}
-	checkForUpdates(){
+	checkForUpdates(serverName){
 		this.handyUtils.checkForUpdates().then(data=>{
 			//console.log('HandyHost versionData',data);
 			if(!data.isUpToDate){
-				this.ioNamespace.to('akt').emit('HandyHostUpdatesAvailable',data);
+				this.ioNamespaces[serverName].namespace.to('akt').emit('HandyHostUpdatesAvailable',data);
 			}
 			else{
-				this.ioNamespace.to('akt').emit('HandyHostIsUpToDate',data);
+				this.ioNamespaces[serverName].namespace.to('akt').emit('HandyHostIsUpToDate',data);
 			}
 		}).catch(error=>{
 			console.log('error checking for handyhost updates',error);
 		})
 	}
-	removeSocketListener(room){
+	removeSocketListener(room,serverName){
 		//everybody left the room, kill the update interval
-		clearInterval(this.socketRoomInterval);
-		delete this.socketRoomInterval;
-		clearInterval(this.marketQueryInterval);
-		delete this.marketQueryInterval;
+		clearInterval(this.ioNamespaces[serverName].socketRoomInterval);
+		delete this.ioNamespaces[serverName].socketRoomInterval;
+		clearInterval(this.ioNamespaces[serverName].marketQueryInterval);
+		delete this.ioNamespaces[serverName].marketQueryInterval;
 	}
-	sendSocketUpdates(){
+	sendSocketUpdates(serverName){
 		this.getClusterStats().then(data=>{
-			this.ioNamespace.to('akt').emit('update',data);
+			this.ioNamespaces[serverName].namespace.to('akt').emit('update',data);
 		}).catch(error=>{
 			console.log('error fetching realtime cluster stats',error);
 		});
@@ -355,7 +353,7 @@ export class HandyAKT{
 				
 			break;
 			case 'updateAkashToLatest':
-				this.utils.updateAkashToLatest(this.ioNamespace).then(data=>{
+				this.utils.updateAkashToLatest(this.ioNamespaces).then(data=>{
 					resolve(data);
 				}).catch(error=>{
 					reject(error);
@@ -396,7 +394,7 @@ export class HandyAKT{
 	getRandomHostname(ipAddress){
 		return new Promise((resolve,reject)=>{
 			const moniker = 'akash-'+generator({words: 3}).dashed;
-			this.k8sUtils.addUbuntuAutoinstalledNode(ipAddress,moniker,this.ioNamespace);
+			this.k8sUtils.addUbuntuAutoinstalledNode(ipAddress,moniker,this.ioNamespaces);
 			resolve(moniker);
 		})
 	}
@@ -672,7 +670,7 @@ export class HandyAKT{
 		}
 		return new Promise((resolve,reject)=>{
 			this.utils.saveClusterConfig(parsed,this.clusterConfigFilePath).then(()=>{
-				this.k8sUtils.createKubernetesInventory(this.clusterConfigFilePath,this.ioNamespace).then((data)=>{
+				this.k8sUtils.createKubernetesInventory(this.clusterConfigFilePath,this.ioNamespaces).then((data)=>{
 					resolve(data);
 				}).catch(error=>{
 					reject(error);
@@ -765,7 +763,7 @@ export class HandyAKT{
 				reject(err);
 			})
 		}
-		return this.utils.saveClusterConfig(parsed,this.clusterConfigFilePath,this.ioNamespace);
+		return this.utils.saveClusterConfig(parsed,this.clusterConfigFilePath,this.ioNamespaces);
 		
 	}
 	getWallets(requestBody){

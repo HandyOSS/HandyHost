@@ -32,7 +32,7 @@ export class UpdateHelper{
 			})
 		})
 	}
-	updateDVPN(socketIONamespace){
+	updateDVPN(socketIONamespaces){
 		return new Promise((resolve,reject)=>{
 			this.checkForUpdates().then(data=>{
 				const latest = data.all[data.all.length-1];
@@ -42,11 +42,17 @@ export class UpdateHelper{
 				let output = '';
 				let hadError = false;
 				s.stdout.on('data',d=>{
-					socketIONamespace.to('dvpn').emit('logs',d.toString());
+					Object.keys(socketIONamespaces).map(serverName=>{
+						socketIONamespaces[serverName].namespace.to('dvpn').emit('logs',d.toString());
+					})
+					//socketIONamespace.to('dvpn').emit('logs',d.toString());
 				})
 				s.stderr.on('data',d=>{
+					Object.keys(socketIONamespaces).map(serverName=>{
+						socketIONamespaces[serverName].namespace.to('dvpn').emit('logs',d.toString());
+					})
 					console.log('dvpn udpate stderr ',d.toString());
-				    socketIONamespace.to('dvpn').emit('logs',d.toString());
+				    //socketIONamespace.to('dvpn').emit('logs',d.toString());
 				})
 				s.on('close',d=>{
 					resolve()
