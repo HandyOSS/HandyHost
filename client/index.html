@@ -22,6 +22,10 @@
 		    if(/Linux aarch64/i.test(userAgent) && !(/Chrome/i.test(userAgent))){
 		    	return false
 		    }
+		    if(/Linux/i.test(userAgent)){
+		    	//seems hit or miss to have a decent GPU/browser webGL impl in linux. 
+		    	return false;
+		    }
 		    if(/X11/i.test(userAgent)){
 		    	return false
 		    }

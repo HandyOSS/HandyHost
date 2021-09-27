@@ -30,9 +30,8 @@ After installing prerequisites, the double click package installer can be found 
 
 To tail the installer progress logs, you can run ```tail -f /var/log/install.log``` in your terminal.
 
-Once the installer is finished you can run the app by double clicking the HandyHost.app in /Applications/Handyhost
-The app will keep a daemon running in the background that if you wish to kill manually, there is a command to kill it listed in the HandyHost.app screen.
-If you wish to start the app on startup, add it to your startup items.
+Once the installer is finished you can run the app control panel by double clicking the HandyHost.app in /Applications/Handyhost. You should notice a status bar icon for handyhost show up in the top right of your MacOS toolbar. 
+In addition, the HandyHost Daemon will automatically startup when you login to the machine.
 
 ### Build/Run from source (MacOS)
 Should you not want to run the package installer, you can manually do the install process. 
@@ -47,7 +46,7 @@ You can run this command to install Homebrew on your system:
 **Installation**:
 1. ```sudo ./installMAC_PKG_POSTINSTALL.sh local``` is the same installer that the package uses internally. It will install (if they dont already exist) homebrew, a ton of dependencies, go, Sia, DVPN, Akash, etc. 
 
-2. ```npm start``` to run the service.
+2. ```./runMAC_APP.sh startup``` to start the daemon. Logs are output to ```~/.HandyHost/handyhost.log```. You can kill the daemon with ```./runMAC_APP.sh stop``` or restart the daemon with ```./runMAC_APP.sh restart```
 
 ### Build/Run from source (Ubuntu)
 1. Install some apt repos for dependencies (```./debian_package_utils/preinst``` or ):

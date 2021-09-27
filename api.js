@@ -62,7 +62,6 @@ export class APIHelper{
 				})
 			break;
 			case 'updateHandyHost':
-				console.log('should update handyhost');
 				this.utils.updateHandyHost().then(data=>{
 					resolve(data);
 				}).catch(error=>{

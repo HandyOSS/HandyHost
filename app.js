@@ -129,7 +129,8 @@ utils.getIPForDisplay().then(data=>{
   if(process.platform == 'darwin'){
     fs.writeFileSync(process.env.HOME+'/.HandyHost/handyhost.pid',process.pid.toString(),'utf8');
     const startupLog = process.env.HOME+'/.HandyHost/startup.log';
-    const line0 = "NOTIFICATION: HandyHost Daemon is Running at: http://"+data.ip+":" + data.port + "/, and https://"+data.ip+":"+httpsPort+'/ (self-signed cert)';
+    fs.writeFileSync(startupLog,data.ip,'utf8');
+    /*const line0 = "NOTIFICATION: HandyHost Daemon is Running at: http://"+data.ip+":" + data.port + "/, and https://"+data.ip+":"+httpsPort+'/ (self-signed cert)';
     const line0a = line0.replace('NOTIFICATION: ','');
     const line1 = 'To stop the daemon, open a terminal and run: ';
     const line2 = 'kill '+fs.readFileSync(process.env.HOME+'/.HandyHost/handyhost.pid','utf8');
@@ -139,7 +140,7 @@ utils.getIPForDisplay().then(data=>{
     fs.writeFileSync(startupLog,line0+'\n','utf8'); //will fire a notification
     fs.appendFileSync(startupLog,line0a+'\n','utf8'); //will log to the UI log panel
     fs.appendFileSync(startupLog,line1+'\n','utf8');
-    fs.appendFileSync(startupLog,line2+'\n','utf8');
+    fs.appendFileSync(startupLog,line2+'\n','utf8');*/
   }
   
   console.log("HandyHost Daemon Running at: http://"+data.ip+":" + data.port + "/, and https://"+data.ip+":"+httpsPort+'/ (self-signed cert)');
@@ -155,7 +156,8 @@ process.on('uncaughtException', function(err) {
       utils.getIPForDisplay().then(data=>{
         if(process.platform == 'darwin'){
           const startupLog = process.env.HOME+'/.HandyHost/startup.log';
-          const line0 = "NOTIFICATION: HandyHost Daemon Already Running at: http://"+data.ip+":" + data.port + "/ and https://"+data.ip+":"+httpsPort+' (self-signed cert)';
+          fs.writeFileSync(startupLog,data.ip,'utf8');
+          /*const line0 = "NOTIFICATION: HandyHost Daemon Already Running at: http://"+data.ip+":" + data.port + "/ and https://"+data.ip+":"+httpsPort+' (self-signed cert)';
           const line0a = line0.replace('NOTIFICATION: ','');
           const line1 = 'To stop the daemon, open a terminal and run: ';
           const line2 = 'kill '+fs.readFileSync(process.env.HOME+'/.HandyHost/handyhost.pid','utf8')
@@ -166,7 +168,7 @@ process.on('uncaughtException', function(err) {
           console.log(line0);
           console.log(line0a);
           console.log(line1);
-          console.log(line2);
+          console.log(line2);*/
         }
         console.log("HandyHost Daemon Already Running at: http://"+data.ip+":" + data.port + "/ and https://"+data.ip+":"+httpsPort+' (self-signed cert)');
         process.exit(1);

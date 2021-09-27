@@ -103,8 +103,8 @@ export class DVPNDashboardAnalytics{
 
 		$info.append(`
 			<div class="bandwidth">
-				<span>Download Speed:</span> ${numeral(node.bandwidth.download).format('0.00b').toUpperCase()}
-				<span>Upload Speed:</span> ${numeral(node.bandwidth.upload).format('0.00b').toUpperCase()}
+				<span>Download Speed:</span> ${numeral(node.bandwidth.download*8).format('0.00b').toUpperCase()}
+				<span>Upload Speed:</span> ${numeral(node.bandwidth.upload*8).format('0.00b').toUpperCase()}
 			</div>`)
 		
 		$info.append(`<div class="price"><span>Price (GB):</span> ${price.toUpperCase()}</div>`);
