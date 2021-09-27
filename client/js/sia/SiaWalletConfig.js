@@ -13,11 +13,12 @@ export class SiaWalletConfig{
 		this.fetchChainAndWalletData().then(result=>{
 			const wallet = result.wallet;
 			const chain = result.chain;
+			this.isChainSynced = chain.synced;
 			if(wallet.height != chain.height || !chain.synced){
 				this.showErrorModal('You cannot create or import a new wallet during sync. <br />Chain Synced: '+chain.synced+'<br />Chain Height: '+chain.height+'<br />Wallet Height: '+wallet.height);
 			}
 			else{
-				this.showInitModal();
+				this.showInitModal(chain.synced);
 			}
 		})
 		$('#walletInitModal').show();
@@ -234,6 +235,10 @@ export class SiaWalletConfig{
 	
 	}
 	showInitModal(chainIsSynced){
+		const isSynced = chainIsSynced;
+		if(typeof isSynced == "undefined"){
+			isSynced = this.isChainSynced;
+		}
 		$('.walletUtil').addClass('showing');
 		$('.noConfirmBadge').hide();
 		$('.confirmBadge').hide();
@@ -241,7 +246,7 @@ export class SiaWalletConfig{
 		$('#walletInitModal').show();
 		$('.walletUtil #importWallet').removeClass('canSave');
 		$('.walletUtil #importWallet .foreground, .walletUtil #importWallet .background').html('Import Wallet');
-		if(!chainIsSynced){
+		if(!isSynced){
 			$('.importNote').remove();
 			$('.walletUtil #importWallet').after('<div class="importNote">Note: You cannot import a wallet during chain sync.</div>')
 			$('.walletUtil #importWallet').removeClass('save').addClass('cancel');
@@ -307,7 +312,7 @@ export class SiaWalletConfig{
 		});
 		$('.walletUtil #importWallet').off('click').on('click',()=>{
 			//show mnemonic textarea
-			if(!isWalletSynced){
+			if(!isSynced){
 				return;
 			}
 			const pwMatch = this.checkPWMatch();
