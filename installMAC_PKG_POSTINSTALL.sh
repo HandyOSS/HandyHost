@@ -109,6 +109,7 @@ sudo chown -R "$USERNAME:$USERGROUP" $pwd && \
 su - $USERNAME -c "[ -s \"$homebrew_prefix_default/opt/nvm/nvm.sh\" ] && \. \"$homebrew_prefix_default/opt/nvm/nvm.sh\" && cd $pwd && nvm install $NPMVERSION && nvm use && npm config set python $PYTHON && cd $pwd && npm install --build-from-source --python=$PYTHON" && \
 sudo chown -R "$USERNAME:$USERGROUP" ./node_modules && \
 sudo npm install -g bower && \
+sudo npm install -g forever && \
 BOWER=$(which bower) && \
 echo "Bower: $BOWER" && \
 su - $USERNAME -c "[ -s \"$homebrew_prefix_default/opt/nvm/nvm.sh\" ] && \. \"$homebrew_prefix_default/opt/nvm/nvm.sh\" && cd $pwd && nvm install $NPMVERSION && nvm use && cd $pwd/client && $BOWER install" && \
@@ -310,7 +311,14 @@ if [ ! $1 = "local" ] ; then
 	fi
 
 	platypus -P /Applications/HandyHost/HandyHost/MacOS_Resources/HandyHost.platypus HandyHost.app && \
-	echo "Done Compiling HandyHost.app"
+	cp "$pwd/MacOS_Resources/handyhost.startup.plist" "$USERHOME/Library/LaunchAgents/handyhost.startup.plist" && \
+	chown "$USERNAME:$USERGROUP" "$USERHOME/Library/LaunchAgents/handyhost.startup.plist" && \
+	su - $USERNAME -c "launchctl unload -w \"$USERHOME/Library/LaunchAgents/handyhost.startup.plist\""; \
+	sleep 1 && \
+	su - $USERNAME -c "launchctl load -w \"$USERHOME/Library/LaunchAgents/handyhost.startup.plist\"" && \
+	echo "Done Compiling HandyHost.app" && \
+	sleep 10 && \
+	su - $USERNAME -c "open /Applications/HandyHost/HandyHost.app"
 else
 	echo "Finished setting up local build"
 fi
