@@ -244,7 +244,8 @@ html.darkTheme #qrModal
 	filter:invert(1);
 }
 
-.darkTheme #siaMain .syncedStatus{
+.darkTheme #siaMain .syncedStatus, 
+.darkTheme #siaStatsSourceLink{
 	filter: invert(1);
 }
 .darkTheme input#autostart{

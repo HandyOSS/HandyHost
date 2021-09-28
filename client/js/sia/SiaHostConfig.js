@@ -247,10 +247,14 @@ export class SiaHostConfig {
 	showTooltip($element,text,label){
 		$('#tooltip').html('<div class="title">'+label+'</div>'+text);
 		let rect = $element[0].getBoundingClientRect();
-		const x = rect.left + rect.width + 5;
+		let x = rect.left + rect.width + 5;
 		let y = rect.top;
-		if(rect.top + $('#tooltip').height() > $(window).height()){
-			y = y - ( (rect.top + $('#tooltip').height()) - $(window).height() +50)
+
+		if(rect.top + $('#tooltip').height() > window.innerHeight){
+			y = y - ( (rect.top + $('#tooltip').height()) - window.innerHeight +50)
+		}
+		if((rect.left + rect.width + $('#tooltip').width()) > window.innerWidth){
+			x = rect.left - $('#tooltip').width() - 30;
 		}
 		$('#tooltip').css({
 			left:x,

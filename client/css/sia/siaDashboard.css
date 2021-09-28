@@ -260,3 +260,8 @@
 	right:  15px;
 	top:  10px;
 }
+#siaStatsSourceLink{
+	margin-bottom: 10px;
+	color:#23db75;
+	display:none;
+}

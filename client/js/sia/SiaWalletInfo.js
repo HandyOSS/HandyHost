@@ -330,11 +330,17 @@ export class SiaWalletInfo{
 				console.log('cf val',val);
 			}
 			if(direction == 'collateralReturned'){
+				//this isnt actually collateral returned. It is a storage proof submittal
+				dirMarker = '(submit storage proof) ';
+				dirColor = '#333'
+				val = hastingsToSiacoins(tx.outputs[0].value).toNumber();
+			}
+			/*if(direction == 'collateralReturned'){
 				hasUpDownClass = ' hasUpDownColor';
 				dirMarker = '(returned collateral) +';
 				dirColor = '#23db75'
 				val = hastingsToSiacoins(tx.outputs[0].value).toNumber();
-			}
+			}*/
 
 			if(val == 0){
 				dirMarker = '';

@@ -63,7 +63,9 @@ export class HostScoreRadarChart{
 					//everything is good
 					let id = hostID.id;
 					fetch('https://siastats.info:3510/hosts-api/host/'+id).then(d=>d.json()).then(result=>{
-						console.log('host result',result);
+						//console.log('host result',result);
+						$('#siaStatsSourceLink').attr('href','https://siastats.info/hosts?='+id)
+						$('#siaStatsSourceLink').show();
 						this.render(result);
 					})
 				}

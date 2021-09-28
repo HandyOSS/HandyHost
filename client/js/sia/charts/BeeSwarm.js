@@ -191,7 +191,10 @@ export class BeeSwarm{
 		$meta.append('<div>Storage Size: '+numeral(data.datasize).format('0.00b').toUpperCase()+'</div>')
 		$('#beeswarmTooltip').html($meta)
 		let left = data.x - ($('#beeswarmTooltip').width()/2) + (this.$el.offset().left - this.$el.offsetParent().offset().left)
-		let top = data.y + data.radius*2 + 20 + $('#beeswarmTooltip').height()/2 + 15;
+		//let top = data.y + data.radius*2 + 20 + $('#beeswarmTooltip').height()/2 + 15;
+		let beeDims = this.$el.find('svg')[0].getBoundingClientRect();
+		let parDims = $('.contractsChart')[0].getBoundingClientRect();
+		let top = data.y + data.radius*2 + 20 + ( beeDims.top - parDims.top); 
 		
 		$('#beeswarmTooltip').css({
 			left:left,
