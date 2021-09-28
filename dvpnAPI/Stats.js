@@ -50,7 +50,8 @@ export class DVPNStats{
 			let output = {
 				exists,
 				state:{},
-				active:false
+				active:false,
+				isAutostart:fs.existsSync(process.env.HOME+'/.HandyHost/sentinelData/autostart')
 			}
 			if(exists){
 				//see if its running..

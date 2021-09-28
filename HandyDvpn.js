@@ -79,6 +79,45 @@ export class HandyDVPN{
 			socket.join('dvpn');
 			this.checkForUpdates(serverName);
 		})
+		socket.on('getAppStatus',()=>{
+			let status = {};
+			this.updateHelper.checkForUpdates().then(data=>{
+				if(Object.keys(data).length > 0){
+					status.current = data.current;
+					status.latest = data.all[data.all.length-1];
+
+					if(data.current != data.all[data.all.length-1]){
+						status.isUpToDate = false;
+					}
+					else{
+						status.isUpToDate = true;
+					}
+				}
+				this.dvpnSetup.checkMachineStatus().then(isRunning=>{
+					status.active = isRunning;
+					socket.emit('versionStatus',status);
+				}).catch(err=>{
+					status.active = false;
+					socket.emit('versionStatus',status);
+				})
+				
+				
+			})
+			//separately check for handyhost updates
+			let handyhostStatus = {};
+			handyhostStatus.current = fs.readFileSync("./VERSION",'utf8').trim();
+			this.handyUtils.checkForUpdates().then(data=>{
+				console.log('hh version data??',data);
+				handyhostStatus.isUpToDate = data.isUpToDate
+				handyhostStatus.latest = data.latest;
+				handyhostStatus.current = data.local;
+				socket.emit('handyhostVersionStatus',handyhostStatus);
+			}).catch(err=>{
+				//couldnt ping github
+				socket.emit('handyhostVersionStatus',handyhostStatus);
+			})
+			
+		})
 
 	}
 	checkForUpdates(serverName){
@@ -266,9 +305,7 @@ export class HandyDVPN{
 				reject(err);
 			})
 		}
-		console.log('config autostart start');
 		this.dvpnSetup.configureAutostart(parsed);
-		console.log('config autostart finished');
 		return this.dvpnSetup.launchDVPN(parsed.pw,this.ioNamespaces);
 	}
 	getWallets(requestBody){

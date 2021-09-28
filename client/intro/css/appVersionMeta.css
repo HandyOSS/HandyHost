@@ -1,0 +1,43 @@
+#appVersionMeta{
+	position:absolute;
+	z-index:1;
+	top:0px;
+	right:0px;
+}
+#appVersionMeta ul{
+	list-style-type:none;
+	padding:0px;
+	margin:5px;
+	color:#eee;
+	font-weight:200;
+}
+#appVersionMeta ul li{
+	line-height:20px;
+	vertical-align: middle;
+	text-align: right;
+}
+#appVersionMeta li.HandyHost{
+	padding-right: 18px;
+}
+#appVersionMeta li span.version{
+	color:#aaa;
+	font-weight:200;
+}
+#appVersionMeta span.version.needsUpdate{
+	color:#ffcb00;
+}
+#appVersionMeta span.badge{
+	margin: 5px 3px 5px 5px;
+	border-radius: 16px;
+	width: 10px;
+	height: 10px;
+	float:right;
+}
+#appVersionMeta span.emoji{
+}
+span.badge.grey{
+	background:#999;
+}
+span.badge.green{
+	background:#0c0;
+}

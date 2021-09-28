@@ -23,23 +23,24 @@ export class Wallet{
 			catch(e){
 				exists = false;
 			}
+			const isAutostart = fs.existsSync(process.env.HOME+'/.HandyHost/aktData/autostart.json')
 			console.log('akash exists??',exists);
 			console.log("akash dir exists?",fs.existsSync(`${process.env.HOME}/.akash`));
 			if(!exists){
 				if(!fs.existsSync(`${process.env.HOME}/.akash`)){
 					//akash needs inited
 					this.initAkash().then(()=>{
-						resolve({exists,initialized:true})
+						resolve({exists,initialized:true,isAutostart})
 					}).catch(error=>{
-						resolve({exists,initialized:false})
+						resolve({exists,initialized:false,isAutostart})
 					})
 				}
 				else{
-					resolve({exists,initialized:true})
+					resolve({exists,initialized:true,isAutostart})
 				}
 			}
 			else{
-				resolve({exists,initialized:true});
+				resolve({exists,initialized:true,isAutostart});
 			}
 		});
 	}

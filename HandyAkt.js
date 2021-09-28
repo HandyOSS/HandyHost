@@ -73,6 +73,23 @@ export class HandyAKT{
 		socket.on('subscribe',()=>{
 			socket.join('akt');
 		})
+		socket.on('getAppStatus',()=>{
+			let status = {};
+			//versionData.installed != versionData.latest
+			this.utils.getCurrentAkashVersion().then(versionData=>{
+				status.current = versionData.installed;
+				status.latest = versionData.latest;
+				status.isUpToDate = versionData.installed == versionData.latest;
+				this.wallet.checkProviderUpStatus().then(d=>{
+					status.active = true;
+					socket.emit('versionStatus',status);
+					
+				}).catch(e=>{
+					status.active = false;
+					socket.emit('versionStatus',status);
+				})
+			})
+		});
 
 	}
 	initSocketListener(room,serverName){

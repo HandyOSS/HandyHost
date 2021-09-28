@@ -114,6 +114,7 @@ export class DVPNDashboard {
 				this.nodeConfig.showWalletInit();
 			}
 			this.nodeStatus.setStatus(json.active);
+			this.nodeStatus.setAutostartStatus(json.isAutostart)
 			if(json.exists && json.logs != ''){
 
 				this.nodeStatus.addBulkLogs(json.logs);

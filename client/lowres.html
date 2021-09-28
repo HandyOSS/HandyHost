@@ -3,11 +3,13 @@
 	<meta charset="UTF-8">
 	<script src="bower_components/jquery/dist/jquery.min.js"></script>
 	<title>HandyHost</title>
+	<link rel="stylesheet" type="text/css" href="./intro/css/appVersionMeta.css" />
 	<style>
 		body,html{
 			background:#111;
 			padding:0;
 			margin:0;
+			font-family: Helvetica, Arial, Sans-serif;
 		}
 		#handyhost{
 			float:left;
@@ -57,9 +59,11 @@
 			}
 		}
 	</style>
-	
+	<script src="/socket.io/socket.io.js"></script>
 </head>
 <body>
+	<div id="appVersionMeta"></div>
+	
 	<div id="handyhost">
 		<img src="./intro/svg/HandyHost.svg" />
 	</div>
@@ -96,7 +100,11 @@
 			})
 			doResize($('#handyhost img'),'#handyhost');
 		})
-		
+	</script>
+	<script type="module">
+		import {CommonUtils} from './js/CommonUtils.js';
+		const utils = new CommonUtils();
+		utils.getIntroVersionInfo();
 	</script>
 </body>
 </html>

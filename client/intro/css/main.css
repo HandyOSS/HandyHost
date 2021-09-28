@@ -1,6 +1,7 @@
 html,body{
 	margin:0;
 	background:rgba(0,0,0,1.0);
+	font-family: Helvetica, Arial, Sans-serif;
 }
 #introLogo{
 	width:100%;

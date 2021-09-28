@@ -3,13 +3,18 @@
 	<meta charset="UTF-8">
 	<title>HandyHost</title>
 	<link rel="stylesheet" type="text/css" href="./intro/css/main.css" />
+	<link rel="stylesheet" type="text/css" href="./intro/css/appVersionMeta.css" />
 	<script src="./external/Tween.js"></script>
 	<script src="./external/jquery.min.js"></script>
+	<script src="/socket.io/socket.io.js"></script>
 </head>
 <body>
+	<div id="appVersionMeta"></div>
 	<div id="introLogo"></div>
 	<script type="module">
 		import {WEBGL} from './external/WEBGL.js';
+		import {CommonUtils} from './js/CommonUtils.js';
+		const utils = new CommonUtils();
 		function checkUserAgent() {
 		    const userAgent = navigator.userAgent || navigator.vendor || window.opera;
 
@@ -139,6 +144,7 @@
 			},500)
 		})
 		
+		utils.getIntroVersionInfo();
 		
 		window.app = app;
 	</script>

@@ -1045,6 +1045,32 @@ export class HandySia{
 		socket.on('subscribe',()=>{
 			socket.join('sia');
 		})
+		socket.on('getAppStatus',()=>{
+			let status = {}
+			this.daemon.getVersion().then(versionD=>{
+				this.daemon.getUpdateAvailStatus().then(updateAvailable=>{
+					status.latest = updateAvailable.version;
+					status.current = versionD;
+					status.isUpToDate = updateAvailable.version == versionD;
+					status.active = true;
+					socket.emit('versionStatus',status);
+				});
+			}).catch(error=>{
+				const manualVersion = spawn('siad',['version']);
+				let manualOut = '';
+				manualVersion.stdout.on('data',(d)=>{
+					manualOut += d.toString();
+				})
+				manualVersion.on('close',()=>{
+					let manualV = manualOut.split(' ');
+					manualV = manualV[manualV.length-1];
+					status.active = false;
+					status.current = manualV;
+					socket.emit('versionStatus',status);
+				})
+				
+			})
+		})
 
 	}
 	initSocketListener(room,serverName){

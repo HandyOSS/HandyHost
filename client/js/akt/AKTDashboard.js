@@ -254,7 +254,12 @@ export class AKTDashboard {
 		fetch('/api/akt/getState').then(d=>d.json()).then(json=>{
 			console.log('state',json);
 			//json.exists = false;
-
+			if(json.isAutostart){
+				$('#runProviderModal #autostart').prop('checked',true);
+			}
+			else{
+				$('#runProviderModal #autostart').prop('checked',false);
+			}
 			if(!json.exists){
 				this.nodeConfig.showWalletInit();
 			}
@@ -263,24 +268,7 @@ export class AKTDashboard {
 			}
 			//this.nodeStatus.setStatus(json.active);
 		})
-		/*fetch('/api/dvpn/getState').then(d=>d.json()).then(json=>{
-			console.log('state',json);
-			//json.exists = false;
-
-			if(!json.exists){
-				this.nodeConfig.showWalletInit();
-			}
-			this.nodeStatus.setStatus(json.active);
-			if(json.exists && json.logs != ''){
-
-				this.nodeStatus.addBulkLogs(json.logs);
-			}
-			//else{
-				//this.nodeConfig.getNodeConfigData();
-			//}
-		}).catch(e=>{
-			console.log('error',e);
-		})*/
+		
 		$('#aktMain .options li').off('click').on('click',function(){
 			const id = $(this).attr('id');
 			switch(id){

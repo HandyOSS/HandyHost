@@ -17,6 +17,14 @@ export class DVPNNodeStatus{
 		this.showing = false;
 		$('#nodeStatusInfo').hide();
 	}
+	setAutostartStatus(isAutostart){
+		if(isAutostart){
+			$('#autostart').prop('checked', true);
+		}
+		else{
+			$('#autostart').prop('checked', false);
+		}
+	}
 	showModal(){
 		$('#launchNodeModal').show();
 		$('.launchModal').addClass('showing');
