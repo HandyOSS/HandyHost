@@ -368,7 +368,7 @@ export class SiaWalletConfig{
 		$('.walletUtil #mnemonic').off('input').on('input',()=>{
 			let wordLen = $('.walletUtil #mnemonic').val().trim().split(' ').length;
 			console.log('updated',wordLen);
-			if(wordLen == 29){
+			if(wordLen == 29 || wordLen == 28){
 				$('.walletUtil #importWallet').addClass('save').removeClass('cancel');
 				$('.walletUtil #importWallet').addClass('canSave');
 			}
