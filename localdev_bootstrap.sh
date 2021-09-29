@@ -76,5 +76,5 @@ ENVS=""
 echo 'to stop sentinel docker:'
 echo 'sudo docker stop $(docker ps -a -q --filter ancestor=sentinel-dvpn-node --format="{{.ID}}")'
 echo 'to stop handyhost app:'
-echo "sudo forever stop \$(cat $pidfile)"
+echo "sudo ./localdev_bootstrap.sh stop"
 echo "logs are at: $logfile"
