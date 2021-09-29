@@ -751,7 +751,7 @@ export class HandySia{
 			.createHash("sha256")
 			.update(pw)
 			.digest("hex");
-		if(pw != this.siaPasswordHash){
+		if(passHash != this.siaPasswordHash){
 			return new Promise((resolve,reject)=>{
 				reject({message:"Incorrect Encryption Password"})
 			})
