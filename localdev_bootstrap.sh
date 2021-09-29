@@ -2,13 +2,13 @@
 #bootstrap encrypted keys into the app for local development on linux
 #macos uses keychain for creds
 ROOTHOME=/root
-USERHOME=/root
-USER=root
+USERHOME=/root #if you did the install as you, make this your home
+USER=root #if you did the install as you, make this your user
 pidfile=$USERHOME/.HandyHost/localdev.pid
 logfile=$USERHOME/.HandyHost/localdev.log
 NVM_DIR=$USERHOME/.nvm
 source $USERHOME/.bashrc
-export NVM_DIR="/$USER/.nvm"
+export NVM_DIR="$USERHOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
 
@@ -57,14 +57,19 @@ trap ctrl_c INT
 
 function ctrl_c() {
     echo "** killing app"
-    bash -c "source /$USER/.bashrc && source /$USER/.profile && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" && cd $PWD && nvm use &&$ENVS forever stop $(cat $pidfile)"
+    bash -c "source $USERHOME/.bashrc && source $USERHOME/.profile && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" && cd $PWD && nvm use &&$ENVS forever stop $(cat $pidfile)"
 }
 ACTION="start"
 if [[ ! -z $1 ]] ; then
     ACTION="$1"
 fi
+export HOME="$USERHOME"
 echo "ACTION IS $ACTION"
-bash -c "source /$USER/.bashrc && source /$USER/.profile && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" && cd $PWD && nvm use &&$ENVS forever $ACTION --pidFile $pidfile -l $logfile -a app.js" && \
+if [ $USER = "root" ] ; then
+    bash -c "source $USERHOME/.bashrc && source $USERHOME/.profile && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" && cd $PWD && nvm use &&$ENVS forever $ACTION --pidFile $pidfile -l $logfile -a app.js"
+else
+    su - $USER -c "source $USERHOME/.bashrc && source $USERHOME/.profile && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" && cd $PWD && nvm use &&$ENVS forever $ACTION --pidFile $pidfile -l $logfile -a app.js"
+fi
 ENVS=""
 
 

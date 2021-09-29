@@ -57,7 +57,7 @@ export class HandySia{
 								if(didJustUpdate){
 									fs.unlinkSync(didJustUpdateFileLoc);
 									Object.keys(this.ioNamespaces).map(serverName=>{
-										this.ioNamespaces[key].namespace.to('sia').emit('postUpdateSpawnFinished');
+										this.ioNamespaces[serverName].namespace.to('sia').emit('postUpdateSpawnFinished');
 									})
 								}
 								if(fs.existsSync(encrypted)){
@@ -89,7 +89,7 @@ export class HandySia{
 								if(didJustUpdate){
 									fs.unlinkSync(didJustUpdateFileLoc);
 									Object.keys(this.ioNamespaces).map(serverName=>{
-										this.ioNamespaces[key].namespace.to('sia').emit('postUpdateSpawnFinished');
+										this.ioNamespaces[serverName].namespace.to('sia').emit('postUpdateSpawnFinished');
 									})
 								}
 								
@@ -140,7 +140,7 @@ export class HandySia{
 							if(didJustUpdate){
 								fs.unlinkSync(didJustUpdateFileLoc);
 								Object.keys(this.ioNamespaces).map(serverName=>{
-									this.ioNamespaces[key].namespace.to('sia').emit('postUpdateSpawnFinished');
+									this.ioNamespaces[serverName].namespace.to('sia').emit('postUpdateSpawnFinished');
 								})
 							}
 						}).catch(error=>{
@@ -420,7 +420,7 @@ export class HandySia{
 
 			function done(e){
 				console.log('update is done',new Date());
-				fs.writeFileSync(process.env.HOME+'/.HandyHost/siaData/isUpdating',new Date(),'utf8');
+				fs.writeFileSync(process.env.HOME+'/.HandyHost/siaData/isUpdating',"true",'utf8');
 				resolve({message:"Update Finished. Restarting Sia (may take anywhere from ~30-45 seconds up to 20 minutes)..."})
 				if(process.platform == 'darwin'){
 					//restart things
