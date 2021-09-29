@@ -5,18 +5,10 @@ export class Wallet{
 
 	}
 	getWalletInfo(){
-		return siacCommand('wallet','GET');/*.then(d=>{
-			console.log('wallet stats',d);
-		}).catch(e=>{
-			console.error('ERROR GETTING WALLET INFO',e);
-		});*/
+		return siacCommand('wallet','GET');
 	}
 	getWalletAddress(){
-		return siacCommand('wallet/address','GET',true);/*.then(d=>{
-			console.log('got address',d);
-		}).catch(e=>{
-			console.error('ERROR GETTING WALLET ADDRESS',e);
-		});*/
+		return siacCommand('wallet/address','GET',true);
 	}
 	getLatestWalletAddress(){
 		return siacCommand('wallet/seedaddrs?count=1','GET');
@@ -29,27 +21,15 @@ export class Wallet{
 		});
 	}
 	initWallet(encryptionpw){
-		return siacPostDataCommand(`wallet/init`,`encryptionpassword=${encryptionpw}&force=true`);/*.then(d=>{
-			console.log('initialized new wallet',d);
-		}).catch(e=>{
-			console.error("ERROR INIT WALLET",e);
-		});*/
+		return siacPostDataCommand(`wallet/init`,`encryptionpassword=${encryptionpw}&force=true`);
 	}
 	initWalletFromSeed(seedStr,encryptionpw){
 		const seed = seedStr.trim();
 
-		return siacPostDataCommand('wallet/init/seed',`seed=${seed}&encryptionpassword=${encryptionpw}&force=true`);/*.then(d=>{
-			console.log('initialized wallet from seed',d);
-		}).catch(e=>{
-			console.error('ERROR INIT WALLET FROM SEED',e);
-		});*/
+		return siacPostDataCommand('wallet/init/seed',`seed=${seed}&encryptionpassword=${encryptionpw}&force=true`);
 	}
 	sendCoins(amountHastings,destination){
-		return siacPostDataCommand('wallet/siacoins',`amount=${amountHastings}&destination=${destination}`);/*.then(d=>{
-			console.log('sent coins',d);
-		}).catch(e=>{
-			console.error('ERROR SENDING COIN',e);
-		});*/
+		return siacPostDataCommand('wallet/siacoins',`amount=${amountHastings}&destination=${destination}`);
 	}
 	lockWallet(){
 		siacCommand('wallet/lock','POST').then(d=>{
@@ -59,11 +39,7 @@ export class Wallet{
 		});
 	}
 	unlockWallet(encryptionpw){
-		return siacPostDataCommand('wallet/unlock',`encryptionpassword=${encryptionpw}`);/*.then(d=>{
-			console.log('unlocked wallet',d);
-		}).catch(e=>{
-			console.error('ERROR UNLOCKING WALLET',e);
-		});*/
+		return siacPostDataCommand('wallet/unlock',`encryptionpassword=${encryptionpw}`);
 	}
 	verifyWallet(address){
 		siacCommand(`wallet/verify/address/${address}`,'GET').then(d=>{

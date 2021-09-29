@@ -12,7 +12,12 @@ export const siacCommand = (endpoint,requestType,useAuth) => {
 			method:requestType
 		};
 		if(useAuth){
-			const apiPass = fs.readFileSync(process.env.HOME+'/.sia/apipassword','utf8').replace('\n','');
+			let apiPassLocation = process.env.HOME+'/.sia/apipassword'
+			if(process.platform == 'darwin'){
+				apiPassLocation = process.env.HOME+'/Library/Application Support/Sia/apipassword';
+			}
+			const apiPass = fs.readFileSync(apiPassLocation,'utf8').replace('\n','');
+			
 			options.headers['Authorization'] = `Basic ${new Buffer.from(':'+apiPass).toString('base64')}`;
 		}
 		
@@ -53,7 +58,11 @@ export const siacCommand = (endpoint,requestType,useAuth) => {
 
 export const siacPostDataCommand = (endpoint,dataStr) =>{
 	const postData = dataStr;
-	const apiPass = fs.readFileSync(process.env.HOME+'/.sia/apipassword','utf8').replace('\n','');
+	let apiPassLocation = process.env.HOME+'/.sia/apipassword'
+	if(process.platform == 'darwin'){
+		apiPassLocation = process.env.HOME+'/Library/Application Support/Sia/apipassword';
+	}
+	const apiPass = fs.readFileSync(apiPassLocation,'utf8').replace('\n','');
 	
 	return new Promise((resolve,reject)=>{
 		const options = {

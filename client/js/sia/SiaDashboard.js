@@ -49,6 +49,11 @@ export class SiaDashboard {
 		this.socket.on('HandyHostIsUpToDate',data=>{
 			$('.options li#handyhostUpdatesWarning').hide();
 		})
+		this.socket.on('/postUpdateSpawnFinished',()=>{
+			this.walletConfig.showErrorModal('Sia Daemon Finished Updating!');
+			$('#walletInitModal').show();
+		})
+						
 
 		
 		

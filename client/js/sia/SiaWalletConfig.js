@@ -10,18 +10,28 @@ export class SiaWalletConfig{
 		/*$('#walletInitModal').show();
 		this.showInitModal(); //override*/
 		$('.walletUtil').removeClass('showing');
-		this.fetchChainAndWalletData().then(result=>{
-			const wallet = result.wallet;
-			const chain = result.chain;
-			this.isChainSynced = chain.synced;
-			if(wallet.height != chain.height || !chain.synced){
-				this.showErrorModal('You cannot create or import a new wallet during sync. <br />Chain Synced: '+chain.synced+'<br />Chain Height: '+chain.height+'<br />Wallet Height: '+wallet.height);
+		fetch('/api/sia/getUpdatingStatus').then(res=>res.json()).then(updateStatus=>{
+			if(updateStatus.updating){
+				//show an error modal because we are mid update. 
+				//Dont want to accidentally show a wallet init modal here and freak anybody out...
+				this.showErrorModal('Sia Daemon is Currently Updating... This can take anywhere from a minute to (rarely) hours.');
 			}
 			else{
-				this.showInitModal(chain.synced);
+				this.fetchChainAndWalletData().then(result=>{
+					const wallet = result.wallet;
+					const chain = result.chain;
+					this.isChainSynced = chain.synced;
+					if(wallet.height != chain.height || !chain.synced){
+						this.showErrorModal('You cannot create or import a new wallet during sync. <br />Chain Synced: '+chain.synced+'<br />Chain Height: '+chain.height+'<br />Wallet Height: '+wallet.height);
+					}
+					else{
+						this.showInitModal(chain.synced);
+					}
+				})
 			}
-		})
-		$('#walletInitModal').show();
+			$('#walletInitModal').show();
+		});
+		
 	}
 	hide(){
 		$('#walletInitModal').hide();
@@ -30,24 +40,34 @@ export class SiaWalletConfig{
 		this.getSiaPorts().then((result)=>{
 			console.log('get sia ports data',result);
 			if(result.portsSet){
-				this.fetchChainAndWalletData().then((result)=>{
-					const wallet = result.wallet;
-					const chain = result.chain;
-					if(!wallet.encrypted && !wallet.unlocked && !wallet.rescanning){
-						//is a new install, we need to make a wallet
-						console.log('wallet chain',wallet,chain);
-						if(typeof wallet.encrypted == "undefined" && typeof wallet.unlocked == "undefined" && typeof wallet.rescanning == "undefined"){
-							$('#walletInitModal').hide();
-							console.log('no wallet data');
-						}
-						else{
-							console.log('time for new wallet creation');
-							this.showInitModal(chain.synced);
-						}
-						
+				fetch('/api/sia/getUpdatingStatus').then(res=>res.json()).then(updateStatus=>{
+					if(updateStatus.updating){
+						//show an error modal because we are mid update. 
+						//Dont want to accidentally show a wallet init modal here and freak anybody out...
+						this.showErrorModal('Sia Daemon is Currently Updating... This can take anywhere from a minute to (rarely) hours.');
+						$('#walletInitModal').show();
 					}
 					else{
-						$('#walletInitModal').hide();
+						this.fetchChainAndWalletData().then((result)=>{
+							const wallet = result.wallet;
+							const chain = result.chain;
+							if(!wallet.encrypted && !wallet.unlocked && !wallet.rescanning){
+								//is a new install, we need to make a wallet
+								console.log('wallet chain',wallet,chain);
+								if(typeof wallet.encrypted == "undefined" && typeof wallet.unlocked == "undefined" && typeof wallet.rescanning == "undefined"){
+									$('#walletInitModal').hide();
+									console.log('no wallet data');
+								}
+								else{
+									console.log('time for new wallet creation');
+									this.showInitModal(chain.synced);
+								}
+								
+							}
+							else{
+								$('#walletInitModal').hide();
+							}
+						});
 					}
 				});
 			}
@@ -211,8 +231,8 @@ export class SiaWalletConfig{
 					resolve({
 						wallet:data,
 						chain:chainData
-					})
-				})
+					});
+				});
 			});
 		});
 	}

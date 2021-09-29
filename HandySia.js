@@ -31,6 +31,8 @@ export class HandySia{
 		//this.consensus.getChainStatus();
 	}
 	trySpawningSiad(){
+		const didJustUpdateFileLoc = process.env.HOME+'/.HandyHost/siaData/isUpdating';
+		const didJustUpdate = fs.existsSync(didJustUpdateFileLoc);
 		if(!fs.existsSync(this.siaPortsPath)){
 			//console.log('sia ports are not present yet, hold...')
 			return false;
@@ -52,6 +54,12 @@ export class HandySia{
 							
 							this.wallet.unlockWallet(pass).then(data=>{
 								console.log('wallet unlock success',data);
+								if(didJustUpdate){
+									fs.unlinkSync(didJustUpdateFileLoc);
+									Object.keys(this.ioNamespaces).map(serverName=>{
+										this.ioNamespaces[key].namespace.to('sia').emit('postUpdateSpawnFinished');
+									})
+								}
 								if(fs.existsSync(encrypted)){
 									fs.unlinkSync(encrypted);
 								}
@@ -78,6 +86,12 @@ export class HandySia{
 							
 							this.wallet.unlockWallet(data.value).then(data=>{
 								console.log('wallet unlock success',data);
+								if(didJustUpdate){
+									fs.unlinkSync(didJustUpdateFileLoc);
+									Object.keys(this.ioNamespaces).map(serverName=>{
+										this.ioNamespaces[key].namespace.to('sia').emit('postUpdateSpawnFinished');
+									})
+								}
 								
 							}).catch(error=>{
 								console.log('error unlocking wallet',error);
@@ -102,6 +116,9 @@ export class HandySia{
 	}
 	attemptWalletUnlock(){
 		setTimeout(()=>{
+			const didJustUpdateFileLoc = process.env.HOME+'/.HandyHost/siaData/isUpdating';
+			const didJustUpdate = fs.existsSync(didJustUpdateFileLoc);
+			
 			//give a little time to boot it up..
 			if(typeof process.env.SCAUTO != "undefined"){
 				
@@ -119,6 +136,12 @@ export class HandySia{
 							console.log('wallet unlock success');
 							if(fs.existsSync(encrypted)){
 								fs.unlinkSync(encrypted);
+							}
+							if(didJustUpdate){
+								fs.unlinkSync(didJustUpdateFileLoc);
+								Object.keys(this.ioNamespaces).map(serverName=>{
+									this.ioNamespaces[key].namespace.to('sia').emit('postUpdateSpawnFinished');
+								})
 							}
 						}).catch(error=>{
 							console.log('error unlocking wallet',error);
@@ -228,7 +251,6 @@ export class HandySia{
 			break;
 			case 'initWallet':
 				this.initWallet(requestBody).then(data=>{
-					console.log('success',data);
 					setTimeout(()=>{
 						this.updateEnvironment(requestBody).then(()=>{
 							resolve(data);
@@ -363,7 +385,21 @@ export class HandySia{
 					reject(error);
 				})
 			break;
+			case 'getUpdatingStatus':
+				this.getUpdatingStatus().then(data=>{
+					resolve(data);
+				}).catch(error=>{
+					reject(error);
+				})
+			break;
 		}
+	}
+	getUpdatingStatus(){
+		return new Promise((resolve,reject)=>{
+			const didJustUpdateFileLoc = process.env.HOME+'/.HandyHost/siaData/isUpdating';
+			const didJustUpdate = fs.existsSync(didJustUpdateFileLoc);
+			resolve({updating:didJustUpdate});
+		});
 	}
 	updateSia(){
 		return new Promise((resolve,reject)=>{
@@ -384,7 +420,8 @@ export class HandySia{
 
 			function done(e){
 				console.log('update is done',new Date());
-				resolve({message:"Update Finished. Restarting Sia (may take ~30-45 seconds)..."})
+				fs.writeFileSync(process.env.HOME+'/.HandyHost/siaData/isUpdating',new Date(),'utf8');
+				resolve({message:"Update Finished. Restarting Sia (may take anywhere from ~30-45 seconds up to 20 minutes)..."})
 				if(process.platform == 'darwin'){
 					//restart things
 					//trySpawningSiad()
@@ -818,48 +855,7 @@ export class HandySia{
 			return this.wallet.initWallet(parsed.pw);
 		}
 
-		/*return new Promise((resolve,reject)=>{
-
-			this.checkWalletStatus().then(isSynced=>{
-				console.log('is synced?',isSynced);
-				if(isSynced){
-					console.log('do wallet init');
-					//init the new wallet then..
-					doInit(parsed,resolve,reject);
-				}
-				else{
-					console.log('do manual remove');
-					
-					//wallet is still syncing. We need to pause siad, 
-					//then remove wallet folder, restart siad,
-					//and finally create the wallet
-					
-					this.manualWalletRemove().then(()=>{
-						doInit(parsed,resolve,reject);
-					})
-				}
-			}).catch(error=>{
-				reject(error);
-			})
-		})
 		
-		function doInit(parsed,resolve,reject){
-			if(parsed.import){
-				//init from seed
-				_this.wallet.initWalletFromSeed(parsed.seed, parsed.pw).then(data=>{
-					resolve(data);
-				}).catch(error=>{
-					reject(error);
-				})
-			}
-			else{
-				_this.wallet.initWallet(parsed.pw).then(data=>{
-					resolve(data);
-				}).catch(error=>{
-					reject(error);
-				})
-			}
-		}*/
 		
 		
 	}
@@ -1051,7 +1047,10 @@ export class HandySia{
 				this.daemon.getUpdateAvailStatus().then(updateAvailable=>{
 					status.latest = updateAvailable.version;
 					status.current = versionD;
-					status.isUpToDate = updateAvailable.version == versionD;
+					if(typeof versionD == "object"){
+						status.current = versionD.version;
+					}
+					status.isUpToDate = status.latest == status.current;
 					status.active = true;
 					socket.emit('versionStatus',status);
 				});

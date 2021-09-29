@@ -1,6 +1,6 @@
 #!/bin/bash
 HANDYHOST_DIR=$PWD
-UPDATED_DIR=$HOME/.HandyHost/HandyHostUpdate
+UPDATED_DIR="$HOME/.HandyHost/HandyHostUpdate"
 HANDYHOST_PID=$3
 USERHOME="$HOME"
 
@@ -27,13 +27,21 @@ if [[ -z "${HANDYHOST_PRIVATE_REPO_TOKEN+x}" ]]; then
 else 
 	URL="https://$HANDYHOST_PRIVATE_REPO_TOKEN@github.com/HandyMiner/HandyHost"
 fi
-mkdir -p $UPDATED_DIR && \
-cd $UPDATED_DIR && \
+if [[ -d "$UPDATED_DIR" ]] ; then
+	rm -rf "$UPDATED_DIR"
+fi
+mkdir -p "$UPDATED_DIR" && \
+cd "$UPDATED_DIR" && \
 git clone $URL . && \
 git checkout "$1" && \
 #skip rebuilding sqlite3 if we can.....
 cp -r "$HANDYHOST_DIR/node_modules" "$UPDATED_DIR/node_modules" && \
 mv "$UPDATED_DIR/update.sh" "$UPDATED_DIR/update.new.sh" && \
+
+if [[ -s "$UPDATED_DIR/update_dependencies.sh" ]] ; then
+	#in case we updated any brew or apt packages...
+	/bin/bash "$UPDATED_DIR/update_dependencies.sh"
+fi
 
 if [[ -d "$USERHOME/.nvm" ]] ; then
 	#has nvm
@@ -42,9 +50,9 @@ if [[ -d "$USERHOME/.nvm" ]] ; then
 fi
 npm install --build-from-source --python=/usr/bin/python3 && \
 cd client && bower install && cd $UPDATED_DIR && \
-cp -r $UPDATED_DIR/* $HANDYHOST_DIR && \
-rm -rf $HOME/.HandyHost/HandyHostUpdate && \
-cd $HANDYHOST_DIR && \
+cp -r "$UPDATED_DIR/* $HANDYHOST_DIR" && \
+rm -rf "$HOME/.HandyHost/HandyHostUpdate" && \
+cd "$HANDYHOST_DIR" && \
 echo "restarting handyhost" && \
 sleep 2 && \
 
@@ -58,6 +66,6 @@ else
 	sh -c "$2 > $HOME/.HandyHost/handyhost.log 2>&1 &" & \
 fi
 
-mv $HANDYHOST_DIR/update.new.sh $HANDYHOST_DIR/update.sh && \
+mv "$HANDYHOST_DIR/update.new.sh" "$HANDYHOST_DIR/update.sh" && \
 exit 0
 
