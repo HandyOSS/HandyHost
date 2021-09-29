@@ -50,7 +50,7 @@ if [[ -d "$USERHOME/.nvm" ]] ; then
 fi
 npm install --build-from-source --python=/usr/bin/python3 && \
 cd client && bower install && cd $UPDATED_DIR && \
-cp -r "$UPDATED_DIR/* $HANDYHOST_DIR" && \
+cp -r "$UPDATED_DIR/" "$HANDYHOST_DIR" && \
 rm -rf "$HOME/.HandyHost/HandyHostUpdate" && \
 cd "$HANDYHOST_DIR" && \
 echo "restarting handyhost" && \
@@ -62,8 +62,10 @@ if [[ -s "/etc/init.d/handyhost" ]] ; then
   		#forever exists, kill with forever
   		#forever stop $HANDYHOST_PID
 else
-	kill $HANDYHOST_PID && \
-	sh -c "$2 > $HOME/.HandyHost/handyhost.log 2>&1 &" & \
+	if [[ -s "$HOME/.HandyHost/handyhostDaemon.pid" ]] ; then
+		NODE_NO_WARNINGS=1 forever restart "$(cat $HOME/.HandyHost/handyhostDaemon.pid)" > /dev/null && \
+		echo "HandyHost Restarted"
+	fi
 fi
 
 mv "$HANDYHOST_DIR/update.new.sh" "$HANDYHOST_DIR/update.sh" && \
