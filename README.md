@@ -62,9 +62,9 @@ sudo apt update
 sudo apt install -y git curl build-essential curl openssl uidmap unzip libssl-dev avahi-utils virtualenv expect kubectl p7zip-full genisoimage whois nmap docker-ce docker-ce-cli containerd.io systemd-container apt-transport-https ca-certificates gnupg lsb-release
 ```
 3. Run the installer:
-```./installUbuntu.sh```
+```./installUbuntu.sh``` note: you may or may not want to change line 4 or 5 depending if you want the app/blockchain datas installed to /root or your user $HOME.
 4. Start with:
-```./localdev_bootstrap.sh``` optionally restart with ```./localdev_bootstrap.sh restart```
+```./localdev_bootstrap.sh``` optionally restart with ```./localdev_bootstrap.sh restart```, and stop with ```localdev_bootstrap.sh stop```. note: you may or may not want to change line 5 and 6 depending if you want the app/blockchain datas installed to /root or your user $HOME.
 5. application logs can be found in: ```~/.HandyHost/localdev.log```
 
 ### Rig Builds:
@@ -97,5 +97,6 @@ Upon doing so, you will see a link in the left-hand options menu in the app to u
 Below are instructions on how to get your github access token.
 
 ### To use in-app updater:
+This only applies to testing/dev builds while the repo is still private.
 1. since the repo is still private we need a github personal access token. In github, go to the very top right of the screen to show your options. Then goto Settings. Scroll down the left options and click "Developer Settings", then in the subsequent left menu click "Personal Access Tokens" and then click the button for "Generate New Token". Then use settings: "90 days", Select top level scope for "Repo" which should check all the repo boxes under it. Then "Generate Token". Now copy the token from the following screen, should look like ```ghp_123456abcd.....efef123``` and plug that into the command line like::
 ```sudo echo "export HANDYHOST_PRIVATE_REPO_TOKEN=ghp_jQX....2gP" >> /root/.profile```
