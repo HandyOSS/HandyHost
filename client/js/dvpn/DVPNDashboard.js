@@ -160,6 +160,9 @@ export class DVPNDashboard {
 				case 'allServices':
 					window.location.href = '/';
 				break;
+				case 'tutorial':
+					window.open('https://youtu.be/5GxRoVDOFKE', '_blank').focus();
+				break;
 			}
 			
 		})

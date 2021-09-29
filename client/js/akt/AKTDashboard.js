@@ -325,6 +325,9 @@ export class AKTDashboard {
 				case 'providerCertificateWarning':
 					_this.clusterStatus.showRegistrationModal(false,$('#providerCertificateWarning').attr('data-wallet'),true);
 				break;
+				case 'tutorial':
+					window.open('https://youtu.be/QV6qhjyQ6dc', '_blank').focus();
+				break;
 			}
 			
 		})

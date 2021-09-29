@@ -255,6 +255,9 @@ export class SiaDashboard {
 				case 'handyhostUpdatesWarning':
 					_this.showHandyHostUpdateModal();
 				break;
+				case 'tutorial':
+					window.open('https://youtu.be/9x3CS6cd3jg', '_blank').focus();
+				break;
 			}
 		})
 		this.utils.getIP().then(data=>{
