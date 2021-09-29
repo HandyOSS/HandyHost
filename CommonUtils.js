@@ -105,7 +105,7 @@ export class CommonUtils{
 			if(typeof process.env.HANDYHOST_PRIVATE_REPO_TOKEN != "undefined"){
 				host = process.env.HANDYHOST_PRIVATE_REPO_TOKEN+'@'+host;
 			}
-			const path = '/HandyMiner/HandyHost/master/VERSION';
+			const path = '/HandyOSS/HandyHost/master/VERSION';
 			return this.queryHTTPSResponse(host,path).then(versionRepo=>{
 				const localVersion = fs.readFileSync("./VERSION",'utf8').trim();
 				resolve({

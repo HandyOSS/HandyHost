@@ -36,7 +36,7 @@ pip3 install -r requirements.txt && \
 cd ~/.HandyHost/aktData && \
 if [[ ! -d ${HOME}/.HandyHost/aktData/ubuntu-autoinstall-generator ]] ; then
 	echo "installing ubuntu-autoinstall-generator"
-	git clone https://github.com/HandyMiner/ubuntu-autoinstall-generator.git && \
+	git clone https://github.com/HandyOSS/ubuntu-autoinstall-generator.git && \
 	cd ubuntu-autoinstall-generator && \
 	chmod +x ubuntu-autoinstall-generator.sh
 else

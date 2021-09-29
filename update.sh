@@ -23,9 +23,9 @@ if [[ -s /var/log/handyhost.pid ]]; then
 fi
 if [[ -z "${HANDYHOST_PRIVATE_REPO_TOKEN+x}" ]]; then
 	#not a private repo anymore yay
-	URL="https://github.com/HandyMiner/HandyHost"
+	URL="https://github.com/HandyOSS/HandyHost"
 else 
-	URL="https://$HANDYHOST_PRIVATE_REPO_TOKEN@github.com/HandyMiner/HandyHost"
+	URL="https://$HANDYHOST_PRIVATE_REPO_TOKEN@github.com/HandyOSS/HandyHost"
 fi
 if [[ -d "$UPDATED_DIR" ]] ; then
 	rm -rf "$UPDATED_DIR"
