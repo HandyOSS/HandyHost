@@ -50,7 +50,7 @@ if [[ -d "$USERHOME/.nvm" ]] ; then
 fi
 npm install --build-from-source --python=/usr/bin/python3 && \
 cd client && bower install && cd $UPDATED_DIR && \
-cp -r "$UPDATED_DIR/" "$HANDYHOST_DIR" && \
+cp -r "$UPDATED_DIR/." "$HANDYHOST_DIR" && \
 rm -rf "$HOME/.HandyHost/HandyHostUpdate" && \
 cd "$HANDYHOST_DIR" && \
 echo "restarting handyhost" && \
