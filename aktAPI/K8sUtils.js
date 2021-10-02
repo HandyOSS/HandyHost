@@ -485,7 +485,8 @@ export class K8sUtils{
 									let itemsOut = {};
 									let ignoreNS = [
 										'ingress-nginx',
-										'kube-system'
+										'kube-system',
+										'akash-services'
 									]
 									json.items.map(pod=>{
 										if(ignoreNS.indexOf(pod.metadata.namespace) >= 0){
