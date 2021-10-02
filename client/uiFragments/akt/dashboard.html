@@ -138,6 +138,45 @@
 	</div>
 	
 </div>
+<div id="updateKubesprayModal" class="modalWrap">
+	<div id="closeModal" class="closeModal">
+		[close]
+	</div>
+	<div class="kubesprayModal modalContent">
+		<div class="logo">
+			<img src="./img/AkashAKTLogo.svg" />
+		</div>
+		<div class="updateInfo">
+			The Akash Cluster Management Software (Kubespray) has an update available.<br />
+			<br />
+			<div class="versionInfo"></div>
+			<br />
+			Updating will not remove any running deployments but may cause up to a minute of downtime post-update.
+			<br />
+			<br />
+			If your Akash provider is running, we will turn it pause it during the update, and restart it after the update is finished.
+			<br />
+			<br />
+			We also recommend you first check the HandyHost Github releases page to make sure (in rare cases) that there are no special requirements or update packages for you to install instead of this in-app update: <a href="https://github.com/HandyOSS/HandyHost/releases" target="_blank">https://github.com/HandyOSS/HandyHost/releases</a>
+			<br />
+			<br />
+		</div>
+
+		<div class="updateLogs">
+			<pre>Starting Update...</pre>
+		</div>
+		
+		<div class="button save" id="updateKubespray">
+			<div class="foreground">Update 🚀</div>
+			<div class="background">Update 🚀</div>
+		</div>
+		<div class="button cancel" id="cancelKubesprayUpdate">
+			<div class="foreground">Cancel</div>
+			<div class="background">Cancel</div>
+		</div>
+	</div>
+	
+</div>
 <div id="aktMain" class="serviceMain">
 	<div class="options">
 		<div class="logo">
@@ -167,6 +206,9 @@
 			</li>
 			<li id="handyhostUpdatesWarning">
 				<span class="warningEmoji">⚠️</span> HandyHost Updates Available
+			</li>
+			<li id="kubesprayUpdateAvailable">
+				<span class="warningEmoji">⚠️</span> Cluster Updates Available
 			</li>
 			<li id="providerRegistrationWarning" data-action="create">
 				<span class="warningEmoji">⚠️</span> Provider Registration <span class="action"></span> Required

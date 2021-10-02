@@ -220,29 +220,33 @@ else
 	echo "kubectl Already Installed. Skipping."
 fi
 
-mkdir -p ${HOME}/.HandyHost/aktData && \
-if [[ ! -d ${HOME}/.HandyHost/aktData/kubespray ]] ; then
-  mkdir -p ${HOME}/.HandyHost/aktData/kubespray && \
-  cd ${HOME}/.HandyHost/aktData/kubespray && \
+LATEST_KUBESPRAY=$(jq -r 'map(select(.prerelease != true)) | first | .tag_name' <<< $(curl --silent "https://api.github.com/repos/kubernetes-sigs/kubespray/releases"))
+
+mkdir -p "${HOME}/.HandyHost/aktData" && \
+if [[ ! -d "${HOME}/.HandyHost/aktData/kubespray" ]] ; then
+  mkdir -p "${HOME}/.HandyHost/aktData/kubespray" && \
+  cd "${HOME}/.HandyHost/aktData/kubespray" && \
   git clone https://github.com/kubernetes-sigs/kubespray.git . && \
+  git checkout "$LATEST_KUBESPRAY"
   virtualenv --python=python3 venv && \
   . venv/bin/activate && \
   pip3 install -r requirements.txt
 else
-  echo "kubespray already installed, check for updates" && \
+	echo "kubespray already installed, check for updates" && \
   cd ${HOME}/.HandyHost/aktData/kubespray && \
-  git fetch && \
-  LOCAL=$(git rev-parse @)
-  REMOTE=$(git rev-parse @{u})
-  BASE=$(git merge-base @ @{u})
-  echo "LOCAL: ${LOCAL}, REMOTE: ${REMOTE}"
-  if [ "$LOCAL"=="$REMOTE" ]; then
+  git fetch --all && \
+  LOCAL_KUBESPRAY=$(git describe --tags)
+  
+  echo "LOCAL: ${LOCAL_KUBESPRAY}, REMOTE: ${LATEST_KUBESPRAY}"
+  if [[ "$LOCAL_KUBESPRAY" == "$LATEST_KUBESPRAY" ]]; then
     echo "Kubespray is up to date"
   else
     echo "kubespray is out of date, updating" && \
-    git pull origin master
+    git fetch --all
+    git checkout "$LATEST_KUBESPRAY"
     virtualenv --python=python3 venv && \
     . venv/bin/activate && \
+    pip3 uninstall -y ansible && \
     pip3 install -r requirements.txt
   fi
 fi
@@ -261,7 +265,7 @@ else
   REMOTE=$(git rev-parse @{u})
   BASE=$(git merge-base @ @{u})
 
-  if [ "$LOCAL"=="$REMOTE" ]; then
+  if [[ "$LOCAL" == "$REMOTE" ]]; then
     echo "ubuntu-autoinstall-generator is up to date"
   else
     echo "ubuntu-autoinstall-generator is out of date, updating" && \
@@ -279,16 +283,29 @@ su - $USERNAME -c "brew install whois" && \
 su - $USERNAME -c "brew install coreutils" && \
 su - $USERNAME -c "brew install gnupg" && \
 su - $USERNAME -c "brew install openssl@1.1" && \
+su - $USERNAME -c "brew install jq" && \
 echo "Finished Installing Akash Dependencies" && \
 
 export AKASH_NET="https://raw.githubusercontent.com/ovrclk/net/master/mainnet"
-export AKASH_VERSION="$(curl -s "$AKASH_NET/version.txt")"
+export AKASH_VERSION=$(/bin/bash "$pwd/aktAPI/getAkashLatestVersion.sh")
 export AKASH_CHAIN_ID="$(curl -s "$AKASH_NET/chain-id.txt")"
 export AKASH_NODE="$(curl -s "$AKASH_NET/rpc-nodes.txt" | gshuf -n 1)"
 
+if [[ ! -d "${USERHOME}/.HandyHost/aktData/akashRepo" ]] ; then
+  mkdir -p "${USERHOME}/.HandyHost/aktData/akashRepo" && \
+  cd "${USERHOME}/.HandyHost/aktData/akashRepo" && \
+  git clone https://github.com/ovrclk/akash.git . && \
+  git checkout "$AKASH_VERSION"
+else
+  cd "${USERHOME}/.HandyHost/aktData/akashRepo" && \
+  git checkout "$AKASH_VERSION"
+fi
+
+chown -R "$USERNAME:$USERGROUP" "${USERHOME}/.HandyHost/aktData/akashRepo" && \
+
 echo "installing akash software..." && \
 cd $HOME/.HandyHost/aktData && \
-curl https://raw.githubusercontent.com/ovrclk/akash/master/godownloader.sh | sh -s -- "v$AKASH_VERSION" && \
+curl https://raw.githubusercontent.com/ovrclk/akash/master/godownloader.sh | sh -s -- "$AKASH_VERSION" && \
 sudo chown -R "$USERNAME:$USERGROUP" $pwd/aktAPI && \
 sudo chown -R "$USERNAME:$USERGROUP" $HOME/.HandyHost/aktData
 

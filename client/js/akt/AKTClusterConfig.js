@@ -131,6 +131,7 @@ export class AKTClusterConfig{
 	autoConfigureK8sData(configData){
 		let hasMaster = false;
 		let hasEtcd = false;
+		let hasIngress = false;
 
 		configData.nodes.map(node=>{
 			if(typeof node.kubernetes != "undefined"){
@@ -140,9 +141,12 @@ export class AKTClusterConfig{
 				if(node.kubernetes.role == 'etcd'){
 					hasEtcd = true;
 				}
+				if(node.kubernetes.ingress){
+					hasIngress = true;
+				}
 			}
 		})
-		const modified = configData.nodes.map(node=>{
+		const modified = configData.nodes.map((node,i)=>{
 			let myRole;
 			if(typeof node.kubernetes == "undefined"){
 				myRole = 'none';
@@ -157,6 +161,7 @@ export class AKTClusterConfig{
 				node.kubernetes = {
 					role:myRole,
 					isCompute:true,
+					ingress:(i == 0 && !hasIngress ? true : false),
 					name:node.hostname.replace('.local','')
 				}
 			}
@@ -173,6 +178,7 @@ export class AKTClusterConfig{
 				node.kubernetes = {
 					role:myRole,
 					isCompute:true,
+					ingress:node.kubernetes.ingress,
 					name:node.hostname.replace('.local','')
 				}
 			}
@@ -312,6 +318,15 @@ export class AKTClusterConfig{
 		$('input[name="ingress"]').off('change').on('change',()=>{
 			const ip = $('input[name="ingress"]:checked').attr('data-ip');
 			$('#ingressPortsMessage .ip').html(ip);
+			this.configData.nodes.map(node=>{
+				let isIngress = false;
+				if(node.ip == ip){
+					isIngress = true;
+				}
+				if(typeof node.kubernetes != "undefined"){
+					node.kubernetes.ingress = isIngress;
+				}
+			})
 		})
 		$('#initCluster').off('click').on('click',()=>{
 			if(!confirm('If there is currently a kubernetes cluster, this operation will completely remove it. Still Continue?')){

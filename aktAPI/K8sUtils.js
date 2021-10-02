@@ -6,7 +6,8 @@ import yaml from 'js-yaml';
 import {CommonUtils} from '../CommonUtils.js';
 
 export class K8sUtils{
-	constructor(configPath){
+	constructor(configPath,walletUtils){
+		this.walletUtils = walletUtils;
 		this.configJSONPath = configPath; //the json for handyhost app about the cluster inventory
 		this.diskUtils = new DiskUtils();
 		this.commonUtils = new CommonUtils();
@@ -75,7 +76,7 @@ export class K8sUtils{
 		})
 		
 	}
-	createKubernetesInventory(configPath,socketIONamespaces){
+	createKubernetesInventory(configPath,socketIONamespaces,customEmitMessage){
 		return new Promise((resolve,reject)=>{
 
 			const configJSON = JSON.parse(fs.readFileSync(configPath,'utf8'));
@@ -140,60 +141,91 @@ export class K8sUtils{
 				let entry = `${tab}${tab}${name}:\n`;
 				   entry += `${tab}${tab}${tab}ansible_host: ${node.hostname}\n`;
  				   entry += `${tab}${tab}${tab}ansible_user: ${node.user}\n`;
+ 				   entry += `${tab}${tab}${tab}access_ip: ${node.ip}\n`;
+ 				   entry += `${tab}${tab}${tab}ip: ${node.ip}\n`;
 				config += entry;
 			})
 
 			config += `${tab}children:\n`;
-			config += `${tab}${tab}kube-master:\n`
+			config += `${tab}${tab}kube_control_plane:\n`
 			config += `${tab}${tab}${tab}hosts:\n`;
 			config += `${tab}${tab}${tab}${tab}${masterNodeName}:\n`;
 			config += `${tab}${tab}etcd:\n`;
 			config += `${tab}${tab}${tab}hosts:\n`;
 			config += `${tab}${tab}${tab}${tab}${etcdNodeName}:\n`
-			config += `${tab}${tab}kube-node:\n`;
+			config += `${tab}${tab}kube_node:\n`;
 			config += `${tab}${tab}${tab}hosts:\n`;
 			nodeNames.map(name=>{
 				config += `${tab}${tab}${tab}${tab}${name}:\n`;
 			});
-			config += `${tab}${tab}calico-rr:\n`;
+			/*config += `${tab}${tab}calico-rr:\n`;
 			config += `${tab}${tab}${tab}hosts:\n`;
 			nodeNames.map(name=>{
 				config += `${tab}${tab}${tab}${tab}${name}:\n`;
-			});
+			});*/
 			
-			config += `${tab}${tab}k8s-cluster:\n`;
+			config += `${tab}${tab}k8s_cluster:\n`;
 			config += `${tab}${tab}${tab}children:\n`;
-			config += `${tab}${tab}${tab}${tab}kube-master:\n`;
-			config += `${tab}${tab}${tab}${tab}kube-node:\n`;
-			config += `${tab}${tab}${tab}${tab}calico-rr:\n`;
+			config += `${tab}${tab}${tab}${tab}kube_control_plane:\n`;
+			config += `${tab}${tab}${tab}${tab}kube_node:\n`;
+			config += `${tab}${tab}calico_rr:\n`;
+			config += `${tab}${tab}${tab}hosts:{}\n`
 
 			console.log('built config',config);
+			const emitMessage = typeof customEmitMessage == "undefined" ? 'k8sBuildLogStatus' : customEmitMessage;
 			fs.writeFileSync(process.env.HOME+'/.HandyHost/aktData/inventory.yaml',config,'utf8');
-			//TODO write to file, build & launch k8s
-			this.teardownOldCluster(socketIONamespaces).then(()=>{
+			this.teardownOldCluster(socketIONamespaces,customEmitMessage).then(()=>{
 				Object.keys(socketIONamespaces).map(serverName=>{
-					socketIONamespaces[serverName].namespace.to('akt').emit('k8sBuildLogStatus',{part:'teardown',status:'finished'});
+					socketIONamespaces[serverName].namespace.to('akt').emit(emitMessage,{part:'teardown',status:'finished'});
 				})
-				//socketIONamespace.to('akt').emit('k8sBuildLogStatus',{part:'teardown',status:'finished'})
+				//socketIONamespace.to('akt').emit(emitMessage,{part:'teardown',status:'finished'})
 				
-				this.initNewCluster(socketIONamespaces).then(()=>{
+				this.initNewCluster(socketIONamespaces,customEmitMessage).then(()=>{
 					this.cleanupKnownHosts(allIPs).then(()=>{
-						this.postInitNewCluster(socketIONamespaces,masterNodeName,masterUser,masterIP,masterMDNS,ingressNode).then(()=>{
+						this.postInitNewCluster(socketIONamespaces,masterNodeName,masterUser,masterIP,masterMDNS,ingressNode,customEmitMessage).then(()=>{
 							Object.keys(socketIONamespaces).map(serverName=>{
-								socketIONamespaces[serverName].namespace.to('akt').emit('k8sBuildLogStatus',{part:'init',status:'finished'})
+								socketIONamespaces[serverName].namespace.to('akt').emit(emitMessage,{part:'init',status:'finished'})
 							})
-							//socketIONamespace.to('akt').emit('k8sBuildLogStatus',{part:'init',status:'finished'})
-							resolve({success:true})
+							//socketIONamespace.to('akt').emit(emitMessage,{part:'init',status:'finished'})
+							if(typeof customEmitMessage != "undefined"){
+								resolve({success:true})
+							}
 						});
 					});
 					
 					
 				})
 			})
-			resolve({config});
+			if(typeof customEmitMessage == "undefined"){
+				resolve({config});
+			}
 		}).catch(error=>{
-			reject(error);
+			console.log('error init cluster',error);
 		});
+	}
+	checkForKubesprayUpdates(){
+		return new Promise((resolve,reject)=>{
+			let out = '';
+			const c = spawn('./getKubesprayLatestVersion.sh',[],{env:process.env,cwd:process.env.PWD+'/aktAPI'})
+			c.stdout.on('data',d=>{
+				out += d.toString();
+			})
+			c.stderr.on('data',d=>{
+				console.log('error fetching kubespray latest version',d.toString());
+				reject(d.toString());
+			})
+			c.on('close',()=>{
+				let json = {};
+				try{
+					json = JSON.parse(out);
+				}
+				catch(e){
+					reject(e);
+				}
+				resolve(json);
+
+			})
+		})
 	}
 	cleanupKnownHosts(allIPs){
 		return new Promise((resolve,reject)=>{
@@ -219,23 +251,24 @@ export class K8sUtils{
 			
 		})
 	}
-	postInitNewCluster(socketIONamespaces,masterNodeName,masterUser,masterIP,masterMDNS,ingressNodeName){
+	postInitNewCluster(socketIONamespaces,masterNodeName,masterUser,masterIP,masterMDNS,ingressNodeName,customEmitMessage){
 		///./postInitK8sCluster.sh ansible akashnode1.local akashnode1 192.168.0.17
 		return new Promise((resolve,reject)=>{
-			const command = './aktAPI/postInitK8sCluster.sh'
+			const command = './postInitK8sCluster.sh'
+			const emitMessage = typeof customEmitMessage == "undefined" ? 'k8sBuildLogs' : customEmitMessage;
 			const args = [masterUser,masterMDNS,ingressNodeName,masterIP];
-			const postProcess = spawn(command,args,{env:process.env,cwd:process.env.PWD});
+			const postProcess = spawn(command,args,{env:process.env,cwd:process.env.PWD+'/aktAPI'});
 			postProcess.stdout.on('data',d=>{
 				Object.keys(socketIONamespaces).map(serverName=>{
-					socketIONamespaces[serverName].namespace.to('akt').emit('k8sBuildLogs','POST INSTALL: '+d.toString());
+					socketIONamespaces[serverName].namespace.to('akt').emit(emitMessage,'POST INSTALL: '+d.toString());
 				})
-				//socketIONamespace.to('akt').emit('k8sBuildLogs','POST INSTALL: '+d.toString());
+				//socketIONamespace.to('akt').emit(emitMessage,'POST INSTALL: '+d.toString());
 			})
 			postProcess.stderr.on('data',d=>{
 				Object.keys(socketIONamespaces).map(serverName=>{
-					socketIONamespaces[serverName].namespace.to('akt').emit('k8sBuildLogs','POST INSTALL: '+d.toString());
+					socketIONamespaces[serverName].namespace.to('akt').emit(emitMessage,'POST INSTALL: '+d.toString());
 				})
-				//socketIONamespace.to('akt').emit('k8sBuildLogs','POST INSTALL: '+d.toString());
+				//socketIONamespace.to('akt').emit(emitMessage,'POST INSTALL: '+d.toString());
 			})
 			postProcess.on('close',()=>{
 				this.installMetricsServer(socketIONamespaces).then(()=>{
@@ -321,22 +354,23 @@ export class K8sUtils{
 			})
 		});
 	}
-	teardownOldCluster(socketIONamespaces){
+	teardownOldCluster(socketIONamespaces,customEmitMessage){
 		return new Promise((resolve,reject)=>{
 			const args = []
+			const emitMessage = typeof customEmitMessage == "undefined" ? 'k8sBuildLogs' : customEmitMessage;
 			const teardown = spawn('./teardownK8sCluster.sh',args,{env:process.env,cwd:process.env.PWD+'/aktAPI'});
 			teardown.stdout.on('data',d=>{
 				Object.keys(socketIONamespaces).map(serverName=>{
-					socketIONamespaces[serverName].namespace.to('akt').emit('k8sBuildLogs',d.toString());
+					socketIONamespaces[serverName].namespace.to('akt').emit(emitMessage,d.toString());
 				})
-				//socketIONamespace.to('akt').emit('k8sBuildLogs',d.toString());
+				//socketIONamespace.to('akt').emit(emitMessage,d.toString());
 			});
 			teardown.stderr.on('data',d=>{
 				console.log('teardown err',d.toString());
 				Object.keys(socketIONamespaces).map(serverName=>{
-					socketIONamespaces[serverName].namespace.to('akt').emit('k8sBuildLogs',d.toString());
+					socketIONamespaces[serverName].namespace.to('akt').emit(emitMessage,d.toString());
 				})
-				//socketIONamespace.to('akt').emit('k8sBuildLogs',d.toString());
+				//socketIONamespace.to('akt').emit(emitMessage,d.toString());
 			});
 			teardown.on('close',()=>{
 				console.log('teardown close');
@@ -344,22 +378,23 @@ export class K8sUtils{
 			})
 		});
 	}
-	initNewCluster(socketIONamespaces){
+	initNewCluster(socketIONamespaces,customEmitMessage){
 		return new Promise((resolve,reject)=>{
 			const command = './aktAPI/initK8sCluster.sh';
 			const args = [];
+			const emitMessage = typeof customEmitMessage == "undefined" ? 'k8sBuildLogs' : customEmitMessage;
 			const init = spawn(command,args,{env:process.env,cwd:process.env.PWD});
 			init.stdout.on('data',d=>{
 				Object.keys(socketIONamespaces).map(serverName=>{
-					socketIONamespaces[serverName].namespace.to('akt').emit('k8sBuildLogs',d.toString());
+					socketIONamespaces[serverName].namespace.to('akt').emit(emitMessage,d.toString());
 				})
-				//socketIONamespace.to('akt').emit('k8sBuildLogs',d.toString());
+				//socketIONamespace.to('akt').emit(emitMessage,d.toString());
 			});
 			init.stderr.on('data',d=>{
 				Object.keys(socketIONamespaces).map(serverName=>{
-					socketIONamespaces[serverName].namespace.to('akt').emit('k8sBuildLogs',d.toString());
+					socketIONamespaces[serverName].namespace.to('akt').emit(emitMessage,d.toString());
 				})
-				//socketIONamespace.to('akt').emit('k8sBuildLogs',d.toString());
+				//socketIONamespace.to('akt').emit(emitMessage,d.toString());
 			});
 			init.on('close',()=>{
 				//TODO: copy kubernetes access keys locally, 
@@ -973,5 +1008,48 @@ export class K8sUtils{
 		},30000);
 		
 		//TODO socket io message about this new node
+	}
+	updateKubespray(ioNamespaces){
+		return new Promise((resolve,reject)=>{
+			this.walletUtils.pauseProvider().then(()=>{
+				console.log('provider is paused, do kubespray update')
+				const p = spawn('./updateKubespray.sh',[],{env:process.env,cwd:process.env.PWD+'/aktAPI'});
+				//emit kubesprayUpdateLogs
+				p.stdout.on('data',d=>{
+					Object.keys(ioNamespaces).map(serverName=>{
+						ioNamespaces[serverName].namespace.to('akt').emit('kubesprayUpdateLogs','Kubespray: '+d.toString());
+					})
+				})
+				p.stderr.on('data',d=>{
+					Object.keys(ioNamespaces).map(serverName=>{
+						ioNamespaces[serverName].namespace.to('akt').emit('kubesprayUpdateLogs','Kubespray: '+d.toString());
+					})
+				})
+				p.on('close',()=>{
+					console.log('done with kubespray update process');
+					const configPath = this.configJSONPath;
+					this.createKubernetesInventory(configPath,ioNamespaces,'kubesprayUpdateLogs').then((status)=>{
+						console.log('create kubernetes inventory done');
+						this.walletUtils.unpauseProvider();
+						Object.keys(ioNamespaces).map(serverName=>{
+							setTimeout(()=>{
+								//give provider a hot second to restart
+								ioNamespaces[serverName].namespace.to('akt').emit('kubesprayUpdateLogs','UPDATE PROCESS COMPLETE',true);
+
+							},15000);
+							ioNamespaces[serverName].namespace.to('akt').emit('kubesprayUpdateLogs','Update Finished! Restarting Provider',true);
+							
+						})
+						resolve(status);
+						
+					})
+		
+					/*Object.keys(ioNamespaces).map(serverName=>{
+						ioNamespaces[serverName].namespace.to('akt').emit('kubesprayUpdateLogs','DONE UPDATING CLUSTER',true);
+					})*/
+				})
+			});
+		})
+		
 	}
 }

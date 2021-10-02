@@ -248,3 +248,36 @@ a.aktStatusPageLink{
 	display: none;
 }
 
+#updateKubesprayModal .updateLogs{
+	display: none;
+}
+#updateKubesprayModal .logsShowing{
+	float: left;
+	width: 80%;
+	height:  70%;
+	margin-left: 10%;
+}
+#updateKubesprayModal .logsShowing .updateLogs{
+	display:  block;
+    max-height: 50%;
+    float: left;
+    width:  100%;
+    overflow-y: scroll;
+    overflow-x: scroll;
+}
+#updateKubesprayModal .logsShowing .updateInfo{
+	display: none;
+}
+#updateKubesprayModal .logsShowing pre{
+	color: #00cc00;
+    float: left;
+    text-align: left;
+    width: calc(100% - 20px);
+    background: rgba(255,255,255,0.1);
+    padding: 0px 10px;
+    margin: 0;
+}
+#kubesprayUpdateAvailable{
+	display: none;
+}
+

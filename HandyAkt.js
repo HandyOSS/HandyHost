@@ -23,10 +23,12 @@ export class HandyAKT{
 		
 		this.checkClusterConfigExistence();
 		this.handyUtils = new CommonUtils();
-		this.utils = new AKTUtils(this.clusterConfigFilePath);
-		this.diskUtils = new DiskUtils();
-		this.k8sUtils = new K8sUtils(this.clusterConfigFilePath);
 		this.wallet = new Wallet();
+		this.k8sUtils = new K8sUtils(this.clusterConfigFilePath,this.wallet);
+		this.utils = new AKTUtils(this.clusterConfigFilePath,this.k8sUtils,this.wallet);
+		this.diskUtils = new DiskUtils();
+		
+		
 		this.market = new Marketplace();
 		setTimeout(()=>{
 			//give env time to spin up and get rpc node
@@ -93,7 +95,6 @@ export class HandyAKT{
 
 	}
 	initSocketListener(room,serverName){
-		//TODO: add when we get more stats on nodes..
 		if(typeof this.ioNamespaces[serverName].socketRoomInterval == "undefined"){
 			//spin up an interval to send out stats
 			this.ioNamespaces[serverName].socketRoomInterval = setInterval(()=>{
@@ -107,10 +108,18 @@ export class HandyAKT{
 				}).catch(error=>{
 					console.log('error fetching market aggregates',error);
 				});
-				this.checkForUpdates(serverName);
+				
 			},180000);
+			
+		}
+		if(typeof this.ioNamespaces[serverName].updateCheckInterval == "undefined"){
+			//spin up an interval to send out update stats every 20 mins
+			this.ioNamespaces[serverName].updateCheckInterval = setInterval(()=>{
+				this.checkForUpdates(serverName);
+			},1000*60*20);
 			this.checkForUpdates(serverName); //check right away
 		}
+
 	}
 	checkForUpdates(serverName){
 		this.handyUtils.checkForUpdates().then(data=>{
@@ -124,6 +133,9 @@ export class HandyAKT{
 		}).catch(error=>{
 			console.log('error checking for handyhost updates',error);
 		})
+		this.k8sUtils.checkForKubesprayUpdates().then(data=>{
+			this.ioNamespaces[serverName].namespace.to('akt').emit('kubesprayVersionStatus',data);
+		})
 	}
 	removeSocketListener(room,serverName){
 		//everybody left the room, kill the update interval
@@ -131,6 +143,8 @@ export class HandyAKT{
 		delete this.ioNamespaces[serverName].socketRoomInterval;
 		clearInterval(this.ioNamespaces[serverName].marketQueryInterval);
 		delete this.ioNamespaces[serverName].marketQueryInterval;
+		clearInterval(this.ioNamespaces[serverName].updateCheckInterval);
+		delete this.ioNamespaces[serverName].updateCheckInterval;
 	}
 	sendSocketUpdates(serverName){
 		this.getClusterStats().then(data=>{
@@ -385,6 +399,13 @@ export class HandyAKT{
 			break;
 			case 'haltProvider':
 				this.wallet.haltProvider().then(data=>{
+					resolve(data);
+				}).catch(error=>{
+					reject(error);
+				})
+			break;
+			case 'updateKubespray':
+				this.k8sUtils.updateKubespray(this.ioNamespaces).then(data=>{
 					resolve(data);
 				}).catch(error=>{
 					reject(error);

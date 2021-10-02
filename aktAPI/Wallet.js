@@ -12,6 +12,7 @@ export class Wallet{
 		this.utils = new AKTUtils();
 		this.commonUtils = new CommonUtils();
 		this.AKASH_NETWORK = 'mainnet';
+		this.providerPaused = false;
 		this.envUtils = new EnvUtils(true); //adhoc reset our rpc node on fall overs...
 	}
 	getState(){
@@ -734,7 +735,13 @@ export class Wallet{
 		}
 	}
 	startProvider(params){
-		
+		if(this.providerPaused){
+			//we pause the provider during updates
+			setTimeout(()=>{
+				this.startProvider(params);
+			},10000)
+			return;
+		}
 		//params = walletName,serverHost,prob password????
 		return new Promise((resolve,reject)=>{
 			let logInterval;
@@ -783,7 +790,7 @@ export class Wallet{
 					output += d.toString();
 				})
 				s.stderr.on('data',d=>{
-					console.log('stderr run provider:',d.toString());
+					console.log('provider stderr:',d.toString());
 					output += d.toString();
 				})
 				s.on('close',()=>{
@@ -820,6 +827,28 @@ export class Wallet{
 			});
 				
 		});
+	}
+	pauseProvider(){
+		this.providerPaused = true;
+		//now kill the provider. it will attempt auto-restart
+		//however since providerpaused==true we will keep trying
+		return new Promise((resolve,reject)=>{
+			const pidPath = process.env.HOME+'/.HandyHost/aktData/provider.pid';
+			if(fs.existsSync(pidPath)){
+				const pid = parseInt(fs.readFileSync(pidPath,'utf8').trim());
+				console.log('killing provider at',pid);
+				process.kill(pid);
+				fs.unlinkSync(pidPath);
+				resolve(true)
+			}
+			else{
+				resolve(true);
+			}
+		})
+	}
+	unpauseProvider(){
+		console.log('provider was unpaused');
+		this.providerPaused = false;
 	}
 	haltProvider(){
 		this.providerWasHalted = true;

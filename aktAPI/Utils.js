@@ -2,10 +2,12 @@ import {spawn} from 'child_process';
 import fs from 'fs';
 import {CommonUtils} from '../CommonUtils.js';
 export class AKTUtils{
-	constructor(configFilePath){
+	constructor(configFilePath,k8sUtils,walletUtils){
 		this.commonUtils = new CommonUtils();
 		this.configFilePath = configFilePath;
 		this.providerYAMLPath = process.env.HOME+'/.HandyHost/aktData/provider.yaml';
+		this.k8sUtils = k8sUtils;
+		this.walletUtils = walletUtils
 	}
 	getHosts(existingConfigData){
 		//get hosts on my local network
@@ -711,32 +713,51 @@ export class AKTUtils{
 				output += d.toString();
 			})
 			getVersion.on('close',()=>{
-				resolve({
-					installed:output.trim(),
-					latest:(process.env.AKASH_VERSION.indexOf('v') != 0 ? 'v'+process.env.AKASH_VERSION : process.env.AKASH_VERSION)
+				const latest = spawn('./getAkashLatestVersion.sh',[],{env:process.env,cwd:process.env.PWD+'/aktAPI'});
+				let latestOut = '';
+				latest.stdout.on('data',d=>{
+					latestOut += d.toString();
 				});
+				latest.on('close',()=>{
+					if(latestOut == ''){
+						//must have been an error, just return installed as to not cause false alarms
+						latestOut = output.trim();
+					}
+					resolve({
+						installed:output.trim(),
+						latest:latestOut.trim()
+					});
+				})
+				
 			})
 		});
 	}
 	updateAkashToLatest(socketIONamespaces){
 		return new Promise((resolve,reject)=>{
-			const args = ['./install.sh'];
-			const updater = spawn('bash',args,{shell:true,env:process.env,cwd:process.env.PWD+'/aktAPI'});
-			updater.stdout.on('data',d=>{
-				Object.keys(socketIONamespaces).map(serverName=>{
-					socketIONamespaces[serverName].namespace.to('akt').emit('akashInstallLogs',d.toString());
+			this.walletUtils.pauseProvider().then(()=>{
+				const args = ['./install.sh'];
+				const updater = spawn('bash',args,{shell:true,env:process.env,cwd:process.env.PWD+'/aktAPI'});
+				updater.stdout.on('data',d=>{
+					Object.keys(socketIONamespaces).map(serverName=>{
+						socketIONamespaces[serverName].namespace.to('akt').emit('akashInstallLogs',d.toString());
+					})
+					//socketIONamespace.to('akt').emit('akashInstallLogs',d.toString());
 				})
-				//socketIONamespace.to('akt').emit('akashInstallLogs',d.toString());
-			})
-			updater.stderr.on('data',d=>{
-				Object.keys(socketIONamespaces).map(serverName=>{
-					socketIONamespaces[serverName].namespace.to('akt').emit('akashInstallLogs',d.toString());
+				updater.stderr.on('data',d=>{
+					Object.keys(socketIONamespaces).map(serverName=>{
+						socketIONamespaces[serverName].namespace.to('akt').emit('akashInstallLogs',d.toString());
+					})
+					//socketIONamespace.to('akt').emit('akashInstallLogs',d.toString());
 				})
-				//socketIONamespace.to('akt').emit('akashInstallLogs',d.toString());
-			})
-			updater.on('close',()=>{
-				resolve({updated:true});
-			})
+				updater.on('close',()=>{
+					
+					resolve({updated:true});
+					this.k8sUtils.updateKubespray(socketIONamespaces).then((status)=>{
+						//provider is unpaused in updateKubespray
+						console.log('done updating kubespray/cluster',status);
+					})
+				})
+			});
 		})
 	}
 

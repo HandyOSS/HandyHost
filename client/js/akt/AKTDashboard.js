@@ -49,7 +49,7 @@ export class AKTDashboard {
 			console.log('k8sBuildLogStatus',data.part,data.status);
 			this.nodeConfig.clusterConfig.updateLogs('========= '+data.part+' is '+data.status+' ==========');
 			if(data.part == 'init'){
-				$('#logs .logsMessage').html('Kubernetes Cluster Installation is Finished!<br />Check your certificates and registration in the Dashboard and then start making $AKT')
+				$('#logs .logsMessage').html('Kubernetes Cluster Installation is Finished!<br />Check your certificates and registration in the Dashboard and then start making $AKT<br /><small>Note: Dashboard stats will take a few minutes to connect.</small>')
 				setTimeout(()=>{
 					this.clusterStatus.fetchStats();
 				},5000)
@@ -97,6 +97,20 @@ export class AKTDashboard {
 			else{
 				$('.options #providerCertificateWarning').hide();
 			}
+		})
+		this.socket.on('kubesprayVersionStatus',data=>{
+			console.log('kubespray version status',data);
+			if(data.local != data.latest){
+				//show kubespray update option
+				$('.options #kubesprayUpdateAvailable').show();
+				$('.options #kubesprayUpdateAvailable').off('click').on('click',()=>{
+					//show modal
+					this.showKubesprayUpdateModal(data);
+				})
+			}
+		})
+		this.socket.on('kubesprayUpdateLogs',(data,isDone)=>{
+			this.showKubesprayUpdateLogs(data,isDone);
 		})
 		
 	}
@@ -188,7 +202,7 @@ export class AKTDashboard {
 			$('#updateAKT .foreground, #updateAKT .background').html('🚀 Updating 🚀');
 			$('#updateAKT').addClass('isUpdating');
 			fetch('/api/akt/updateAkashToLatest').then(d=>d.json()).then(d=>{
-				$('.updateInfo').html('SUCCESSFULLY UPDATED!!')
+				$('.updateInfo').html('SUCCESSFULLY UPDATED AKASH!! Now we will update our cluster.')
 				setTimeout(()=>{
 					$('#updateAKTModal').hide();//.removeClass('showing');
 					$('#updateAKT').removeClass('isUpdating');
@@ -248,6 +262,90 @@ export class AKTDashboard {
 			$('#updateHandyHostModal').hide();
 		})
 		
+	}
+	showKubesprayUpdateLogs(data,isDone){
+		if(!$('#updateKubesprayModal .modalContent').hasClass('showing') && !$('#updateKubesprayModal .modalContent').hasClass('logsShowing') ){
+			$('#updateKubesprayModal').show();
+			$('#updateKubesprayModal .modalContent').addClass('showing');
+			$('#updateKubesprayModal .modalContent').addClass('logsShowing');
+			$('#updateKubespray').removeClass('save').addClass('cancel');
+			$('#updateKubespray .foreground, #updateKubespray .background').html('🚀 Updating...')
+			$('#cancelKubesprayUpdate').hide();
+			$('#updateKubesprayModal .closeModal').off('click');
+			//this may have been triggered by an akash update.
+			$('#updateAKTModal').hide();//.removeClass('showing');
+			$('#updateAKT').removeClass('isUpdating');
+			$('#updateAKT .foreground, #updateAKT .background').html('Update 🚀');
+		}
+		const message = typeof data == 'object' ? JSON.stringify(data) : data;
+		//$('#updateKubesprayModal .updateLogs pre').append(d+'\n');
+		if(typeof this.k8sUpdateLogs == "undefined"){
+			this.k8sUpdateLogs = []
+			$('#updateKubesprayModal .updateLogs pre').html('');
+		}
+		this.k8sUpdateLogs.push(message);
+		if(this.k8sUpdateLogs.length > 500){
+			this.k8sUpdateLogs = this.k8sUpdateLogs.slice(-300);
+			//redraw all logs
+			$('#updateKubesprayModal .updateLogs pre').html('')
+			this.k8sUpdateLogs.map(line=>{
+				$('#updateKubesprayModal .updateLogs pre').append(line);
+			})
+		}
+		else{
+			
+			$('#updateKubesprayModal .updateLogs pre').append(this.ansi_up.ansi_to_html(message))
+		}
+		if($('#updateKubesprayModal .updateLogs pre').height() > $('#updateKubesprayModal .updateLogs').height()){
+			const diff = $('#updateKubesprayModal .updateLogs pre').height() - $('#updateKubesprayModal .updateLogs').height();
+			$('#updateKubesprayModal .updateLogs').scrollTop(diff);
+		}
+		if(isDone === true){
+			//re-enable closing
+			$('#updateKubespray .foreground, #updateKubespray .background').html('🚀 Update Complete!')
+			$('#updateKubespray').addClass('doneUpdating')
+			$('#updateKubespray').removeClass('cancel').addClass('save');
+			$('#cancelKubesprayUpdate').show();
+			$('#cancelKubesprayUpdate .foreground, #cancelKubesprayUpdate .background').html('Close Updater');
+			$('#cancelKubesprayUpdate').off('click').on('click',()=>{
+				$('#updateKubespray .foreground, #updateKubespray .background').html('Update 🚀');
+				$('#updateKubesprayModal').hide();
+			})
+			$('#kubesprayUpdateAvailable').hide();
+			this.clusterStatus.fetchStats();
+		}
+	}
+	showKubesprayUpdateModal(data){
+		//updateKubesprayModal
+		$('#updateKubesprayModal .versionInfo').html(`
+			<div class="current">Local Version: ${data.local}</div>
+			<div class="latest">Latest Version: ${data.latest}</div>
+		`)
+		$('#updateKubesprayModal').show();
+		$('#updateKubesprayModal .modalContent').addClass('showing');
+		$('#cancelKubesprayUpdate .foreground, #cancelKubesprayUpdate .background').html('cancel');
+		$('#updateKubespray').off('click').on('click',()=>{
+			//perform update
+			if($('#updateKubespray').hasClass('cancel') || $('#updateKubespray').hasClass('doneUpdating')){
+				return false;
+			}
+			console.log('trigger update');
+			fetch('/api/akt/updateKubespray').then(d=>d.json()).then(data=>{
+				console.log('update script done');
+			})
+			$('#updateKubesprayModal .modalContent').addClass('logsShowing');
+			$('#updateKubespray').removeClass('save').addClass('cancel');
+			$('#updateKubespray .foreground, #updateKubespray .background').html('🚀 Updating...')
+			//after done, cange back to Update 🚀
+			$('#cancelKubesprayUpdate').hide();
+			$('#updateKubesprayModal .closeModal').off('click');
+		})
+		$('#cancelKubesprayUpdate').off('click').on('click',()=>{
+			$('#updateKubesprayModal').hide();
+		})
+		$('#updateKubesprayModal .closeModal').off('click').on('click',()=>{
+			$('#updateKubesprayModal').hide();
+		})
 	}
 	initDashboard(){
 		const _this = this;

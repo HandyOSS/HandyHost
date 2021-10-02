@@ -11,7 +11,6 @@ source $USERHOME/.bashrc
 export NVM_DIR="$USERHOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
-
 moveDaemonKey(){
     if [[ -s "$USERHOME/.HandyHost/keystore/daemon_$1" ]] ; then
         #client wants a launch daemon, lets move that pubkey to root area
@@ -63,6 +62,8 @@ ACTION="start"
 if [[ ! -z $1 ]] ; then
     ACTION="$1"
 fi
+#set modprobe filter for dvpn on ubuntu 20
+sudo modprobe ip6table_filter; \
 export HOME="$USERHOME"
 echo "ACTION IS $ACTION"
 if [ $USER = "root" ] ; then

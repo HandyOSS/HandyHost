@@ -257,3 +257,6 @@ html.darkTheme #qrModal
 .darkTheme .advancedToggle{
 	filter: invert(1);
 }
+.darkTheme #updateKubesprayModal .logsShowing pre{
+	filter: invert(1);
+}

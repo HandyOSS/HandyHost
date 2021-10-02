@@ -3,6 +3,7 @@ import {DonutChart} from '../charts/DonutChart.js';
 export class AKTClusterStatus{
 	constructor(dashboardComponent){
 		this.dashboard = dashboardComponent;
+		this.collateralAmount = 5; //provider collateral amount
 		fetch('./uiFragments/akt/clusterStatus.html').then(res=>res.text()).then(fragment=>{
 			$('body').append(fragment);
 			this.initDonuts();
@@ -111,7 +112,7 @@ export class AKTClusterStatus{
 		$el.append($q2);
 		$el.append($q3);
 		//we device locked AKT from open bids/leases
-		const lockedBalance = (parseInt(data.leasesActive) + parseInt(data.bidsOpen)) * 50;
+		const lockedBalance = (parseInt(data.leasesActive) + parseInt(data.bidsOpen)) * this.collateralAmount;
 		
 		if(lockedBalance > 0){
 			$('.accountBalance .balance .locked').remove();

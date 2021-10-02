@@ -1,6 +1,6 @@
 import https from 'https';
 import fs from 'fs';
-
+import {spawn} from 'child_process';
 /*
 export AKASH_NET="https://raw.githubusercontent.com/ovrclk/net/master/mainnet"
 export AKASH_VERSION="$(curl -s "$AKASH_NET/version.txt")"
@@ -55,7 +55,7 @@ export class EnvUtils{
 			}).catch(e=>{
 				reject(e);
 			});
-			this.getVersion().then(v=>{
+			this.getLocalVersion().then(v=>{
 				//console.log("SET ENV.AKASH_VERSION",v);
 				process.env.AKASH_VERSION = v;
 				done++;
@@ -97,8 +97,38 @@ export class EnvUtils{
 	getChainID(){
 		return this.queryHTTPSResponse(`${this.httpsPathBase}/chain-id.txt`);	
 	}
-	getVersion(){
-		return this.queryHTTPSResponse(`${this.httpsPathBase}/version.txt`)
+	getLocalVersion(){
+		return new Promise((resolve,reject)=>{
+			//~/.HandyHost/aktData/bin/akash version
+			const p = spawn(process.env.HOME+'/.HandyHost/aktData/bin/akash',['version'],{cwd:process.env.PWD+'/aktAPI'});
+			let out = '';
+			p.stdout.on('data',d=>{
+				out += d.toString();
+			})
+			p.stderr.on('data',d=>{
+				console.log('error fetching local akash version',d.toString())
+				reject(d.toString());
+			})
+			p.on('close',()=>{
+				resolve(out.trim());
+			})
+		})
+	}
+	getLatestVersion(){
+		return new Promise((resolve,reject)=>{
+			const p = spawn('./getAkashLatestVersion.sh',[],{cwd:process.env.PWD+'/aktAPI'});
+			let out = '';
+			p.stdout.on('data',d=>{
+				out += d.toString();
+			})
+			p.stderr.on('data',d=>{
+				console.log('error fetching latest akash version',d.toString())
+				reject(d.toString());
+			})
+			p.on('close',()=>{
+				resolve(out.trim());
+			})
+		})
 	}
 	getRPCNode(){
 		return new Promise((resolve,reject)=>{

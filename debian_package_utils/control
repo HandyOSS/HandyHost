@@ -4,7 +4,7 @@ Section: base
 Priority: optional
 Architecture: all
 Installed-Size: SIZE
-Depends: git, curl, build-essential, curl, openssl, uidmap, unzip, libssl-dev, avahi-utils, virtualenv, expect, kubectl, p7zip-full, genisoimage, whois, nmap, docker-ce, docker-ce-cli, containerd.io, systemd-container
+Depends: git, curl, build-essential, curl, openssl, uidmap, unzip, libssl-dev, avahi-utils, virtualenv, expect, kubectl, p7zip-full, genisoimage, whois, nmap, docker-ce, docker-ce-cli, containerd.io, systemd-container, jq
 Pre-Depends: apt-transport-https, ca-certificates, gnupg, lsb-release
 Maintainer: Handy Software <alex.smith@earthlab.tech>
 Description: HandyHost by Handy Software

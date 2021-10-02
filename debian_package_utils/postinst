@@ -272,14 +272,27 @@ else
 fi
 
 export AKASH_NET="https://raw.githubusercontent.com/ovrclk/net/master/mainnet"
-export AKASH_VERSION="$(curl -s "$AKASH_NET/version.txt")"
+export AKASH_VERSION=$(/bin/bash "$pwd/aktAPI/getAkashLatestVersion.sh")
 export AKASH_CHAIN_ID="$(curl -s "$AKASH_NET/chain-id.txt")"
 export AKASH_NODE="$(curl -s "$AKASH_NET/rpc-nodes.txt" | shuf -n 1)"
 
 cd ${USERHOME}/.HandyHost/aktData && \
 
+
+if [[ ! -d "${USERHOME}/.HandyHost/aktData/akashRepo" ]] ; then
+  mkdir -p "${USERHOME}/.HandyHost/aktData/akashRepo" && \
+  cd "${USERHOME}/.HandyHost/aktData/akashRepo" && \
+  git clone https://github.com/ovrclk/akash.git . && \
+  git checkout "$AKASH_VERSION"
+else
+  cd "${USERHOME}/.HandyHost/aktData/akashRepo" && \
+  git checkout "$AKASH_VERSION"
+fi
+
+chown -R "$USERNAME:$USERGROUP" "${USERHOME}/.HandyHost/aktData/akashRepo" && \
+
 echo "installing akash software..." && \
-curl https://raw.githubusercontent.com/ovrclk/akash/master/godownloader.sh | sh -s -- "v$AKASH_VERSION"
+curl https://raw.githubusercontent.com/ovrclk/akash/master/godownloader.sh | sh -s -- "$AKASH_VERSION"
 
 echo -e "########## \x1b[92mDONE INSTALLING!\x1b[0m ##########" && \
 cd $pwd && \
