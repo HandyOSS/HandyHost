@@ -24,13 +24,13 @@ export class SiaDashboard {
 				this.resize();
 			}
 		})
+		this.socket = io('/sia');
 		this.hostConfig = new SiaHostConfig();
 		this.storageConfig = new SiaStorageConfig();
-		this.walletConfig = new SiaWalletConfig();
+		this.walletConfig = new SiaWalletConfig(this);
 		this.walletInfo = new SiaWalletInfo();
 		this.contracts = new SiaContracts();
 
-		this.socket = io('/sia');
 		this.socket.on('connect',()=>{
 			console.log('socket connected');
 		})

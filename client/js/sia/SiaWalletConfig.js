@@ -1,5 +1,6 @@
 export class SiaWalletConfig{
-	constructor(){
+	constructor(dashboard){
+		this.dashboard = dashboard;
 		fetch('./uiFragments/sia/walletConfig.html').then(res=>res.text()).then(fragment=>{
 			$('body').append(fragment);
 			this.initWallet();
@@ -53,6 +54,7 @@ export class SiaWalletConfig{
 							const chain = result.chain;
 							if(!wallet.encrypted && !wallet.unlocked && !wallet.rescanning){
 								//is a new install, we need to make a wallet
+								this.dashboard.socket.emit('forceRealtimeUpdate');
 								console.log('wallet chain',wallet,chain);
 								if(typeof wallet.encrypted == "undefined" && typeof wallet.unlocked == "undefined" && typeof wallet.rescanning == "undefined"){
 									$('#walletInitModal').hide();
@@ -217,6 +219,10 @@ export class SiaWalletConfig{
 					$('.setPortsModal').removeClass('showing');
 					$('#walletInitModal').hide();
 					this.initWallet();
+					setTimeout(()=>{
+						//force a realtime update so that we see the syncing badge
+						this.dashboard.socket.emit('forceRealtimeUpdate');
+					},5000)
 				},3000)
 				
 			})

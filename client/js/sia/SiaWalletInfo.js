@@ -43,6 +43,7 @@ export class SiaWalletInfo{
 							resolve();
 						}
 					});
+					this.setSyncedStatus(data.height,chainData.height,chainData.synced);
 				});
 			});
 		});
