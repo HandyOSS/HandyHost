@@ -1033,13 +1033,16 @@ export class HandySia{
 		  console.log(`socket ${id} has left room ${room}`);
 		});*/
 		this.ioNamespaces[serverName].namespace.on('connection',(socket)=>{
-			this.addSocketConnection(socket);
+			this.addSocketConnection(socket,serverName);
 		});
 	}
-	addSocketConnection(socket){
+	addSocketConnection(socket,serverName){
 		socket.emit('register');
 		socket.on('subscribe',()=>{
 			socket.join('sia');
+		})
+		socket.on('forceRealtimeUpdate',()=>{
+			this.sendSocketUpdates(serverName);
 		})
 		socket.on('getAppStatus',()=>{
 			let status = {}
