@@ -260,3 +260,6 @@ html.darkTheme #qrModal
 .darkTheme #updateKubesprayModal .logsShowing pre{
 	filter: invert(1);
 }
+.darkTheme .disclaimer{
+	filter: invert(1);
+}

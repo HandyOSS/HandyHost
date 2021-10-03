@@ -40,7 +40,7 @@
 		<div class="introText">
 			<div class="welcome">Welcome to Sia!</div>
 			<div class="welcomeBody">
-				Before we start the Sia fullnode, you need to make sure to setup port forwarding for default Sia ports (9981-9984) in your network router for TCP traffic to this device&#039;s IP (<span class="ip">IP address</span>). After you have configured port forwarding, click save to launch your Sia node.
+				Before we start the Sia fullnode, you need to make sure to setup port forwarding for default Sia ports (9981-9984) in your network router for TCP traffic to this device&#039;s IP (<span class="ip">IP address</span>). After you have configured port forwarding, click Start Sia Node to being chain sync.
 			</div>
 			<div class="setCustom">
 				<input type="checkbox" id="useCustomPorts" />
@@ -69,8 +69,8 @@
 		
 		
 		<div class="button save" id="savePorts">
-			<div class="foreground">Start Node</div>
-			<div class="background">Start Node</div>
+			<div class="foreground">Start Sia Node</div>
+			<div class="background">Start Sia Node</div>
 		</div>
 		<!-- <div class="button cancel" id="cancelPorts">
 			<div class="foreground">Cancel</div>
@@ -84,6 +84,9 @@
 		<div id="mnemonicOut"></div>
 		<div class="button save" id="mnemonicConfirmation0"><div class="foreground">I have written this down somewhere safe</div><div class="background">I have written this down somewhere safe</div></div>
 		<div class="button save" id="mnemonicConfirmation1"><div class="foreground">I&#039;m serious. This is the only time you see this recovery phrase.</div><div class="background">I&#039;m serious. This is the only time you see this recovery phrase.</div></div>
+		<div class="disclaimer">
+			Disclaimer: Please be sure you wrote this down. We do not store your private keys anywhere within the app so it is completely your responsibility (so verify and do not lose it).
+		</div>
 	</div>
 	<div class="seedImportMessage">
 		<div class="logo">
@@ -91,6 +94,9 @@
 		</div>
 		<div class="message success">
 			Seed Import was successful. Sia is now scanning the entire chain for transactions which can take hours. Thanks for being patient, if there were a faster way to import from seed, we would be doing it.
+		</div>
+		<div class="disclaimer">
+			Disclaimer: We do not store your private keys anywhere within the app so please do not lose your keys.
 		</div>
 		<div class="message error"></div>
 		<div class="button save" id="importSeedMessageConf"><div class="foreground">Done</div><div class="background">Done</div></div>

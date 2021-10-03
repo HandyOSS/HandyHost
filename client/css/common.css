@@ -333,6 +333,12 @@ html,body{
 #handyhostUpdatesWarning{
   display:none;
 }
+.disclaimer{
+	color: #a00;
+	padding: 5px 10px;
+	float: left;
+	width: calc(100% - 20px);
+}
 
 /*loading spinner*/
 .loadingPanel{

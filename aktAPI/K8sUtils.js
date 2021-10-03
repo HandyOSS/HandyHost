@@ -999,6 +999,13 @@ export class K8sUtils{
 			isDiskConfigured:true
 		}
 		fs.writeFileSync(this.configJSONPath,JSON.stringify(clusterConfig),'utf8');
+		let preconfiguredMonikers = {};
+		const preconfiguredMonikersPath = process.env.HOME+'/.HandyHost/aktData/preconfiguredMonikers.json';
+		if(fs.existsSync(preconfiguredMonikersPath)){
+			preconfiguredMonikers = JSON.parse(fs.readFileSync(preconfiguredMonikersPath,'utf8'));
+		}
+		preconfiguredMonikers[moniker] = true;
+		fs.writeFileSync(JSON.stringify(preconfiguredMonikersPath,null,2),'utf8');
 		console.log('added node to config',ipAddress,moniker);
 		setTimeout(()=>{
 			//give the USB time to unmount and the node time to restart..
@@ -1029,6 +1036,33 @@ export class K8sUtils{
 				p.on('close',()=>{
 					console.log('done with kubespray update process');
 					const configPath = this.configJSONPath;
+					let shouldSkipKubernetesRebuild = false;
+					if(!fs.exists(configPath)){
+						shouldSkipKubernetesRebuild = true;
+					}
+					else{
+						const config = JSON.parse(fs.readFileSync(configPath));
+						let hasK8s = false;
+						if(typeof config.nodes == "undefined"){
+							shouldSkipKubernetesRebuild = true;
+						}
+						else{
+							config.nodes.map(node=>{
+								if(typeof node.kubernetes != "undefined"){
+									hasK8s = true;
+								}
+							})
+							if(!hasK8s){
+								shouldSkipKubernetesRebuild = true;
+							}
+						}
+					}
+					if(shouldSkipKubernetesRebuild){
+						console.log('skipping kubernetes rebuild, no nodes present')
+						resolve({"updated":true})
+						ioNamespaces[serverName].namespace.to('akt').emit('kubesprayUpdateLogs','Update Finished!',true);
+						return;
+					}
 					this.createKubernetesInventory(configPath,ioNamespaces,'kubesprayUpdateLogs').then((status)=>{
 						console.log('create kubernetes inventory done');
 						this.walletUtils.unpauseProvider();

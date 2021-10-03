@@ -212,9 +212,23 @@ export class AKTUtils{
 					})
 					
 				}
+				let preconfiguredMonikers = {};
+				const preconfiguredMonikersPath = process.env.HOME+'/.HandyHost/aktData/preconfiguredMonikers.json';
+				if(fs.existsSync(preconfiguredMonikersPath)){
+					preconfiguredMonikers = JSON.parse(fs.readFileSync(preconfiguredMonikersPath,'utf8'));
+				}
+				if(Object.keys(preconfiguredMonikers).length > 0){
+					output.map(node=>{
+						if(preconfiguredMonikers[node.hostname.split('.')[0]]){
+							node.sshConfigured = true;
+							node.user = 'ansible';
+						}
+					})
+				}
 					
 				
 				resolve(output);
+				
 			}).catch(error=>{
 				console.log('error with host lookup',error);
 				resolve(machines);
