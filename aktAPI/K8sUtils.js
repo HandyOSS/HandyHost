@@ -271,7 +271,7 @@ export class K8sUtils{
 				//socketIONamespace.to('akt').emit(emitMessage,'POST INSTALL: '+d.toString());
 			})
 			postProcess.on('close',()=>{
-				this.installMetricsServer(socketIONamespaces).then(()=>{
+				this.installMetricsServer(socketIONamespaces,customEmitMessage).then(()=>{
 					resolve();
 				})
 				
@@ -297,8 +297,10 @@ export class K8sUtils{
 			
 		});
 	}
-	installMetricsServer(socketIONamespaces){
+	installMetricsServer(socketIONamespaces,customEmitMessage){
 		return new Promise((installResolve,installReject)=>{
+			const emitMessage = typeof customEmitMessage == "undefined" ? 'k8sBuildLogs' : customEmitMessage;
+			
 			new Promise((resolve,reject)=>{
 				const url = 'https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml';
 				
@@ -321,6 +323,7 @@ export class K8sUtils{
 					//console.log('args',args);
 					if(args.length > 0){
 						if(args.indexOf('--kubelet-insecure-tls') == -1){
+							//only for metrics on my local network.
 							args.push('--kubelet-insecure-tls');
 						}
 						d.spec.template.spec.containers[0].args = args;
@@ -328,20 +331,21 @@ export class K8sUtils{
 					output.push(yaml.dump(d));
 				});
 				Object.keys(socketIONamespaces).map(serverName=>{
-					socketIONamespaces[serverName].namespace.to('akt').emit('k8sBuildLogs','Setting up Metrics Server');
+					socketIONamespaces[serverName].namespace.to('akt').emit(emitMessage,'Setting up Metrics Server');
 				})
 				//socketIONamespace.to('akt').emit('k8sBuildLogs','Setting up Metrics Server');
 				fs.writeFileSync(process.env.HOME+'/.HandyHost/aktData/akash_cluster_resources/metrics-server-handyhost.yaml',output.join('---\n'),'utf8');
 				const applyKubectl = spawn('./installMetricsServer.sh',[],{env:process.env,cwd:process.env.PWD+'/aktAPI'});
+				
 				applyKubectl.stdout.on('data',d=>{
 					Object.keys(socketIONamespaces).map(serverName=>{
-						socketIONamespaces[serverName].namespace.to('akt').emit('k8sBuildLogs','POST INSTALL: '+d.toString());
+						socketIONamespaces[serverName].namespace.to('akt').emit(emitMessage,'POST INSTALL: '+d.toString());
 					})
 					//socketIONamespace.to('akt').emit('k8sBuildLogs','POST INSTALL: '+d.toString());
 				})
 				applyKubectl.stderr.on('data',d=>{
 					Object.keys(socketIONamespaces).map(serverName=>{
-						socketIONamespaces[serverName].namespace.to('akt').emit('k8sBuildLogs','POST INSTALL: '+d.toString());
+						socketIONamespaces[serverName].namespace.to('akt').emit(emitMessage,'POST INSTALL: '+d.toString());
 					})
 					//socketIONamespace.to('akt').emit('k8sBuildLogs','POST INSTALL: '+d.toString());
 				})
@@ -1005,7 +1009,7 @@ export class K8sUtils{
 			preconfiguredMonikers = JSON.parse(fs.readFileSync(preconfiguredMonikersPath,'utf8'));
 		}
 		preconfiguredMonikers[moniker] = true;
-		fs.writeFileSync(JSON.stringify(preconfiguredMonikersPath,null,2),'utf8');
+		fs.writeFileSync(preconfiguredMonikersPath,JSON.stringify(preconfiguredMonikers,null,2),'utf8');
 		console.log('added node to config',ipAddress,moniker);
 		setTimeout(()=>{
 			//give the USB time to unmount and the node time to restart..
@@ -1036,12 +1040,18 @@ export class K8sUtils{
 				p.on('close',()=>{
 					console.log('done with kubespray update process');
 					const configPath = this.configJSONPath;
+					const inventoryExists = false;
+					const inventoryPath = process.env.HOME+'/.HandyHost/aktData/kubespray/inventory/handyhost';
+
 					let shouldSkipKubernetesRebuild = false;
-					if(!fs.exists(configPath)){
+					//if(!fs.existsSync(configPath)){
+					if(!fs.existsSync(inventoryPath)){
+						//we only want to skip if the inventory.yaml exists aka its been built before
 						shouldSkipKubernetesRebuild = true;
 					}
 					else{
-						const config = JSON.parse(fs.readFileSync(configPath));
+						//ok it has yaml inventory, make sure config has nodes present
+						const config = JSON.parse(fs.readFileSync(configPath,'utf8'));
 						let hasK8s = false;
 						if(typeof config.nodes == "undefined"){
 							shouldSkipKubernetesRebuild = true;
@@ -1059,8 +1069,10 @@ export class K8sUtils{
 					}
 					if(shouldSkipKubernetesRebuild){
 						console.log('skipping kubernetes rebuild, no nodes present')
+						Object.keys(ioNamespaces).map(serverName=>{
+							ioNamespaces[serverName].namespace.to('akt').emit('kubesprayUpdateLogs','Update Finished!',true);	
+						});
 						resolve({"updated":true})
-						ioNamespaces[serverName].namespace.to('akt').emit('kubesprayUpdateLogs','Update Finished!',true);
 						return;
 					}
 					this.createKubernetesInventory(configPath,ioNamespaces,'kubesprayUpdateLogs').then((status)=>{

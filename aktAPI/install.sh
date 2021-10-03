@@ -6,8 +6,3 @@ export AKASH_VERSION=$(/bin/bash "$pwd/getAkashLatestVersion.sh")
 echo "installing akash software..." && \
 cd "$HOME/.HandyHost/aktData" && \
 curl https://raw.githubusercontent.com/ovrclk/akash/master/godownloader.sh | sh -s -- "$AKASH_VERSION"
-
-
-
-#update kubespray and the local cluster
-/bin/bash "$pwd/updateKubespray.sh"

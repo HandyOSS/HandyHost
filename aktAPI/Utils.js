@@ -204,6 +204,33 @@ export class AKTUtils{
 				
 				if(typeof existingConfigData.preConfiguredNVMe != "undefined"){
 					//check if this is a preconfigured node so we can mark that we already did ssh access
+					//seems like sometimes nmap and/or arp dont bring back hostnames. in which case check if it's preconfigd node by ip
+					let indexedByIP = {};
+					if(typeof existingConfigData.preConfiguredNVMe != "undefined"){
+						Object.keys(existingConfigData.preConfiguredNVMe).map(machineName=>{
+							const ip = existingConfigData.preConfiguredNVMe[machineName].ip;
+							const localAddress = existingConfigData.preConfiguredNVMe[machineName].reservedNetworkHost;
+							const hostname = machineName;
+							indexedByIP[ip] = {
+								ip,
+								localAddress,
+								hostname
+							};
+						});
+						
+					}
+					output.map(node=>{
+						if(node.hostname == '?'){
+							if(typeof indexedByIP[node.ip] != "undefined"){
+								node.hostname = indexedByIP[node.ip].localAddress;
+								/*if(node.hostname.indexOf('.local') == -1){
+									node.hostname = node.hostname+'.local';
+								}*/
+							}
+						}
+					})
+				
+					
 					output.map(node=>{
 						if(typeof existingConfigData.preConfiguredNVMe[node.hostname.split('.')[0]] != "undefined"){
 							node.sshConfigured = true;
@@ -765,11 +792,12 @@ export class AKTUtils{
 				})
 				updater.on('close',()=>{
 					
-					resolve({updated:true});
 					this.k8sUtils.updateKubespray(socketIONamespaces).then((status)=>{
 						//provider is unpaused in updateKubespray
 						console.log('done updating kubespray/cluster',status);
 					})
+					resolve({updated:true});
+					
 				})
 			});
 		})

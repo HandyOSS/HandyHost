@@ -2,7 +2,16 @@
 USERHOME="$HOME"
 pwd="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 DIDUPDATE=0
-LATEST_KUBESPRAY=$(jq -r 'map(select(.prerelease != true)) | first | .tag_name' <<< $(curl --silent "https://api.github.com/repos/kubernetes-sigs/kubespray/releases"))
+
+VERSIONFILE="$HOME/.HandyHost/aktData/latestKubesprayVersion"
+if [[ ! -s "$VERSIONFILE" ]] ; then
+  VERSION=$(jq -r 'map(select(.prerelease != true)) | first | .tag_name' <<< $(curl --silent "https://api.github.com/repos/kubernetes-sigs/kubespray/releases"))
+else
+  VERSION=$(cat "$VERSIONFILE")
+fi
+
+LATEST_KUBESPRAY="$VERSION"
+
 if [[ ! -d "${USERHOME}/.HandyHost/aktData/kubespray" ]] ; then
   mkdir -p "${USERHOME}/.HandyHost/aktData/kubespray" && \
   cd "${USERHOME}/.HandyHost/aktData/kubespray" && \
@@ -14,8 +23,8 @@ if [[ ! -d "${USERHOME}/.HandyHost/aktData/kubespray" ]] ; then
 else
   echo "kubespray already installed, check for updates" && \
   cd "${USERHOME}/.HandyHost/aktData/kubespray" && \
-  git fetch --all && \
-  LOCAL_KUBESPRAY=$(cd "$USERHOME/.HandyHost/aktData/kubespray" && git describe --tags )
+  git fetch --all
+  LOCAL_KUBESPRAY=$(git describe --tags )
 
   if [[ "$LOCAL_KUBESPRAY" == "$LATEST_KUBESPRAY" ]]; then
     echo "Kubespray is up to date"
@@ -50,12 +59,5 @@ else
 fi
 
 chown -R "$USERNAME:$USERGROUP" "${USERHOME}/.HandyHost/aktData/akashRepo"
-#running all this in node per usual
-#check if we have an inventory
-# if [[ -s "$HOME/.HandyHost/aktData/inventory.yaml" ]] ; then
-# 	echo "updating akash kubernetes cluster"
-# 	echo "teardown cluster"
-# 	/bin/bash "$pwd/teardownK8sCluster.sh"
-# 	/bin/bash "$pwd/initK8sCluster.sh"
-# 	/bin/bash "$pwd/postInitK8sCluster.sh"
-# fi
+
+echo "done checking out kubespray and akash repos"

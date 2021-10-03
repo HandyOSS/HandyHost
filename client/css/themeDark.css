@@ -263,3 +263,6 @@ html.darkTheme #qrModal
 .darkTheme .disclaimer{
 	filter: invert(1);
 }
+.darkTheme .importNote{
+	filter: invert(1);
+}

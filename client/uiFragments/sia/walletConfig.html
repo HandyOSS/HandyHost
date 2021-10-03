@@ -25,7 +25,9 @@
 			<textarea id="mnemonic"></textarea>
 		</div>
 		<div class="button save" id="importWallet"><div class="foreground">Import Wallet</div><div class="background">Import Wallet</div></div>
-
+		<div class="walletNote">
+			Note: If you are going to run multiple Sia Host Machines, DO NOT use the same wallet on multiple instances. Each unique host needs its own wallet.
+		</div>
 	</div>
 	<!-- 
 	--host-addr 9982
@@ -94,10 +96,11 @@
 		</div>
 		<div class="message success">
 			Seed Import was successful. Sia is now scanning the entire chain for transactions which can take hours. Thanks for being patient, if there were a faster way to import from seed, we would be doing it.
+			<div class="disclaimer">
+				Disclaimer: We do not store your private keys anywhere within the app so please do not lose your keys.
+			</div>
 		</div>
-		<div class="disclaimer">
-			Disclaimer: We do not store your private keys anywhere within the app so please do not lose your keys.
-		</div>
+		
 		<div class="message error"></div>
 		<div class="button save" id="importSeedMessageConf"><div class="foreground">Done</div><div class="background">Done</div></div>
 		

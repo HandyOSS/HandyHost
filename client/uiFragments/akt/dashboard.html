@@ -154,12 +154,16 @@
 			Updating will not remove any running deployments but may cause up to a minute of downtime post-update.
 			<br />
 			<br />
-			If your Akash provider is running, we will turn it pause it during the update, and restart it after the update is finished.
+			If your Akash provider is running, we will pause it during the update, and restart it after the update is finished.
 			<br />
 			<br />
-			We also recommend you first check the HandyHost Github releases page to make sure (in rare cases) that there are no special requirements or update packages for you to install instead of this in-app update: <a href="https://github.com/HandyOSS/HandyHost/releases" target="_blank">https://github.com/HandyOSS/HandyHost/releases</a>
+			Priority Order of Updates:<br />
+			First: If there are HandyHost Application updates available in the main menu, please install them first.<br />
+			Second: If there are Akash Provider updates available in the main menu, please install them second. Note: Akash Provider update will automatically check for and apply Kubespray Updates.<br />
+			Third: If there are Cluster updates available in the main menu, please install them last. 
 			<br />
 			<br />
+			
 		</div>
 
 		<div class="updateLogs">
@@ -202,13 +206,13 @@
 				<div class="toggleLabel">Dark Mode</div>
 			</li>
 			<li id="updateAkash">
-				<span class="emoji">⚠️</span> Update Available
+				<span class="emoji">⚠️</span> Akash Update Available
 			</li>
 			<li id="handyhostUpdatesWarning">
-				<span class="warningEmoji">⚠️</span> HandyHost Updates Available
+				<span class="warningEmoji">⚠️</span> HandyHost Update Available
 			</li>
 			<li id="kubesprayUpdateAvailable">
-				<span class="warningEmoji">⚠️</span> Cluster Updates Available
+				<span class="warningEmoji">⚠️</span> Cluster Update Available
 			</li>
 			<li id="providerRegistrationWarning" data-action="create">
 				<span class="warningEmoji">⚠️</span> Provider Registration <span class="action"></span> Required

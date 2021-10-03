@@ -395,7 +395,9 @@ export class Wallet{
 				}
 			});
 			request.end();
-			
+			request.on('error',e=>{
+				reject(e);
+			})
 		})
 	}
 	getProviderRegistrationStatus(){

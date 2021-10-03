@@ -21,10 +21,12 @@ export class SiaWalletConfig{
 					const wallet = result.wallet;
 					const chain = result.chain;
 					this.isChainSynced = chain.synced;
-					if(wallet.height != chain.height || !chain.synced){
+					if(/*wallet.height != chain.height ||*/ !chain.synced){
+						$('.disclaimer').hide();
 						this.showErrorModal('You cannot create or import a new wallet during sync. <br />Chain Synced: '+chain.synced+'<br />Chain Height: '+chain.height+'<br />Wallet Height: '+wallet.height);
 					}
 					else{
+						$('.disclaimer').show();
 						this.showInitModal(chain.synced);
 					}
 				})
@@ -268,7 +270,7 @@ export class SiaWalletConfig{
 		$('.walletUtil #importWallet .foreground, .walletUtil #importWallet .background').html('Import Wallet');
 		if(!isSynced){
 			$('.importNote').remove();
-			$('.walletUtil #importWallet').after('<div class="importNote">Note: You cannot import a wallet during chain sync.</div>')
+			$('.walletUtil #importWallet').after('<div class="importNote">You cannot import a wallet during chain sync</div>')
 			$('.walletUtil #importWallet').removeClass('save').addClass('cancel');
 		}
 		else{	

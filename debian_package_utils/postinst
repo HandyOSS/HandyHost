@@ -220,29 +220,32 @@ fi
 
 echo -e "########## \x1b[92mInstalling Akash\x1b[0m ##########" && \
 
+LATEST_KUBESPRAY=$(jq -r 'map(select(.prerelease != true)) | first | .tag_name' <<< $(curl --silent "https://api.github.com/repos/kubernetes-sigs/kubespray/releases"))
+
 cd $pwd/aktAPI && \
 if [[ ! -d ${USERHOME}/.HandyHost/aktData/kubespray ]] ; then
   mkdir -p ${USERHOME}/.HandyHost/aktData/kubespray && \
   cd ${USERHOME}/.HandyHost/aktData/kubespray && \
   git clone https://github.com/kubernetes-sigs/kubespray.git . && \
+  git checkout "$LATEST_KUBESPRAY" && \
   virtualenv --python=python3 venv && \
   . venv/bin/activate && \
   pip3 install -r requirements.txt
 else
   echo "kubespray already installed, check for updates" && \
   cd ${USERHOME}/.HandyHost/aktData/kubespray && \
-  git fetch && \
-  LOCAL=$(git rev-parse @)
-  REMOTE=$(git rev-parse @{u})
-  BASE=$(git merge-base @ @{u})
+  git fetch --all && \
+  LOCAL_KUBESPRAY=$(git describe --tags)
 
-  if [ "$LOCAL"=="$REMOTE" ]; then
+  if [[ "$LOCAL_KUBESPRAY" == "$LATEST_KUBESPRAY" ]]; then
     echo "Kubespray is up to date"
   else
     echo "kubespray is out of date, updating" && \
-    git pull origin master
+    git fetch --all && \
+    git checkout "$LATEST_KUBESPRAY" && \
     virtualenv --python=python3 venv && \
     . venv/bin/activate && \
+    pip3 uninstall -y ansible && \
     pip3 install -r requirements.txt
   fi
 fi
@@ -261,7 +264,7 @@ else
   REMOTE=$(git rev-parse @{u})
   BASE=$(git merge-base @ @{u})
 
-  if [ "$LOCAL"=="$REMOTE" ]; then
+  if [[ "$LOCAL" == "$REMOTE" ]]; then
     echo "ubuntu-autoinstall-generator is up to date"
   else
     echo "ubuntu-autoinstall-generator is out of date, updating" && \
@@ -291,7 +294,7 @@ fi
 
 chown -R "$USERNAME:$USERGROUP" "${USERHOME}/.HandyHost/aktData/akashRepo" && \
 
-echo "installing akash software..." && \
+echo "######## \x1b[92mINSTALLING AKASH APP\x1b[0m ##########" && \
 curl https://raw.githubusercontent.com/ovrclk/akash/master/godownloader.sh | sh -s -- "$AKASH_VERSION"
 
 echo -e "########## \x1b[92mDONE INSTALLING!\x1b[0m ##########" && \

@@ -127,6 +127,10 @@ export class AKTClusterConfig{
 				$('#clusterInventory').show();
 			})
 		}
+		else{
+			//clear out the kubernetes advanced opts
+			$('#clusterInventory .configData').html('');
+		}
 	}
 	autoConfigureK8sData(configData){
 		let hasMaster = false;
@@ -329,10 +333,10 @@ export class AKTClusterConfig{
 			})
 		})
 		$('#initCluster').off('click').on('click',()=>{
-			if(!confirm('If there is currently a kubernetes cluster, this operation will completely remove it. Still Continue?')){
+			/*if(!confirm('If there is currently a kubernetes cluster, this operation will completely remove it. Still Continue?')){
 				console.log('aborted');
 				return;
-			}
+			}*/
 			let configOut = JSON.parse(JSON.stringify(configData));
 			configOut.nodes = configOut.nodes.filter(n=>{
 				return n.selected;
@@ -378,7 +382,11 @@ export class AKTClusterConfig{
 	}
 	initLogs(){
 		$('#logs').addClass('showing');
-		$('#logs .logsMessage').html('Kubernetes cluster build is running, it will take at least 5-10 minutes...')
+		$('#logs .logsMessage').html(`
+			Kubernetes cluster build is running, it will take at least 5-20 minutes.
+			<br />
+			<small>Note: Your Current Deployments will not be removed, there may be a minute of cutover post-install.</small>
+			`);
 		setTimeout(()=>{
 			$('body').scrollTop($('#initCluster').offset().top)
 		},250);
@@ -493,6 +501,7 @@ export class AKTClusterConfig{
 				$('.walletUtil').removeClass('showing');
 				$('#walletInitModal').show();
 				this.parentComponent.verifyImportFromSeed('Saved Cluster Config!');
+				this.fetchData();
 
 			})
 			.catch((res)=>{ 
