@@ -273,6 +273,7 @@ fi
 chown -R "$USERNAME:$USERGROUP" "${USERHOME}/.HandyHost/aktData/akashRepo" && \
 
 echo "installing Akash software..." && \
+cd ${USERHOME}/.HandyHost/aktData && \
 curl https://raw.githubusercontent.com/ovrclk/akash/master/godownloader.sh | sh -s -- "$AKASH_VERSION"
 
 echo -e "########## \x1b[92mDONE INSTALLING!\x1b[0m ##########" && \
