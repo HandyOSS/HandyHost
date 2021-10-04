@@ -745,6 +745,7 @@ export class K8sUtils{
 						else{
 							//ok lets flash the drive then
 							if(typeof devicePath != "undefined"){
+								console.log("WILL MAKE ISO NOW",devicePath);
 								_this.createUbuntuISO(devicePath,pw).then(data=>{
 									resolve(data)
 								}).catch(error=>{

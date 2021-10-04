@@ -1,10 +1,11 @@
 import http from 'http';
 import fs from 'fs';
+const siaAPIPort = '10801';
 export const siacCommand = (endpoint,requestType,useAuth) => {
 	return new Promise((resolve,reject)=>{
 		const options = {
 			host: 'localhost',
-			port:'9980',
+			port:siaAPIPort,
 			path: '/'+endpoint,
 			headers : {
 				'User-Agent': 'Sia-Agent'
@@ -67,7 +68,7 @@ export const siacPostDataCommand = (endpoint,dataStr) =>{
 	return new Promise((resolve,reject)=>{
 		const options = {
 			host: 'localhost',
-			port:'9980',
+			port:siaAPIPort,
 			path: '/'+endpoint,
 			headers : {
 				'User-Agent': 'Sia-Agent',

@@ -4,6 +4,10 @@
 			"description":"Internal Sia RPC Port",
 			"service":"SC"
 		},
+		"10801":{
+			"description":"HandyHost Sia Internal API Port",
+			"service":"SC"
+		},
 		"8443":{
 			"description":"Akash Provider Port",
 			"service":"AKT"

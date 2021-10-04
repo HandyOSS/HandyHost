@@ -414,9 +414,9 @@ export class AKTClusterConfig{
 			}*/
 			$('.logs pre').append(this.ansi_up.ansi_to_html(message))
 		}
-		if($('.logs pre').height() > $('.logs').height()){
-			const diff = $('.logs pre').height() - $('.logs').height();
-			$('.logs').scrollTop(diff);
+		if($('#logs .logs pre').height() > $('.logs').height()){
+			const diff = $('#logs .logs pre').height() - $('#logs .logs').height();
+			$('#logs .logs').scrollTop(diff);
 		}
 
 

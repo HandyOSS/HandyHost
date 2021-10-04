@@ -37,6 +37,10 @@ export class SiaWalletInfo{
 								resolve();
 							})
 						}
+						else if(!data.encrypted && !data.rescanning && !data.unlocked && data.height == 0){
+							this.showEmptyUI(data);
+							resolve();
+						}
 						else if(data.rescanning){
 							//is a new wallet from seed, display a message
 							this.showRescanUI(data);
@@ -56,6 +60,20 @@ export class SiaWalletInfo{
 				</div>
 				<div class="message">
 					Your imported wallet is currently syncing. Once wallet data is present, this panel will show information about the wallet state.
+				</div>
+			</div>`)
+		$('#siaWalletInfo .walletOptions').html($warningMessage);
+	}
+	showEmptyUI(walletData){
+		const $warningMessage = $(`
+			<div class="syncWarning">
+				<div class="logo">
+					<img src="./img/SiacoinSCLogo.svg" />
+				</div>
+				<div class="message">
+					Either you just started re-scanning, or you need to add or import a new wallet.
+					<br />
+					Once wallet data is present, this panel will show information about the wallet state.
 				</div>
 			</div>`)
 		$('#siaWalletInfo .walletOptions').html($warningMessage);

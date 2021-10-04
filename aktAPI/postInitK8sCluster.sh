@@ -3,6 +3,13 @@
 #./postInitK8sCluster.sh ansible akashnode1.local akashnode1 192.168.0.17
 #./postInitK8sCluster.sh ansible akash-disastrous-smooth-offer.local akash-disastrous-smooth-offer 192.168.0.220
 AKASH_VERSION=$(/bin/bash "$PWD/getAkashLatestVersion.sh")
+
+#first double check we have the ingress crd and other yaml resources from the akash repo
+echo "checkout akash repo"
+/bin/bash "$PWD/updateAkashRepo.sh"
+echo "done checking out akash repo"
+#done checking for yamls
+
 echo "INGRESS NODE NAME $3" && \
 echo "MASTER IP $4" && \
 cd "$HOME/.HandyHost/aktData"
@@ -30,7 +37,7 @@ cp "${HOME}/.HandyHost/aktData/akashRepo/pkg/apis/akash.network/v1/crd.yaml" ./a
 kubectl apply -f ./akash_cluster_resources/crd.yaml --overwrite && \
 
 ## new things: we aply the provider crd and new ingress
-cd $HOME/.HandyHost/aktData/akashRepo/script
+cd "$HOME/.HandyHost/aktData/akashRepo/script"
 kubectl apply -f ../pkg/apis/akash.network/v1/provider_hosts_crd.yaml
 kubectl apply -f ../_run/ingress-nginx.yaml
 kubectl apply -f ../_run/ingress-nginx-class.yaml

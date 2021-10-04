@@ -110,6 +110,7 @@ export class Daemon{
 			let muxWSPort = ':9984';
 			let hostPort = ':9982';
 			let rpcPort = ':9981';
+			let apiPort = ':10801';
 
 			if(fs.existsSync(siaPortsPath)){
 				ports = JSON.parse(fs.readFileSync(siaPortsPath,'utf8'));
@@ -131,6 +132,7 @@ export class Daemon{
 			console.log('rpcPort',rpcPort);
 			console.log('muxPort',muxPort);
 			console.log('muxWSPort',muxWSPort);
+			console.log('apiPort',apiPort)
 			//start siad
 			const opts = {
 				detached:true
@@ -146,6 +148,8 @@ export class Daemon{
 			opts.stdio = ['ignore',siadOutputStdout,siadOutputStderr];
 			
 			const siadCLIOpts = [
+				'--api-addr',
+				'localhost'+apiPort,
 				'--siamux-addr',
 				muxPort,//':9985',
 				'--siamux-addr-ws',

@@ -228,8 +228,8 @@ if [[ ! -d "${HOME}/.HandyHost/aktData/kubespray" ]] ; then
   cd "${HOME}/.HandyHost/aktData/kubespray" && \
   git clone https://github.com/kubernetes-sigs/kubespray.git . && \
   git checkout "$LATEST_KUBESPRAY"
-  virtualenv --python=python3 venv && \
-  . venv/bin/activate && \
+  virtualenv --python=python3 venv
+  . venv/bin/activate
   pip3 install -r requirements.txt
 else
 	echo "kubespray already installed, check for updates" && \
@@ -244,9 +244,9 @@ else
     echo "kubespray is out of date, updating" && \
     git fetch --all
     git checkout "$LATEST_KUBESPRAY"
-    virtualenv --python=python3 venv && \
-    . venv/bin/activate && \
-    pip3 uninstall -y ansible && \
+    virtualenv --python=python3 venv
+    . venv/bin/activate
+    pip3 uninstall -y ansible
     pip3 install -r requirements.txt
   fi
 fi
@@ -284,6 +284,7 @@ su - $USERNAME -c "brew install coreutils" && \
 su - $USERNAME -c "brew install gnupg" && \
 su - $USERNAME -c "brew install openssl@1.1" && \
 su - $USERNAME -c "brew install jq" && \
+su - $USERNAME -c "brew install nmap" && \
 echo "Finished Installing Akash Dependencies" && \
 
 export AKASH_NET="https://raw.githubusercontent.com/ovrclk/net/master/mainnet"

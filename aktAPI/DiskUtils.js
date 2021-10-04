@@ -589,9 +589,22 @@ export class DiskUtils{
 						let id = disk.path.split('/');
 						id = id[id.length-1];
 						console.log('disk to parse',disk,id);
-						const meta = json.AllDisksAndPartitions.find(d=>{
+						let meta = json.AllDisksAndPartitions.find(d=>{
 							return d.DeviceIdentifier == id;
 						})
+						if(typeof meta.Partitions != "undefined" && typeof meta.MountPoint == "undefined"){
+							//ok find the right partition
+							let newMeta;
+							meta.Partitions.map(partition=>{
+								if(typeof partition.MountPoint != "undefined"){
+									newMeta = partition;
+								}
+							})
+							if(typeof newMeta != "undefined"){
+								console.log('using partition',newMeta,id);
+								meta = newMeta;
+							}	
+						}
 						/*disksOut.push({
 							id:disk.path,
 							deviceIdentifier: meta.DeviceIdentifier,

@@ -1,5 +1,13 @@
 #!/bin/bash
 USERHOME="$HOME"
+
+if [[ "$OSTYPE" == "darwin"* ]] ; then
+  USERNAME="$(stat -f '%Su' $USERHOME)"
+else
+  USERNAME="$(ls -ld $HOME | awk '{print $3}')"
+fi
+USERGROUP="$(id -gn $USERNAME)"
+
 pwd="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 DIDUPDATE=0
 
@@ -17,8 +25,8 @@ if [[ ! -d "${USERHOME}/.HandyHost/aktData/kubespray" ]] ; then
   cd "${USERHOME}/.HandyHost/aktData/kubespray" && \
   git clone https://github.com/kubernetes-sigs/kubespray.git . && \
   git checkout "$LATEST_KUBESPRAY" && \
-  virtualenv --python=python3 venv && \
-  . venv/bin/activate && \
+  virtualenv --python=python3 venv
+  . venv/bin/activate
   pip3 install -r requirements.txt
 else
   echo "kubespray already installed, check for updates" && \
@@ -32,10 +40,10 @@ else
     echo "kubespray is out of date, updating" && \
     git fetch --all
     git checkout "$LATEST_KUBESPRAY"
-    virtualenv --python=python3 venv && \
-    . venv/bin/activate && \
-    pip3 uninstall -y ansible && \
-    pip3 install -r requirements.txt && \
+    virtualenv --python=python3 venv
+    . venv/bin/activate
+    pip3 uninstall -y ansible
+    pip3 install -r requirements.txt
     DIDUPDATE=1
   fi
 fi
@@ -44,20 +52,6 @@ echo "kubespray update is done, checking akash for kubernetes updates."
 #it could either be called because kubespray needed updates
 #alternately akash released a new version
 
-AKASH_VERSION=$(/bin/bash "$pwd/getAkashLatestVersion.sh")
-
-cd ${USERHOME}/.HandyHost/aktData && \
-if [[ ! -d "${USERHOME}/.HandyHost/aktData/akashRepo" ]] ; then
-  mkdir -p "${USERHOME}/.HandyHost/aktData/akashRepo" && \
-  cd "${USERHOME}/.HandyHost/aktData/akashRepo" && \
-  git clone https://github.com/ovrclk/akash.git . && \
-  git checkout "$AKASH_VERSION"
-else
-  cd "${USERHOME}/.HandyHost/aktData/akashRepo" && \
-  git fetch --all && \
-  git checkout "$AKASH_VERSION"
-fi
-
-chown -R "$USERNAME:$USERGROUP" "${USERHOME}/.HandyHost/aktData/akashRepo"
+/bin/bash "$pwd/updateAkashRepo.sh"
 
 echo "done checking out kubespray and akash repos"
