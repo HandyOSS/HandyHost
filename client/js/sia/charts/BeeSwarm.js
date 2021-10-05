@@ -56,6 +56,7 @@ export class BeeSwarm{
 		})
 		
 		const defaultColor = 'rgba(35,219,117,0.6)';
+		const proofColor = 'rgba(255,0,120,0.6)';
 		const grey = 'rgba(161,161,161,0.4)';
 		const highlightColor = 'rgba(35,219,117,1.0)';
 		let isClicked = false;
@@ -63,10 +64,19 @@ export class BeeSwarm{
 			.data(data)
 			.join('circle')
 				.classed('node',true)
+				.classed('proofType',d=>{
+					return d.isProofType;
+				})
 				.attr('r',d=>d.radius)
 				.attr('cx',d=> xScale(d.expirationheight))
 				.attr('cy',height/2)
-				.attr('fill',defaultColor)
+				.attr('fill',d=>{
+					if(d.isProofType){
+						console.log('is proof type',d);
+						return proofColor;
+					}
+					return defaultColor;
+				})
 				.on('mouseenter',d=>{
 					if(!isClicked){
 						/*g.selectAll('circle.node').attr('fill',(allC)=>{
@@ -185,12 +195,34 @@ export class BeeSwarm{
 	}
 	showTooltip(data,heightNow){
 		const $meta = $('<div />')
-		$meta.append('<div>Expiration Height: '+data.expirationheight+' <small>(~'+Math.floor((data.expirationheight-heightNow)/144*100)/100+' days)</small></div>');
-		$meta.append('<div>Proof Deadline: '+data.proofdeadline+' <small>(~'+Math.floor((data.proofdeadline-heightNow)/144*100)/100+' days)</small></div>');
+		if(data.isProofType){
+			$meta.append('<div>Contract Finished. Awaiting Proof Deadline</div>')
+			$meta.append('<div>Expired at: '+data.expirationheight+' <small>('+Math.abs((data.expirationheight-heightNow))+' blocks ago)</small></div>');
+			$meta.append('<div>Proof Deadline: '+data.proofdeadline+' <small>('+Math.abs((data.proofdeadline-heightNow))+' blocks)</small></div>');
+			let sumRevenue = 0;
+			sumRevenue += hastingsToSiacoins(data.potentialaccountfunding).toNumber();
+			sumRevenue += hastingsToSiacoins(data.potentialdownloadrevenue).toNumber();
+			sumRevenue += hastingsToSiacoins(data.potentialstoragerevenue).toNumber();
+			sumRevenue += hastingsToSiacoins(data.potentialuploadrevenue).toNumber();
+			$meta.append('<div>Potential Revenue: '+(Math.floor(sumRevenue*100)/100)+' SC</div>');
+			
+		}
+		else{
+			$meta.append('<div>Expiration Height: '+data.expirationheight+' <small>(~'+Math.floor((data.expirationheight-heightNow)/144*100)/100+' days)</small></div>');
+			$meta.append('<div>Proof Deadline: '+data.proofdeadline+' <small>(~'+Math.floor((data.proofdeadline-heightNow)/144*100)/100+' days)</small></div>');
+			
+		}
 		$meta.append('<div>Value+Collateral: '+Math.floor(hastingsToSiacoins(data.validproofoutputs[1].value).toNumber()*100)/100+'SC</div>')
 		$meta.append('<div>Storage Size: '+numeral(data.datasize).format('0.00b').toUpperCase()+'</div>')
 		$('#beeswarmTooltip').html($meta)
 		let left = data.x - ($('#beeswarmTooltip').width()/2) + (this.$el.offset().left - this.$el.offsetParent().offset().left)
+		if(left < 0){
+			left = 10;
+		}
+		const rightBound = (this.$el[0].getBoundingClientRect().left + this.$el[0].getBoundingClientRect().width);
+		if(left + $('#beeswarmTooltip').width() > rightBound ){
+			left = rightBound+20 - $('#beeswarmTooltip').width();
+		}
 		//let top = data.y + data.radius*2 + 20 + $('#beeswarmTooltip').height()/2 + 15;
 		let beeDims = this.$el.find('svg')[0].getBoundingClientRect();
 		let parDims = $('.contractsChart')[0].getBoundingClientRect();

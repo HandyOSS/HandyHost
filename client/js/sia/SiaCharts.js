@@ -174,17 +174,49 @@ export class ContractsChart{
 	renderBeeswarm(data){
 		fetch('/api/sia/getChainStatus').then(d=>d.json()).then(chainD=>{
 			const height = chainD.height;
-			const filtered = data.contracts.filter(d=>{
+			let filtered = data.contracts.filter(d=>{
 				return d.expirationheight >= height;
 				//return !d.proofconfirmed;
 			});
+			const ending = data.contracts.filter(d=>{
+				return d.expirationheight <= height && height-144 <= d.proofdeadline;
+			}).map(d=>{
+				d.isProofType = true;
+				return d;
+			})
+			//console.log('contracts ending??',ending);
+			
+			this.renderEnding(ending);
 			this.data = filtered;
 			this.height = height;
 			$('#beeswarmLoading').remove();
-			this.chart.render(filtered,height);
+			this.chart.render(filtered.concat(ending),height);
 		})
 		
 		//'.contractsChart';
+	}
+	renderEnding(ending){
+		let sumStorage = 0;
+		let sumRevenue = 0;
+		let sumCollateral = 0;
+		let count = ending.length;
+		ending.map(contract=>{
+			sumStorage += contract.datasize;
+			sumRevenue += hastingsToSiacoins(contract.potentialaccountfunding).toNumber();
+			sumRevenue += hastingsToSiacoins(contract.potentialdownloadrevenue).toNumber();
+			sumRevenue += hastingsToSiacoins(contract.potentialstoragerevenue).toNumber();
+			sumRevenue += hastingsToSiacoins(contract.potentialuploadrevenue).toNumber();
+			sumCollateral += hastingsToSiacoins(contract.lockedcollateral).toNumber()
+		})
+		$('.contractsMeta ul',this.$el).append('<li><span class="label">Storage Proofs (next 144 blocks)</span>: '+count+'</li>')
+		$('.contractsMeta ul',this.$el).append('<li><span class="label">Proofs Storage Size</span>: '+numeral(sumStorage).format('0.0b').toUpperCase()+'</li>')
+		$('.contractsMeta ul',this.$el).append('<li><span class="label">Proofs Potential Revenue</span>: '+Math.round(sumRevenue*100)/100+'SC</li>')
+		$('.contractsMeta ul',this.$el).append('<li><span class="label">Proofs Collateral</span>: '+Math.round(sumCollateral*100)/100+'SC</li>')
+		
+		/*potentialaccountfunding: "0"
+		potentialdownloadrevenue: "25657106400000001687980"
+		potentialstoragerevenue: "4608741180843245961216"
+		potentialuploadrevenue: "5051596800000000000000"*/
 	}
 	resize(){
 		//this.$el.height($('.contractsMeta',this.$el).height()+$('.valueLabel',this.$el).height()+20)

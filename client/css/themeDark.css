@@ -51,6 +51,9 @@ html.darkTheme #qrModal
 .darkTheme circle.node{
 	fill: rgba(220,36,138,0.6);
 }
+.darkTheme circle.node.proofType{
+	fill: rgba(157,0,255,1.0);
+}
 .darkTheme circle.node.grey{
 	fill: rgba(161,161,161,0.4);
 }
