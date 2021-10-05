@@ -162,7 +162,8 @@ a.getGlobalIP{
 
 .buildABoxModal .stepInfo{
 	float:left;
-	width: 100%;
+	width: calc(100% - 20px);
+	padding: 0 10px;
 	background: rgba(0,0,0,0.1);
 }
 #setHostname{

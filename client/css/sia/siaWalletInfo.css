@@ -109,7 +109,7 @@ li span.balanceLabel{
 	float:left;
 }
 #sendModal .sendBody, #sendModal .sendConfirm{
-	margin-top: -120%;
+	margin-top: -200%;
 	transition: margin-top 0.3s linear;
 }
 #sendModal .sendBody.showing,#sendModal .sendConfirm.showing{

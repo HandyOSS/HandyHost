@@ -60,13 +60,11 @@ export class TriangulatedLogo{
 			logoOpacity,
 			logoNormals
 		};
-		console.log('logoassets',logoAssets);
 		resolve(this.initLogo(logoAssets,positionParams,true));
 	}
 	
 	
 	getRandomData(cellTotalNumber){
-		console.log('cell num',cellTotalNumber);
 		let directions = [];
 		let centroids = [];
 		let faces = [];

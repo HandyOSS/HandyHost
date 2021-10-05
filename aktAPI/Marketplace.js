@@ -271,7 +271,7 @@ export class Marketplace{
 				catch(e){
 					reject({error:output})
 				}
-				console.log('aggregates query was successful');
+				//console.log('aggregates query was successful');
 				resolve(json.pagination.total);
 			}
 		});

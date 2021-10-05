@@ -6,8 +6,9 @@
 		<string>com.handyhost.app</string>
 		<key>ProgramArguments</key>
         <array>
-            <string>/Applications/HandyHost/HandyHost.app/Contents/Resources/script</string>
-            <string>startup</string>
+        	<string>bash</string>
+        	<string>-c</string>
+            <string>sleep 30; open /Applications/HandyHost/HandyHost.app; /Applications/HandyHost/HandyHost.app/Contents/Resources/script startup</string>
         </array>
 		<key>RunAtLoad</key>
 		<true/>

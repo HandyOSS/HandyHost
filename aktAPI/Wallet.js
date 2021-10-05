@@ -232,9 +232,9 @@ export class Wallet{
 			
 			/*
 			#$1 = mnemonic
-#$2 = pw
-#$3 = walletname
-(echo "$1"; echo "$2"; echo "$2") | $HOME/.HandyHost/aktData/bin/akash --keyring-backend file keys add "$3" --recover
+			#$2 = pw
+			#$3 = walletname
+			(echo "$1"; echo "$2"; echo "$2") | $HOME/.HandyHost/aktData/bin/akash --keyring-backend file keys add "$3" --recover
 			*/	
 			const args = [
 				'--keyring-backend', 'file',
@@ -357,48 +357,87 @@ export class Wallet{
 		
 	}
 	getBalance(address){
-		//TODO: get this balance from RPC instead
-
+		
 		return new Promise((resolve,reject)=>{
 			//get public IP for them at least..
-			const options = {
-				host: 'lcd-akash.cosmostation.io',
-				port:'443',
-				path: `/cosmos/bank/v1beta1/balances/${address}`,
-				method:'GET',
-				rejectUnauthorized: true,
-				requestCert: true,
-				agent: false
-			};
-			let output = '';
-			const request = https.request(options,response=>{
-				response.on('data', (chunk) => {
-					output += chunk;
+			const args = [
+				'query',
+				'bank',
+				'balances',
+				address,
+				'--output',
+				'json'
+			];
+			new Promise((balanceResolve,balanceReject)=>{
+				this.tryBalanceQuery(args,balanceResolve,balanceReject,1);
+			}).then(balanceOutput=>{
+				this.getQRCode(address).then(qrData=>{
+					const balanceData = {
+						balance:balanceOutput,
+						qr:qrData
+					};
+					resolve(balanceData);
 				});
-
-				//the whole response has been received, so we just print it out here
-				response.on('end', () => {
-					this.getQRCode(address).then(qrData=>{
-						const balanceData = {
-							balance:JSON.parse(output),
-							qr:qrData
-						};
-						resolve(balanceData);
-					})
-					
-				});
-
-				if(response.statusCode.toString() != '200'){
-					//something went wrong
-					console.log('error getting balance',response.statusCode.toString());
-					reject(output);
-				}
-			});
-			request.end();
-			request.on('error',e=>{
-				reject(e);
+			}).catch(error=>{
+				reject({error});
 			})
+			
+		});
+	}
+	tryBalanceQuery(args,resolve,reject,attemptCount){
+		let output = '';
+		let errOut = '';
+		
+		const s = spawn('./bin/akash',args,{shell:true,env:process.env,cwd:process.env.HOME+'/.HandyHost/aktData'});
+		s.stdout.on('data',d=>{
+			output += d.toString();
 		})
+		s.stderr.on('data',d=>{
+			console.log('AKT: get balance query error',d.toString());
+			errOut += d.toString();
+		});
+		s.on('close',()=>{
+			if(errOut != ''){
+				if(errOut.indexOf('Error: post failed') >= 0 && errOut.indexOf('EOF') >= 0){
+					//rpc error, retry...
+					if(attemptCount >= 10){
+						console.log('reset env attempt is too many, failing now...')
+						reject({error:errOut})
+						return;
+					}
+					console.log('RPC request failed, reset env and try again...')
+					this.envUtils.setEnv().then(()=>{
+						console.log('reset env attempt',attemptCount)
+						setTimeout(()=>{
+							this.tryBalanceQuery(args,resolve,reject,attemptCount+1);
+						},1000)
+						
+					}).catch(e=>{
+						console.log('failed to reset env, retrying...')
+						setTimeout(()=>{
+							this.tryBalanceQuery(args,resolve,reject,attemptCount+1);
+						},1000)
+						
+					}); //reset env on fail
+				}
+				else{
+					reject({error:errOut});
+				}
+				
+				
+			}
+			else{
+				let json = {};
+				try{
+					json = JSON.parse(output);
+				}
+				catch(e){
+					reject({error:output})
+				}
+				//console.log('wallet balance query was successful');
+				resolve(json);
+			}
+		});
 	}
 	getProviderRegistrationStatus(){
 		return new Promise((resolve,reject)=>{

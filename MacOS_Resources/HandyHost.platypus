@@ -19,7 +19,7 @@
 	<key>DeclareService</key>
 	<false/>
 	<key>Destination</key>
-	<string>/Users/alexsmith/Desktop/Application.app</string>
+	<string>/Applications/HandyHost/Application.app</string>
 	<key>DevelopmentVersion</key>
 	<false/>
 	<key>DocIconPath</key>
@@ -29,7 +29,7 @@
 	<key>ExecutablePath</key>
 	<string>/usr/local/share/platypus/ScriptExec</string>
 	<key>IconPath</key>
-	<string>/Users/alexsmith/projects/HandyHost/MacOS_Resources/HandyHost.icns</string>
+	<string>/Applications/HandyHost/HandyHost/MacOS_Resources/HandyHost.icns</string>
 	<key>Identifier</key>
 	<string>org.HandySoftware.HandyHost</string>
 	<key>InterfaceType</key>

@@ -82,6 +82,11 @@ export class HandyAKT{
 				status.current = versionData.installed;
 				status.latest = versionData.latest;
 				status.isUpToDate = versionData.installed == versionData.latest;
+				if(status.latest.trim() == ''){
+					status.isUpToDate = true;
+					status.latest = status.current;
+					//in the event we cached a non-result for latest, we skip this 20 min interval
+				}
 				this.wallet.checkProviderUpStatus().then(d=>{
 					status.active = true;
 					socket.emit('versionStatus',status);
@@ -612,6 +617,10 @@ export class HandyAKT{
 				console.log('error fetching k8s stats',error);
 			})
 			this.utils.getCurrentAkashVersion().then(versionData=>{
+				if(versionData.latest.trim() == ''){
+					//ok skip because we cached null data
+					versionData.latest = versionData.installed;
+				}
 				statsOut.akashVersion = versionData;
 				statsFetched++;
 				finish(statsFetched,statsToFetch,statsOut,resolve);

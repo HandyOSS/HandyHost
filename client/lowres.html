@@ -63,7 +63,30 @@
 	<script src="/socket.io/socket.io.js"></script>
 </head>
 <body>
-	<div id="appVersionMeta"></div>
+	<div id="appVersionMeta">
+		<ul class="versionInfo">
+			<li class="HandyHost">
+				HandyHost 
+				<span class="version"> ---</span>
+			</li>
+			<li class="Akash">
+				Akash 
+				<span class="version"> ---</span>
+			</li>
+			<li class="Sia">
+				Sia 
+				<span class="version"> ---</span>
+			</li>
+			<li class="DVPN">
+				DVPN 
+				<span class="version"> ---</span>
+			</li>
+			<li class="lowres">
+				<label for="fancyAnimations">Fancy Animations</label> 
+				<input type="checkbox" id="fancyAnimations" />
+			</li>
+		</ul>
+	</div>
 	
 	<div id="handyhost">
 		<img src="./intro/svg/HandyHost.svg" />
@@ -105,6 +128,23 @@
 	<script type="module">
 		import {CommonUtils} from './js/CommonUtils.js';
 		const utils = new CommonUtils();
+		const doFancyAnimations = window.localStorage.getItem('fancyAnimations');
+		if(doFancyAnimations == 'true' || doFancyAnimations == null){
+			$('#fancyAnimations').prop('checked',true);
+		}
+		else{
+			$('#fancyAnimations').prop('checked',false);
+		}
+		$('#fancyAnimations').off('change').on('change',()=>{
+			const val = $('#fancyAnimations').is(':checked');
+			window.localStorage.setItem('fancyAnimations',val);
+			if(!val){
+				window.location.href = 'lowres.html';
+			}
+			else{
+				window.location.href = 'index.html'
+			}
+		})
 		utils.getIntroVersionInfo();
 	</script>
 </body>

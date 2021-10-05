@@ -116,7 +116,7 @@ export class AKTClusterStatus{
 		
 		if(lockedBalance > 0){
 			$('.accountBalance .balance .locked').remove();
-			$('.accountBalance .balance').append('<div class="locked">Locked Collateral: '+lockedBalance+' AKT</div>')
+			$('.accountBalance .balance').append('<div class="locked">Locked Deposits: '+lockedBalance+' AKT</div>')
 		}
 	}
 	renderRunInfo(statsData){
@@ -427,7 +427,7 @@ export class AKTClusterStatus{
 
 		let qr = balanceData.qr;
 		const $balance = $('.accountBalance',$el);
-
+		const $locked = $('.locked',$balance);
 		let img;
 		if(typeof qr != "undefined"){
 			img = `<img src="${qr}" />`;
@@ -452,6 +452,9 @@ export class AKTClusterStatus{
 		/*if(lockedBalance > 0){
 			$('.balance',$balance).append('<div class="locked">Locked Collateral: '+lockedBalance+' AKT</div>')
 		}*/
+		if($locked.length > 0){
+			$('.balance',$balance).append($locked);
+		}
 
 		$('.walletAddress',$balance).off('click').on('click',()=>{
 			$('.walletAddress',$balance).select();

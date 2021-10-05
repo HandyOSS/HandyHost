@@ -54,10 +54,10 @@ export class CommonUtils{
 			console.log('sia version status',siaVersionStatus);
 		});
 		function finish(){
-			if(finished != total){
+			/*if(finished != total){
 				return;
-			}
-			const $ul = $('<ul class="versionInfo" />');
+			}*/
+			const $ul = $('ul.versionInfo');
 			let ordered = Object.keys(meta).filter(key=>{
 				return key != "HandyHost"
 			});
@@ -66,6 +66,9 @@ export class CommonUtils{
 				const data = meta[name];
 				let version = '';
 				let needsUpdateClass = '';
+				if(typeof data == "undefined"){
+					return;
+				}
 				if(typeof data.current != "undefined"){
 					version = data.current;
 					if(typeof data.latest != "undefined"){
@@ -88,9 +91,9 @@ export class CommonUtils{
 						$li.append('<span class="badge grey"></span>')
 					}
 				}
-				$ul.append($li);
+				$ul.find('li.'+name).replaceWith($li);
 			})
-			$('#appVersionMeta').html($ul);
+			//$('#appVersionMeta').html($ul);
 		}
 	}
 }

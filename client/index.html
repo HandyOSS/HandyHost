@@ -10,12 +10,49 @@
 	<script src="/socket.io/socket.io.js"></script>
 </head>
 <body>
-	<div id="appVersionMeta"></div>
+	<div id="appVersionMeta">
+		<ul class="versionInfo">
+			<li class="HandyHost">
+				HandyHost 
+				<span class="version"> ---</span>
+			</li>
+			<li class="Akash">
+				Akash 
+				<span class="version"> ---</span>
+			</li>
+			<li class="Sia">
+				Sia 
+				<span class="version"> ---</span>
+			</li>
+			<li class="DVPN">
+				DVPN 
+				<span class="version"> ---</span>
+			</li>
+			<li class="lowres">
+				<label for="fancyAnimations">Fancy Animations</label> 
+				<input type="checkbox" id="fancyAnimations" />
+			</li>
+		</ul>
+	</div>
 	<div id="introLogo"></div>
 	<script type="module">
 		import {WEBGL} from './external/WEBGL.js';
 		import {CommonUtils} from './js/CommonUtils.js';
 		const utils = new CommonUtils();
+		const doFancyAnimations = window.localStorage.getItem('fancyAnimations');
+		if(doFancyAnimations == 'true' || doFancyAnimations == null){
+			$('#fancyAnimations').prop('checked',true);
+		}
+		else{
+			$('#fancyAnimations').prop('checked',false);
+		}
+		$('#fancyAnimations').off('change').on('change',()=>{
+			const val = $('#fancyAnimations').is(':checked');
+			window.localStorage.setItem('fancyAnimations',val);
+			if(!val){
+				window.location.href = 'lowres.html';
+			}
+		})
 		function checkUserAgent() {
 		    const userAgent = navigator.userAgent || navigator.vendor || window.opera;
 
@@ -28,7 +65,7 @@
 		    if(/Linux aarch64/i.test(userAgent) && !(/Chrome/i.test(userAgent))){
 		    	return false
 		    }
-		    if(/Linux/i.test(userAgent)){
+		    if(/Linux/i.test(userAgent)  && !(/Chrome/i.test(userAgent)) ){
 		    	//seems hit or miss to have a decent GPU/browser webGL impl in linux. 
 		    	return false;
 		    }
@@ -46,8 +83,14 @@
 		else{
 			console.log('has webgl support');
 		}
-		if(!checkUserAgent()){
-			window.location.href='./lowres.html';
+		if(!checkUserAgent() || doFancyAnimations == 'false'){
+			if(doFancyAnimations == 'true'){
+				//do nothing
+			}
+			else{
+				window.location.href='./lowres.html';
+			}
+			
 		}
 		const logoAkash = './intro/svg/akash.svg';
 		const logoSentinel = './intro/svg/sentinel.svg';

@@ -15,7 +15,7 @@
 	margin-left:25%;
 	background:#eee;
 	float:left;
-	margin-top: -100%;
+	margin-top: -500%;
 	transition: margin-top 0.4s linear;
 }
 .setPortsModal .validation.error{

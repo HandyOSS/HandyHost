@@ -125,7 +125,6 @@ export class DVPNStats{
 		
 	}
 	getWalletBalance(address){
-		//https://api-sentinel.cosmostation.io/v1/account/total/balance/sent15slyktswyxs87e0nq4et5uxatmpnru9k007awk
 		return new Promise((resolve,reject)=>{
 			const options = {
 				host: 'api-sentinel.cosmostation.io',
@@ -174,8 +173,6 @@ export class DVPNStats{
 		})
 	}
 	getWalletTransactions(address){
-		//https://api-sentinel.cosmostation.io/v1/account/txs/sent15slyktswyxs87e0nq4et5uxatmpnru9k007awk
-		//https://api-sentinel.cosmostation.io/v1/account/new_txs/sent15slyktswyxs87e0nq4et5uxatmpnru9k007awk?from=0&limit=50
 		console.log('get tx for',address);
 		return new Promise((resolve,reject)=>{
 			const options = {
