@@ -269,3 +269,6 @@ html.darkTheme #qrModal
 .darkTheme .importNote{
 	filter: invert(1);
 }
+.darkTheme .bootableWarning{
+	filter: invert(1);
+}

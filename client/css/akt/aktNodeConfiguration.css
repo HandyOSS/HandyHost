@@ -333,4 +333,8 @@ a.getGlobalIP{
 	color:#333;
 }
 
+.bootableWarning{
+	color:#d00;
+	font-weight:400;
+}
 
