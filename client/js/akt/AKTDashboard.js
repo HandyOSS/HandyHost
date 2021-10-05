@@ -100,8 +100,9 @@ export class AKTDashboard {
 		})
 		this.socket.on('kubesprayVersionStatus',data=>{
 			console.log('kubespray version status',data);
-			if(data.local != data.latest){
+			if(data.local != data.latest && data.latest.trim() != ''){
 				//show kubespray update option
+				//ensure its not blank
 				$('.options #kubesprayUpdateAvailable').show();
 				$('.options #kubesprayUpdateAvailable').off('click').on('click',()=>{
 					//show modal

@@ -122,7 +122,6 @@ export class AKTClusterConfig{
 
 		})
 		if(canConfigureKubernetes){
-			$('#ingressPortsMessage').show();
 			$('#initCluster').removeClass('cancel').addClass('save');
 			let k8sConfigEnhanced = this.autoConfigureK8sData(configData);
 			this.renderKubernetesConfig(configData);
@@ -259,7 +258,9 @@ export class AKTClusterConfig{
 				}
 			}
 		})
-
+		if(ingressName != ''){
+			$('#ingressPortsMessage').show();
+		}
 		configData.nodes.map(node=>{
 			if(!node.selected){
 				return;
