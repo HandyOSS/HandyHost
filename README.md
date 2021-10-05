@@ -1,11 +1,14 @@
 ## HandyHost
 
 HandyHost is a modern cryptocurrency "mining" software which allows you to monetize off-the-shelf hardware for passive income all while providing real utility to users versus just minting monies. Currently there are 3 main distributed-web utility blockchains that we implement within HandyHost. 
-1. DVPN - DVPN (as the name suggests) is decentralized VPN. You rent your extra bandwidth for $DVPN. In addition, the DVPN service allows resolution of Handshake (HNS) Top-Level-Domains, allowing your users to resolve the future.
+1. DVPN - Sentinel DVPN (as the name suggests) is decentralized VPN. You rent your extra bandwidth for $DVPN. In addition, the DVPN service allows resolution of Handshake (HNS) Top-Level-Domains, allowing your users to resolve the future.
 2. AKT - Akash is a decentralized server rental marketplace. Akash allows you to setup clusters of servers and rent them out, becoming a mini Amazon EC2.
 3. Sia - SiaCoin (SC) is a long established provider of distributed disk space. As a Sia Host, you rent out disk space and bandwidth for passive income.
 
 More of our tutorials and explainers about each service can be found on our [YouTube Channel](https://www.youtube.com/channel/UCo9mpJA4MHAf_iZYHDieADQ)
+
+### Supported Platforms
+Currently we have built HandyHost for Debian/Ubuntu (64-bit) and MacOS. We will have Windows support in the future.
 
 ### Installation (Ubuntu Desktop 64-bit)
 There is a compiled .deb package that can be found in Releases. There are many apt dependencies and thus you will have to install thru dpkg and apt like:
@@ -25,7 +28,7 @@ You can run this command to install Homebrew on your system:
 ```
 3. Docker. DVPN runs its service in containers, thus you need Docker. Now that we have homebrew it is easy to install. Just run: ```brew install --cask docker```. Once installed, open the Docker.app (in /Applications), accept the EULA, and then you can close the Docker application and continue the install.
 
-After installing prerequisites, the double click package installer can be found in Releases, and will take ~20-30 minutes to download/compile all dependencies.
+After installing prerequisites, the double click package installer can be found in [Releases](https://github.com/HandyOSS/HandyHost/releases) and will take ~20-30 minutes to download and compile all dependencies.
 
 
 To tail the installer progress logs, you can run ```tail -f /var/log/install.log``` in your terminal.
@@ -49,7 +52,7 @@ You can run this command to install Homebrew on your system:
 2. ```./runMAC_APP.sh startup``` to start the daemon. Logs are output to ```~/.HandyHost/handyhost.log```. You can kill the daemon with ```./runMAC_APP.sh stop``` or restart the daemon with ```./runMAC_APP.sh restart```
 
 ### Build/Run from source (Ubuntu)
-1. Install some apt repos for dependencies (```./debian_package_utils/preinst``` or ):
+1. Install some apt repos for dependencies:
 ```
 wget -qO /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg && \
 echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
@@ -59,13 +62,20 @@ sudo apt update
 ```
 2. Install dependencies:
 ```
-sudo apt install -y git curl build-essential curl openssl uidmap unzip libssl-dev avahi-utils virtualenv expect kubectl p7zip-full genisoimage whois nmap docker-ce docker-ce-cli containerd.io systemd-container apt-transport-https ca-certificates gnupg lsb-release
+sudo apt install -y git curl jq build-essential curl openssl uidmap unzip libssl-dev avahi-utils virtualenv expect kubectl p7zip-full genisoimage whois nmap docker-ce docker-ce-cli containerd.io systemd-container apt-transport-https ca-certificates gnupg lsb-release
 ```
 3. Run the installer:
 ```./installUbuntu.sh``` note: you may or may not want to change line 4 or 5 depending if you want the app/blockchain datas installed to /root or your user $HOME.
-4. Start with:
+4. Start the daemon with:
 ```./localdev_bootstrap.sh``` optionally restart with ```./localdev_bootstrap.sh restart```, and stop with ```localdev_bootstrap.sh stop```. note: you may or may not want to change line 5 and 6 depending if you want the app/blockchain datas installed to /root or your user $HOME.
 5. application logs can be found in: ```~/.HandyHost/localdev.log```
+
+### Video Tutorials
+
+[Sia Host Setup Video Tutorial](https://youtu.be/9x3CS6cd3jg)
+[DVPN Host Setup](https://youtu.be/5GxRoVDOFKE)
+[Akash Part 1, Hardware Setup](https://youtu.be/Jqg3z3PMOwI)
+[Akash Part 2, Software Setup](https://youtu.be/QV6qhjyQ6dc)
 
 ### Rig Builds:
 
@@ -73,7 +83,7 @@ sudo apt install -y git curl build-essential curl openssl uidmap unzip libssl-de
 
 [HandyHost Akash Node Components Spreadsheet](https://docs.google.com/spreadsheets/d/1-WJb0tL7v__S62BDUu457A4yz9Y6U-nie95a_zF58kU/edit?usp=sharing)
 
-[A YouTube tutorial on building an akash cluster](https://youtu.be/Jqg3z3PMOwI)
+[HandyHost DVPN Raspberry Pi 4 Components Spreadsheet](https://docs.google.com/spreadsheets/d/1njYVqVFq7KoyKZ2XzWPTzy1W6zlTz84egL_EtIrTsqc/edit?usp=sharing)
 
 ### A few notes about monies
 
@@ -84,19 +94,21 @@ Why all the tldr;? To host some of these services (Sia, for instance), your wall
 We go an extra step further than the recommendations and encrypt the unlock keys at rest, and only provide an encrypted key location to the HandyHost application on startup. After the application has decrypted and used the passwords, the temporary encrypted key file is deleted.
 I'm still not crazy about the idea but it's about as good as it gets for running a daemon that needs to auto-startup without you sitting at the keyboard.
 
+##### [LICENSE](https://github.com/HandyOSS/HandyHost/blob/master/LICENSE) 
 
-### Testing/Private development things
-To test the in-app updates while the repo is still private, we need to set our github access token to an environment variable in our .profile. Depending on which user you run the app as (default = root), you will want to dump this line into the .profile of the appropriate runner of the HandyHost Daemon.
+Copyright (C) 2021  
+- Alex Smith - alex.smith@earthlab.tech
+- Steven McKie - mckie@amentum.org
+- Thomas Costanzo - stanzo89@gmail.com
 
-```sudo echo "export HANDYHOST_PRIVATE_REPO_TOKEN=ghp_jQX....2gP" >> /root/.profile```
-
-And if the daemon is already running, you will want to ```sudo systemctl restart handyhost``` to reload your token.
-
-Upon doing so, you will see a link in the left-hand options menu in the app to update HandyHost from within the app.
-
-Below are instructions on how to get your github access token.
-
-### To use in-app updater:
-This only applies to testing/dev builds while the repo is still private.
-1. since the repo is still private we need a github personal access token. In github, go to the very top right of the screen to show your options. Then goto Settings. Scroll down the left options and click "Developer Settings", then in the subsequent left menu click "Personal Access Tokens" and then click the button for "Generate New Token". Then use settings: "90 days", Select top level scope for "Repo" which should check all the repo boxes under it. Then "Generate Token". Now copy the token from the following screen, should look like ```ghp_123456abcd.....efef123``` and plug that into the command line like::
-```sudo echo "export HANDYHOST_PRIVATE_REPO_TOKEN=ghp_jQX....2gP" >> /root/.profile```
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
