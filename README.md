@@ -1,17 +1,32 @@
 ## HandyHost
 
+**HandyHost is currently in a Beta release state as of 10/05/2021, version 0.4.5**
+
 HandyHost is a modern cryptocurrency "mining" software which allows you to monetize off-the-shelf hardware for passive income all while providing real utility to users versus just minting monies. Currently there are 3 main distributed-web utility blockchains that we implement within HandyHost. 
-1. DVPN - Sentinel DVPN (as the name suggests) is decentralized VPN. You rent your extra bandwidth for $DVPN. In addition, the DVPN service allows resolution of Handshake (HNS) Top-Level-Domains, allowing your users to resolve the future.
-2. AKT - Akash is a decentralized server rental marketplace. Akash allows you to setup clusters of servers and rent them out, becoming a mini Amazon EC2.
-3. Sia - SiaCoin (SC) is a long established provider of distributed disk space. As a Sia Host, you rent out disk space and bandwidth for passive income.
+1. DVPN - [Sentinel](https://sentinel.co/dvpn) ($DVPN) (as the name suggests) is decentralized VPN. You rent your extra bandwidth for $DVPN. In addition, the DVPN service allows resolution of Handshake (HNS) Top-Level-Domains, allowing your users to resolve the future.
+2. AKT - [Akash](https://akash.network/) ($AKT) is a decentralized server rental marketplace. Akash allows you to setup clusters of servers and rent them out, becoming a mini Amazon EC2.
+3. Sia - [SiaCoin](https://sia.tech/) ($SC) is a long established provider of distributed disk space. As a Sia Host, you rent out disk space and bandwidth for passive income.
 
 More of our tutorials and explainers about each service can be found on our [YouTube Channel](https://www.youtube.com/channel/UCo9mpJA4MHAf_iZYHDieADQ)
 
 ### Supported Platforms
 Currently we have built HandyHost for Debian/Ubuntu (64-bit) and MacOS. We will have Windows support in the future.
 
+Ubuntu Recommended Versions: We have tested extensively with Ubuntu 20.04 and 21.04 **64-bit only**. 
+
+### Requirements
+
+1. You need to have some familiarity with home networking/port forwarding. You will need to setup a fair amount of port forwarding for each platform.
+2. General IT knowledge and terminology.
+3. Familiar enough with a command line to know how to move around (example) ```cd ~/Downloads``` and run simple commands.
+4. Hardware. [View our list of build examples](#hardware) discussed in detail in our [Video Tutorials](#videos)
+5. A decent internet connection (recommended minimum 10MB upload / 100MB download)
+6. Network uptime. For any of these services you should have a hardwired ethernet connection to any devices that is always (within reason) up and on.
+7. You should have familiarity with crypto wallets, mainly: keeping your keys safe somewhere non-electronic and how to buy crypto ($SC, $AKT, $DVPN). $SC is easy to buy/hold on Kraken. $AKT and $DVPN can easily be swapped for $ATOM (also available on Kraken) on [osmosis.zone](https://osmosis.zone) via [keplr wallet](https://wallet.keplr.app/).
+8. (things you should aspire to do) Staking. $AKT and $DVPN can be staked for very high APY% within either [keplr wallet](https://wallet.keplr.app/) for desktop and/or [Cosmostation](https://wallet.cosmostation.io/) for mobile. In addition you can look into Liquidity Pool Mining through [osmosis.zone](https://osmosis.zone) for a very high APY%.
+
 ### Installation (Ubuntu Desktop 64-bit)
-There is a compiled .deb package that can be found in Releases. There are many apt dependencies and thus you will have to install thru dpkg and apt like:
+There is a compiled .deb package that can be found in Releases. There are many apt dependencies and thus you will have to download it and install thru dpkg and apt like:
 ```sudo dpkg -i handyhost_vX.X.X.deb || sudo apt install -f -y```
 On subsequent debian installs you can likely just double click the .deb file (assuming no new apt dependencies). 
 The Debian package will install HandyHost as a daemon which can be spawned/unspawned like:
@@ -62,7 +77,7 @@ sudo apt update
 ```
 2. Install dependencies:
 ```
-sudo apt install -y git curl jq build-essential curl openssl uidmap unzip libssl-dev avahi-utils virtualenv expect kubectl p7zip-full genisoimage whois nmap docker-ce docker-ce-cli containerd.io systemd-container apt-transport-https ca-certificates gnupg lsb-release
+sudo apt install -y git curl jq build-essential curl openssl uidmap unzip libssl-dev avahi-utils virtualenv expect kubectl p7zip-full genisoimage whois nmap docker-ce docker-ce-cli containerd.io systemd-container apt-transport-https ca-certificates gnupg lsb-release net-tools
 ```
 3. Run the installer:
 ```./installUbuntu.sh``` note: you may or may not want to change line 4 or 5 depending if you want the app/blockchain datas installed to /root or your user $HOME.
@@ -70,6 +85,7 @@ sudo apt install -y git curl jq build-essential curl openssl uidmap unzip libssl
 ```./localdev_bootstrap.sh``` optionally restart with ```./localdev_bootstrap.sh restart```, and stop with ```localdev_bootstrap.sh stop```. note: you may or may not want to change line 5 and 6 depending if you want the app/blockchain datas installed to /root or your user $HOME.
 5. application logs can be found in: ```~/.HandyHost/localdev.log```
 
+<a id="videos"></a>
 ### Video Tutorials
 
 [Sia Host Setup Video Tutorial](https://youtu.be/9x3CS6cd3jg)
@@ -77,7 +93,8 @@ sudo apt install -y git curl jq build-essential curl openssl uidmap unzip libssl
 [Akash Part 1, Hardware Setup](https://youtu.be/Jqg3z3PMOwI)
 [Akash Part 2, Software Setup](https://youtu.be/QV6qhjyQ6dc)
 
-### Rig Builds:
+<a id="harddware"></a>
+### Rig Hardware Builds:
 
 [HandyHost MasterNode Build Spreadsheet (20TB storage, hosts DVPN/SIA and manages your AKT Cluster)](https://docs.google.com/spreadsheets/d/1IzIiKbsBy_IblG-K99nxzjlg70b4_Yaxh5TJCbWzvjA/edit?usp=sharing)
 

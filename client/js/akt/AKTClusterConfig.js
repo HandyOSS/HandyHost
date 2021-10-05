@@ -28,10 +28,11 @@ export class AKTClusterConfig{
 		if(typeof configData.nodes == "undefined"){
 
 			$ul.html('<li>No Cluster Nodes Found.</li>')
-			
+			$('#ingressPortsMessage').hide();
 
 		}
 		else{
+
 			let hasSelectedNodes = false;
 			let canConfigureDisk = false;
 			configData.nodes.map(node=>{
@@ -51,6 +52,7 @@ export class AKTClusterConfig{
 			$header.append('<th>MAC Address</th>')
 			$header.append('<th>Manufacturer</th>')
 			if(hasSelectedNodes){
+
 				$header.append('<th>SSH Configured?</th>')
 			}
 			/*if(canConfigureDisk){
@@ -120,6 +122,7 @@ export class AKTClusterConfig{
 
 		})
 		if(canConfigureKubernetes){
+			$('#ingressPortsMessage').show();
 			$('#initCluster').removeClass('cancel').addClass('save');
 			let k8sConfigEnhanced = this.autoConfigureK8sData(configData);
 			this.renderKubernetesConfig(configData);
@@ -128,6 +131,7 @@ export class AKTClusterConfig{
 			})
 		}
 		else{
+			$('#ingressPortsMessage').hide();
 			//clear out the kubernetes advanced opts
 			$('#clusterInventory .configData').html('');
 		}
