@@ -8,7 +8,7 @@
         <array>
         	<string>bash</string>
         	<string>-c</string>
-            <string>sleep 30; open /Applications/HandyHost/HandyHost.app; /Applications/HandyHost/HandyHost.app/Contents/Resources/script startup</string>
+            <string>sleep 60; open /Applications/HandyHost/HandyHost.app; /Applications/HandyHost/HandyHost.app/Contents/Resources/script startup</string>
         </array>
 		<key>RunAtLoad</key>
 		<true/>
