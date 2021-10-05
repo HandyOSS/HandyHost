@@ -166,4 +166,6 @@
 	text-align: center;
 	color: #fc0;
 	font-size:  14px;
+	float:left;
+	width: 100%;
 }

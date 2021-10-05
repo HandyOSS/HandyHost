@@ -168,7 +168,7 @@ export class HandySia{
 							this.siaPasswordHash = passHash;
 							
 							console.log('tryingwallet unlock')
-							this.wallet.unlockWallet(pass).then(data=>{
+							this.wallet.unlockWallet(data.value).then(data=>{
 								console.log('wallet unlock success');
 								
 							}).catch(error=>{

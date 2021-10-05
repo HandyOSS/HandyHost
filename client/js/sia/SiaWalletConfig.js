@@ -22,10 +22,20 @@ export class SiaWalletConfig{
 					const wallet = result.wallet;
 					const chain = result.chain;
 					this.isChainSynced = chain.synced;
-					if(/*wallet.height != chain.height ||*/ !chain.synced){
-						$('.disclaimer').hide();
-						this.showErrorModal('You cannot create or import a new wallet during sync. <br />Chain Synced: '+chain.synced+'<br />Chain Height: '+chain.height+'<br />Wallet Height: '+wallet.height);
+					
+					if(!chain.synced && !wallet.unlocked && !wallet.encrypted && wallet.height == 0){
+						//is a new machine, no wlallet yet
+						$('.disclaimer').show();
+						this.showInitModal(chain.synced);
 					}
+					else if(chain.synced && wallet.unlocked && wallet.encrypted && wallet.height < chain.height){
+						$('.disclaimer').hide();
+						this.showErrorModal('You cannot create or import a new wallet during another wallet sync. <br />Chain Synced: '+chain.synced+'<br />Chain Height: '+chain.height+'<br />Wallet Scan Height: '+wallet.height);
+					}
+					//else if(/*wallet.height != chain.height ||*/ !chain.synced){
+					//	$('.disclaimer').hide();
+					//	this.showErrorModal('You cannot create or import a new wallet during sync. <br />Chain Synced: '+chain.synced+'<br />Chain Height (local): '+chain.height+'<br />Wallet Scan Height: '+wallet.height);
+					//}
 					else{
 						$('.disclaimer').show();
 						this.showInitModal(chain.synced);
@@ -329,7 +339,6 @@ export class SiaWalletConfig{
 			    body: JSON.stringify(formOutput)
 			})
 			.then((res)=>{ console.log('success'); return res.json(); }).then(data=>{
-				console.log('res data',data);
 				$('.walletUtil').removeClass('showing');
 				$('.newWalletInfo #mnemonicOut').html(data.primaryseed)
 				$('.newWalletInfo').addClass('showing');
@@ -384,7 +393,6 @@ export class SiaWalletConfig{
 					})
 					.then((res)=>{ console.log('success'); return res.json(); }).then(data=>{
 						clearTimeout(returnTimeout);
-						console.log('success res data',data);
 						if(typeof data.message != "undefined" && data.message.indexOf('error') >= 0){
 							this.showErrorModal(data.message);
 						}
