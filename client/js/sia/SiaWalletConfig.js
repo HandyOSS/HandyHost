@@ -23,8 +23,8 @@ export class SiaWalletConfig{
 					const chain = result.chain;
 					this.isChainSynced = chain.synced;
 					
-					if(!chain.synced && !wallet.unlocked && !wallet.encrypted && wallet.height == 0){
-						//is a new machine, no wlallet yet
+					if(!chain.synced && !wallet.unlocked && !wallet.encrypted && wallet.height == 0 && !wallet.rescanning){
+						//is a new machine, no wallet yet
 						$('.disclaimer').show();
 						this.showInitModal(chain.synced);
 					}
@@ -32,10 +32,14 @@ export class SiaWalletConfig{
 						$('.disclaimer').hide();
 						this.showErrorModal('You cannot create or import a new wallet during another wallet sync. <br />Chain Synced: '+chain.synced+'<br />Chain Height: '+chain.height+'<br />Wallet Scan Height: '+wallet.height);
 					}
-					//else if(/*wallet.height != chain.height ||*/ !chain.synced){
-					//	$('.disclaimer').hide();
-					//	this.showErrorModal('You cannot create or import a new wallet during sync. <br />Chain Synced: '+chain.synced+'<br />Chain Height (local): '+chain.height+'<br />Wallet Scan Height: '+wallet.height);
-					//}
+					else if(wallet.rescanning){
+						this.showErrorModal('Your imported wallet is currently re-scanning, this will take a  number of hours.')
+					}
+					else if(/*wallet.height != chain.height ||*/ !chain.synced){
+
+						$('.disclaimer').hide();
+						this.showErrorModal('You cannot create or import a new wallet during sync. <br />Chain Synced: '+chain.synced+'<br />Chain Height (local): '+chain.height+'<br />Wallet Scan Height: '+wallet.height);
+					}
 					else{
 						$('.disclaimer').show();
 						this.showInitModal(chain.synced);

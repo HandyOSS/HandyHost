@@ -47,7 +47,7 @@ export class SiaWalletInfo{
 							resolve();
 						}
 					});
-					this.setSyncedStatus(data.height,chainData.height,chainData.synced);
+					this.setSyncedStatus(data.height,chainData.height,chainData.synced,data.rescanning);
 				});
 			});
 		});
@@ -78,9 +78,15 @@ export class SiaWalletInfo{
 			</div>`)
 		$('#siaWalletInfo .walletOptions').html($warningMessage);
 	}
-	setSyncedStatus(walletHeight,chainHeight,isChainSynced){
+	setSyncedStatus(walletHeight,chainHeight,isChainSynced,isRescanning){
+		//rescanning means we are importing a new wallet.....
+		//during rescan the height displays as 0....
+		console.log('set status',isRescanning,isChainSynced)
 		const isWalletSynced = chainHeight == walletHeight;
 		let $synced;
+		if(isRescanning){
+			walletHeight = 'rescanning'
+		}
 		if(isChainSynced){
 			$synced = $('<div class="syncedStatus">Synced: <span class="emoji">'+(isWalletSynced ? '✅' : '😞')+'</span> <small>[ '+walletHeight+' / '+chainHeight+' ]</small></div>')
 		}
@@ -155,7 +161,7 @@ export class SiaWalletInfo{
 		$balanceArea.append($unconfirmed);
 		$balanceArea.append($lockedCollateralBalance);
 
-		this.setSyncedStatus(walletData.height,chainData.height,isChainSynced);
+		this.setSyncedStatus(walletData.height,chainData.height,isChainSynced,walletData.rescanning);
 
 		$('#siaWalletInfo .walletOptions').html($ul);
 		$('#siaWalletInfo .walletOptions').append($balanceArea);

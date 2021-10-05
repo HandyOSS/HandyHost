@@ -255,7 +255,7 @@ export class HandySia{
 						this.updateEnvironment(requestBody).then(()=>{
 							resolve(data);
 						});
-					},500); //give it time to make the wallet
+					},1500); //give it time to make the wallet
 					
 				}).catch(error=>{
 					

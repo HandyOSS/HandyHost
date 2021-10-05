@@ -75,7 +75,8 @@ export class SiaDashboard {
 			this.enableUpdateModal(updateData,data.daemon);
 		}
 		this.enableWarningsModal(data.config);
-		this.walletInfo.setSyncedStatus(walletData.height,chainData.height,chainData.synced);
+		console.log('wallet d',walletData);
+		this.walletInfo.setSyncedStatus(walletData.height,chainData.height,chainData.synced,walletData.rescanning);
 	}	
 	enableUpdateModal(updateData,versionCurrentData){
 		

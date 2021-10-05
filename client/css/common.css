@@ -338,6 +338,7 @@ html,body{
 	padding: 5px 10px;
 	float: left;
 	width: calc(100% - 20px);
+	font-weight:600;
 }
 
 /*loading spinner*/

@@ -49,7 +49,9 @@ if [[ -d "$USERHOME/.nvm" ]] ; then
 	nvm use
 fi
 npm install --build-from-source --python=/usr/bin/python3 && \
-cd client && bower install && cd $UPDATED_DIR && \
+cd client && bower install && cd $UPDATED_DIR
+#for whatever reason on mac copying the .git subdir into the app drops an error..
+rm -rf "$UPDATED_DIR/.git" && \
 cp -r "$UPDATED_DIR/." "$HANDYHOST_DIR" && \
 rm -rf "$HOME/.HandyHost/HandyHostUpdate" && \
 cd "$HANDYHOST_DIR" && \
