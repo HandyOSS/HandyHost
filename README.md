@@ -23,7 +23,7 @@ Ubuntu Recommended Versions: We have tested extensively with Ubuntu 20.04 and 21
 5. A decent internet connection (recommended minimum 10MB upload / 100MB download)
 6. Network uptime. For any of these services you should have a hardwired ethernet connection to any devices that is always (within reason) up and on.
 7. You should have familiarity with crypto wallets, mainly: keeping your keys safe somewhere non-electronic and how to buy crypto ($SC, $AKT, $DVPN). $SC is easy to buy/hold on Kraken. $AKT and $DVPN can easily be swapped for $ATOM (also available on Kraken) on [osmosis.zone](https://osmosis.zone) via [keplr wallet](https://wallet.keplr.app/).
-8. (things you should aspire to do) Staking. $AKT and $DVPN can be staked for very high APY% within either [keplr wallet](https://wallet.keplr.app/) for desktop and/or [Cosmostation](https://wallet.cosmostation.io/) for mobile. In addition you can look into Liquidity Pool Mining through [osmosis.zone](https://osmosis.zone) for a very high APY%.
+8. (things you should aspire to do) Staking. $AKT and $DVPN can be staked for very high APY% within either [keplr wallet](https://wallet.keplr.app/) for desktop and/or [Cosmostation](https://wallet.cosmostation.io/) for mobile. In addition you can look into Liquidity Pool Mining through [osmosis.zone](https://osmosis.zone) for a very (very) high APY%.
 
 ### Installation (Ubuntu Desktop 64-bit)
 There is a compiled .deb package that can be found in Releases. There are many apt dependencies and thus you will have to download it and install thru dpkg and apt like:
@@ -89,12 +89,17 @@ sudo apt install -y git curl jq build-essential curl openssl uidmap unzip libssl
 ### Video Tutorials
 
 [Sia Host Setup Video Tutorial](https://youtu.be/9x3CS6cd3jg)
+
 [DVPN Host Setup](https://youtu.be/5GxRoVDOFKE)
+
 [Akash Part 1, Hardware Setup](https://youtu.be/Jqg3z3PMOwI)
+
 [Akash Part 2, Software Setup](https://youtu.be/QV6qhjyQ6dc)
 
-<a id="harddware"></a>
+<a id="hardware"></a>
 ### Rig Hardware Builds:
+
+We walk through each of the following builds within the Video Tutorials above.
 
 [HandyHost MasterNode Build Spreadsheet (20TB storage, hosts DVPN/SIA and manages your AKT Cluster)](https://docs.google.com/spreadsheets/d/1IzIiKbsBy_IblG-K99nxzjlg70b4_Yaxh5TJCbWzvjA/edit?usp=sharing)
 
@@ -102,7 +107,7 @@ sudo apt install -y git curl jq build-essential curl openssl uidmap unzip libssl
 
 [HandyHost DVPN Raspberry Pi 4 Components Spreadsheet](https://docs.google.com/spreadsheets/d/1njYVqVFq7KoyKZ2XzWPTzy1W6zlTz84egL_EtIrTsqc/edit?usp=sharing)
 
-### A few notes about monies
+### A few important notes about monies
 
 **What HandyHost is NOT**: A long term storage wallet for your life savings or big monies. Although each service requires you have wallets attached to them, the wallets/funds are mainly there to pay transaction fees, place deposits/collateral, and of course receive your passive income payments. Once you have accrued enough extra money in your wallet, please move it to a more permanent storage medium (and probably stake it via Cosmostation/Keplr/Osmosis in the case of DVPN and AKT). 
 Although we lock everything down as well as we can, you ultimately have wallets running attached to 1. your local network and any machines on said network, 2. you have open ports to the whole world for the various services you will host, 3. you are hosting servers and your bandwidth to the outside world. 

@@ -129,10 +129,7 @@
 		import {CommonUtils} from './js/CommonUtils.js';
 		const utils = new CommonUtils();
 		let doFancyAnimations = window.localStorage.getItem('fancyAnimations');
-		if(doFancyAnimations == null){
-			doFancyAnimations = 'false';
-		}
-		if(doFancyAnimations == 'true' || doFancyAnimations == null){
+		if(doFancyAnimations == 'true'){
 			$('#fancyAnimations').prop('checked',true);
 		}
 		else{
