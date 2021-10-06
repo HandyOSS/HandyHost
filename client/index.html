@@ -79,14 +79,19 @@
 			console.log('has webgl support');
 		}
 		if(!checkUserAgent() || doFancyAnimations == 'false'){
+			if(window.localStorage.getItem('fancyAnimations') == null){
+				doFancyAnimations = 'false';
+				window.localStorage.setItem('fancyAnimations',false);
+				$('#fancyAnimations').prop('checked',false);
+			}
 			if(doFancyAnimations == 'false'){
 				//do nothing
-				if(window.localStorage.getItem('fancyAnimations') == null){
-					window.localStorage.setItem('fancyAnimations',false);
-					$('#fancyAnimations').prop('checked',false);
-				}
+				window.location.href='./lowres.html';
 			}
-			window.location.href='./lowres.html';
+			else{
+				//do nothing
+			}
+			
 		}
 		if(checkUserAgent() && doFancyAnimations == null){
 			if(window.localStorage.getItem('fancyAnimations') == null){
