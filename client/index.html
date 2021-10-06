@@ -57,12 +57,6 @@
 		function checkUserAgent() {
 		    const userAgent = navigator.userAgent || navigator.vendor || window.opera;
 
-		    // Windows Phone must come first because its UA also contains "Android"
-		    
-
-		    /*if (/android/i.test(userAgent)) {
-		        return false;
-		    }*/
 		    if(/Linux aarch64/i.test(userAgent) && !(/Chrome/i.test(userAgent))){
 		    	return false
 		    }
@@ -85,15 +79,19 @@
 			console.log('has webgl support');
 		}
 		if(!checkUserAgent() || doFancyAnimations == 'false'){
-			if(doFancyAnimations == 'true'){
+			if(doFancyAnimations == 'false'){
 				//do nothing
 				if(window.localStorage.getItem('fancyAnimations') == null){
-					window.localStorage.setItem('fancyAnimations',true);
-					$('#fancyAnimations').prop('checked',true);
+					window.localStorage.setItem('fancyAnimations',false);
+					$('#fancyAnimations').prop('checked',false);
 				}
 			}
-			else{
-				window.location.href='./lowres.html';
+			window.location.href='./lowres.html';
+		}
+		if(checkUserAgent() && doFancyAnimations == null){
+			if(window.localStorage.getItem('fancyAnimations') == null){
+				window.localStorage.setItem('fancyAnimations',true);
+				$('#fancyAnimations').prop('checked',true);
 			}
 			
 		}
