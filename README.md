@@ -110,9 +110,11 @@ We walk through each of the following builds within the Video Tutorials above.
 ### A few important notes about monies
 
 **What HandyHost is NOT**: A long term storage wallet for your life savings or big monies. Although each service requires you have wallets attached to them, the wallets/funds are mainly there to pay transaction fees, place deposits/collateral, and of course receive your passive income payments. Once you have accrued enough extra money in your wallet, please move it to a more permanent storage medium (and probably stake it via Cosmostation/Keplr/Osmosis in the case of DVPN and AKT). 
+
 Although we lock everything down as well as we can, you ultimately have wallets running attached to 1. your local network and any machines on said network, 2. you have open ports to the whole world for the various services you will host, 3. you are hosting servers and your bandwidth to the outside world. 
 Althought we go farther than most Sia services recommendations by encrypting any wallet informations at rest, we still think anything is possible and that you should be safe (ie: dont hold your life savings wallet into this mining service wallet). 
 Why all the tldr;? To host some of these services (Sia, for instance), your wallet needs to be unlocked at all times to pay collateral deposits and fees. Traditionally Sia recommends to pass wallet unlock keys to the application by environment variables and store the keys safely on disk at rest. You don't want to miss out on income because your computer restarted overnight... 
+
 We go an extra step further than the recommendations and encrypt the unlock keys at rest, and only provide an encrypted key location to the HandyHost application on startup. After the application has decrypted and used the passwords, the temporary encrypted key file is deleted.
 I'm still not crazy about the idea but it's about as good as it gets for running a daemon that needs to auto-startup without you sitting at the keyboard.
 
