@@ -39,8 +39,7 @@ Prerequisites:
 1. some xcode command line tools are required during building of dependencies. You must run ```sudo xcode-select --install``` on your terminal before running the installer. 
 2. The various projects depend on standard packages installed from [homebrew](https://brew.sh/). 
 You can run this command to install Homebrew on your system:
-```/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-```
+```/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"```
 3. Docker. DVPN runs its service in containers, thus you need Docker. Now that we have homebrew it is easy to install. Just run: ```brew install --cask docker```. Once installed, open the Docker.app (in /Applications), accept the EULA, and then you can close the Docker application and continue the install.
 
 After installing prerequisites, the double click package installer can be found in [Releases](https://github.com/HandyOSS/HandyHost/releases) and will take ~20-30 minutes to download and compile all dependencies.
