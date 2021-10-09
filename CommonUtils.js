@@ -1,6 +1,8 @@
 import {spawn,spawnSync} from 'child_process'; 
 import fs from 'fs';
 import https from 'https';
+import jsonwebtoken from 'jsonwebtoken';
+import crypto from 'crypto';
 
 export class CommonUtils{
 	constructor(){
@@ -311,5 +313,80 @@ export class CommonUtils{
 			})
 			
 		})
+	}
+	
+	initJWTKey(){
+		const jwtPath = process.env.HOME+'/.HandyHost/keystore/jwt.key';
+		if(!fs.existsSync(jwtPath)){
+			fs.writeFileSync(jwtPath,crypto.createHash('sha256').update( (Math.floor(new Date().getTime()*Math.random()) - Math.floor(Math.random()*new Date().getTime())).toString() ).digest('hex'),'utf8');
+		}
+		const authPath = process.env.HOME+'/.HandyHost/keystore/auth.key';
+		if(!fs.existsSync(authPath)){
+			//set a default
+			fs.writeFileSync(authPath,crypto.createHash('sha256').update('changemeplease').digest('hex'),'utf8');
+		}
+		
+	}
+	hasDefaultAuth(){
+		const authPath = process.env.HOME+'/.HandyHost/keystore/auth.key';
+		const defaultPass = crypto.createHash('sha256').update('changemeplease').digest('hex');
+		const currentPass = fs.readFileSync(authPath,'utf8').trim();
+		return defaultPass == currentPass;
+	}
+	checkAuth(pw){
+		return new Promise((resolve,reject)=>{
+			const authPath = process.env.HOME+'/.HandyHost/keystore/auth.key';
+			const auth = fs.readFileSync(authPath,'utf8').trim();
+			if(auth != pw){
+				resolve(false);
+			}
+			else{
+				resolve(true);
+			}
+		});
+	}
+	changeAuth(newPass,oldPass){
+		return new Promise((resolve,reject)=>{
+			const authPath = process.env.HOME+'/.HandyHost/keystore/auth.key';
+			const defaultPass = crypto.createHash('sha256').update('changemeplease').digest('hex');
+			const currentPass = fs.readFileSync(authPath,'utf8').trim();
+			if(currentPass == defaultPass){
+				//is default/brand new, change it
+				fs.writeFileSync(authPath,newPass,'utf8');
+				resolve(true);
+			}
+			else{
+				if(oldPass == currentPass){
+					//do change
+					fs.writeFileSync(authPath,newPass,'utf8');
+					resolve(true);
+				}
+				else{
+					resolve(false);
+				}
+			}
+		});
+	}
+	checkAuthToken(token){
+		const jwtKey = fs.readFileSync(process.env.HOME+'/.HandyHost/keystore/jwt.key','utf8').trim();
+		let verified = false;
+		try{
+			verified = jsonwebtoken.verify(token, jwtKey);
+		}
+		catch(e){
+			verified = false;
+		}
+		return verified;
+	}
+	bumpToken(){
+		return new Promise((resolve,reject)=>{
+			const jwtKey = fs.readFileSync(process.env.HOME+'/.HandyHost/keystore/jwt.key','utf8').trim();
+			const data = {
+		        timestamp:new Date().getTime()
+		    }
+		    const token = jsonwebtoken.sign(data, jwtKey, { expiresIn: '30d' }); //likely their browser sesh will last 30 days..
+	        resolve(token);
+		});
+		
 	}
 }
