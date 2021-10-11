@@ -227,7 +227,7 @@
 					.then((res)=>res.json()).then(data=>{
 						//console.log('data',data);
 						if(data.success){
-							document.cookie = "handyhostToken="+data.token;
+							document.cookie = "handyhostToken="+data.token+";  path=/; max-age=2628000"; //1 month
 							window.location.href = window.location.href;
 						}
 						else{
@@ -255,7 +255,7 @@
 						.then((res)=>res.json()).then(data=>{
 							//console.log('data',data);
 							if(data.success){
-								document.cookie = "handyhostToken="+data.token;
+								document.cookie = "handyhostToken="+data.token+'; path=/; max-age=2628000";';
 								window.location.href = window.location.href;
 							}
 							else{
