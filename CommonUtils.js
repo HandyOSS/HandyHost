@@ -314,30 +314,105 @@ export class CommonUtils{
 			
 		})
 	}
-	
+	isAuthEnabled(){
+		//check if auth is enabled
+		const settingsPath = process.env.HOME+'/.HandyHost/authSettings.json';
+		let isEnabled = false;
+		if(fs.existsSync(settingsPath)){
+			let settings = {};
+			try{
+				settings = JSON.parse(fs.readFileSync(settingsPath,'utf8'));
+			}
+			catch(e){
+				console.log("ERROR PARSING DEFAULT AUTH FILE AT "+settingsPath,e);
+			}
+			isEnabled = typeof settings.enabled != "undefined" ? settings.enabled : isEnabled;
+		}
+		return isEnabled;
+	}
+	getAuthDefaultExpiry(){
+		const settingsPath = process.env.HOME+'/.HandyHost/authSettings.json';
+		let expiry = '30d';
+		if(fs.existsSync(settingsPath)){
+			let settings = {};
+			try{
+				settings = JSON.parse(fs.readFileSync(settingsPath,'utf8'));
+			}
+			catch(e){
+				console.log("ERROR PARSING DEFAULT AUTH FILE AT "+settingsPath,e);
+			}
+			expiry = typeof settings.tokenTTL != "undefined" ? settings.tokenTTL : expiry;
+		}
+		return expiry;
+	}
 	initJWTKey(){
 		const jwtPath = process.env.HOME+'/.HandyHost/keystore/jwt.key';
-		if(!fs.existsSync(jwtPath)){
-			fs.writeFileSync(jwtPath,crypto.createHash('sha256').update( (Math.floor(new Date().getTime()*Math.random()) - Math.floor(Math.random()*new Date().getTime())).toString() ).digest('hex'),'utf8');
-		}
 		const authPath = process.env.HOME+'/.HandyHost/keystore/auth.key';
+		const settingsPath = process.env.HOME+'/.HandyHost/authSettings.json';
+		
+		const jwtKeyDefault = crypto.createHash('sha256').update( (Math.floor(new Date().getTime()*Math.random()) - Math.floor(Math.random()*new Date().getTime())).toString() ).digest('hex');
+		const defaultKey = crypto.createHash('sha256').update('changemeplease').update(jwtKeyDefault).digest('hex');
+		
+		if(!fs.existsSync(jwtPath)){
+			//init jwt key it it doesnt exist
+			fs.writeFileSync(jwtPath,jwtKeyDefault,'utf8');
+		}
 		if(!fs.existsSync(authPath)){
-			//set a default
-			fs.writeFileSync(authPath,crypto.createHash('sha256').update('changemeplease').digest('hex'),'utf8');
+			//set a default password
+			fs.writeFileSync(authPath,defaultKey,'utf8');
+		}
+		if(!fs.existsSync(settingsPath)){
+			//init default settings
+			const settings = {
+				enabled:false,
+				initialPassword:'changemeplease',
+				hasInitialized:false,
+				tokenTTL:'30d'
+			}
+			fs.writeFileSync(settingsPath,JSON.stringify(settings,null,2),'utf8');
+		}
+		else{
+			//settings exist, check if auth is enabled or needs enabled
+			let settings = JSON.parse(fs.readFileSync(settingsPath,'utf8'));
+			if(settings.enabled && !settings.hasInitialized){
+				const jwtKey = fs.readFileSync(jwtPath,'utf8').trim();
+				//somebody just turned on auth, lets enable it
+				const initialKey = crypto.createHash('sha256').update(settings.initialPassword).update(jwtKey).digest('hex');
+				fs.writeFileSync(authPath,initialKey,'utf8');
+				settings.hasInitialized = true;
+				fs.writeFileSync(settingsPath,JSON.stringify(settings,null,2),'utf8')
+			}
 		}
 		
 	}
 	hasDefaultAuth(){
 		const authPath = process.env.HOME+'/.HandyHost/keystore/auth.key';
-		const defaultPass = crypto.createHash('sha256').update('changemeplease').digest('hex');
+		const jwtPath = process.env.HOME+'/.HandyHost/keystore/jwt.key';
+		const jwtKey = fs.readFileSync(jwtPath,'utf8').trim();
+		const settingsPath = process.env.HOME+'/.HandyHost/authSettings.json';
+		let defaultpw = 'changemeplease';
+		if(fs.existsSync(settingsPath)){
+			let settings = {};
+			try{
+				settings = JSON.parse(fs.readFileSync(settingsPath,'utf8'));
+			}
+			catch(e){
+				console.log("ERROR PARSING DEFAULT AUTH FILE AT "+settingsPath,e);
+			}
+			defaultpw = typeof settings.initialPassword != "undefined" ? settings.initialPassword : defaultpw;
+		}
+		const defaultPass = crypto.createHash('sha256').update(defaultpw).update(jwtKey).digest('hex');
 		const currentPass = fs.readFileSync(authPath,'utf8').trim();
 		return defaultPass == currentPass;
 	}
 	checkAuth(pw){
 		return new Promise((resolve,reject)=>{
 			const authPath = process.env.HOME+'/.HandyHost/keystore/auth.key';
+			const jwtPath = process.env.HOME+'/.HandyHost/keystore/jwt.key';
+			const jwtKey = fs.readFileSync(jwtPath,'utf8').trim();
 			const auth = fs.readFileSync(authPath,'utf8').trim();
-			if(auth != pw){
+			const pwHashed = crypto.createHash('sha256').update(pw).update(jwtKey).digest('hex');
+			if(auth != pwHashed){
 				resolve(false);
 			}
 			else{
@@ -348,17 +423,33 @@ export class CommonUtils{
 	changeAuth(newPass,oldPass){
 		return new Promise((resolve,reject)=>{
 			const authPath = process.env.HOME+'/.HandyHost/keystore/auth.key';
-			const defaultPass = crypto.createHash('sha256').update('changemeplease').digest('hex');
+			const jwtPath = process.env.HOME+'/.HandyHost/keystore/jwt.key';
+			const jwtKey = fs.readFileSync(jwtPath,'utf8').trim();
+			const settingsPath = process.env.HOME+'/.HandyHost/authSettings.json';
+			let defaultpw = 'changemeplease';
+			if(fs.existsSync(settingsPath)){
+				let settings = {};
+				try{
+					settings = JSON.parse(fs.readFileSync(settingsPath,'utf8'));
+				}
+				catch(e){
+					console.log("ERROR PARSING DEFAULT AUTH FILE AT "+settingsPath,e);
+				}
+				defaultpw = typeof settings.initialPassword != "undefined" ? settings.initialPassword : defaultpw;
+			}
+			const defaultPass = crypto.createHash('sha256').update(defaultpw).update(jwtKey).digest('hex');
 			const currentPass = fs.readFileSync(authPath,'utf8').trim();
+			const newPassHashed = crypto.createHash('sha256').update(newPass).update(jwtKey).digest('hex');
+			const oldPassHashed = crypto.createHash('sha256').update(oldPass).update(jwtKey).digest('hex');
 			if(currentPass == defaultPass){
 				//is default/brand new, change it
-				fs.writeFileSync(authPath,newPass,'utf8');
+				fs.writeFileSync(authPath,newPassHashed,'utf8');
 				resolve(true);
 			}
 			else{
-				if(oldPass == currentPass){
+				if(oldPassHashed == currentPass){
 					//do change
-					fs.writeFileSync(authPath,newPass,'utf8');
+					fs.writeFileSync(authPath,newPassHashed,'utf8');
 					resolve(true);
 				}
 				else{
@@ -378,13 +469,15 @@ export class CommonUtils{
 		}
 		return verified;
 	}
+
 	bumpToken(){
 		return new Promise((resolve,reject)=>{
 			const jwtKey = fs.readFileSync(process.env.HOME+'/.HandyHost/keystore/jwt.key','utf8').trim();
 			const data = {
 		        timestamp:new Date().getTime()
 		    }
-		    const token = jsonwebtoken.sign(data, jwtKey, { expiresIn: '30d' }); //likely their browser sesh will last 30 days..
+		    const tokenTTL = this.getAuthDefaultExpiry();
+		    const token = jsonwebtoken.sign(data, jwtKey, { expiresIn: tokenTTL }); //likely their browser sesh will last 30 days..
 	        resolve(token);
 		});
 		

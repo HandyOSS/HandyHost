@@ -603,6 +603,8 @@ export class HandySia{
 					resolve(out);
 				})
 				//resolve(out);
+			}).catch(e=>{
+				console.log('sia: getHostMetrics err',e);
 			})
 		})
 	}

@@ -17,4 +17,5 @@ $HOME/.HandyHost/aktData/bin/akash provider run \
 --bid-price-strategy scale \
 --bid-price-cpu-scale $3 \
 --deployment-runtime-class none \
---cluster-node-port-quantity 1000
+--cluster-node-port-quantity 1000 \
+--minimum-balance 100000

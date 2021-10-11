@@ -87,8 +87,14 @@ function handleServerRequest(request,response){
   
   const unsafe = url.parse(request.url).pathname;
   const safe = path.normalize(unsafe).replace(/^(\.\.(\/|\\|$))+/, '');
-  
-  if(utils.checkAuthToken(authToken)){
+  //ok check if we enabled auth for the server
+  const isAuthEnabled = utils.isAuthEnabled();
+  let isAuthValid = true;
+  if(isAuthEnabled){
+    //and if we did, is our token valid
+    isAuthValid = utils.checkAuthToken(authToken);
+  }
+  if(isAuthValid){
     if(safe.indexOf('/api/login') == 0){
       //document.cookie and fetch cookie are out of fn sync for whatever reason, let them know for a bump
       response.setHeader('Set-Cookie', ["handyhostToken="+authToken]);
@@ -158,7 +164,7 @@ function handleServerRequest(request,response){
     });
   }
   else{
-    //no auth
+    //no valid auth token and auth is valid
     const now = Math.floor(new Date().getTime()/1000);
     if( (now - lastBadAttempt > 60) || badAttempts >= 6){
       badAttempts = 0;

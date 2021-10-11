@@ -81,7 +81,30 @@
 				opacity:1;
 				z-index:0;
 			}
-
+			.button.cancel .foreground{
+				/* Permalink - use to edit and share this gradient: https://colorzilla.com/gradient-editor/#c4c4c4+0,ffffff+100 */
+				/* Permalink - use to edit and share this gradient: https://colorzilla.com/gradient-editor/#7f7f7f+0,dbdbdb+100 */
+				background: #7f7f7f; /* Old browsers */
+				background: -moz-linear-gradient(45deg,  #7f7f7f 0%, #dbdbdb 100%); /* FF3.6-15 */
+				background: -webkit-linear-gradient(45deg,  #7f7f7f 0%,#dbdbdb 100%); /* Chrome10-25,Safari5.1-6 */
+				background: linear-gradient(45deg,  #7f7f7f 0%,#dbdbdb 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+				filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#7f7f7f', endColorstr='#dbdbdb',GradientType=1 ); /* IE6-9 fallback on horizontal gradient */
+				color:#fff;
+				opacity:1;
+				z-index:1;
+				transition: opacity 0.3s linear;
+			}
+			.button.cancel .background{
+				/* Permalink - use to edit and share this gradient: https://colorzilla.com/gradient-editor/#c4c4c4+0,ffffff+100 */
+				background: #c4c4c4; /* Old browsers */
+				background: -moz-linear-gradient(45deg,  #c4c4c4 0%, #ffffff 100%); /* FF3.6-15 */
+				background: -webkit-linear-gradient(45deg,  #c4c4c4 0%,#ffffff 100%); /* Chrome10-25,Safari5.1-6 */
+				background: linear-gradient(45deg,  #c4c4c4 0%,#ffffff 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+				filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#c4c4c4', endColorstr='#ffffff',GradientType=1 ); /* IE6-9 fallback on horizontal gradient */
+				color:#444;
+				opacity:1;
+				z-index:0;
+			}
 			.button.save:hover .background{
 				box-shadow: -2px 0px 7px #be2fce;
 			}
@@ -137,6 +160,7 @@
 		<script type="module">
 			const formMode = "__FORMMODE__";
 			let mode = 'login';
+			let isLoggingIn = false;
 			if(formMode == 'new'){
 				setAsNewOrReset(true);
 			}
@@ -184,7 +208,10 @@
 				document.getElementById('warnings').textContent = 'Incorrect Password';
 				document.getElementById('warnings').style.display = 'block';
 				document.getElementsByClassName('foreground')[0].textContent = 'Login';
-				document.getElementsByClassName('background')[0].textContent = 'Login';	
+				document.getElementsByClassName('background')[0].textContent = 'Login';
+				document.getElementById('submit').classList.remove('cancel')
+				document.getElementById('submit').classList.add('save');
+				isLoggingIn = false;	
 			}
 			function doLogin(pw){
 				sha256(pw).then(pwSHA256=>{
@@ -247,6 +274,9 @@
 				setAsNewOrReset(false);
 			});
 			document.getElementById('submit').addEventListener('click',()=>{
+				if(isLoggingIn){
+					return false
+				}
 				if(mode == 'login'){
 					const pw = document.getElementById('loginPass').value;
 					if(pw == ''){
@@ -284,6 +314,9 @@
 				}
 				document.getElementsByClassName('foreground')[0].textContent = 'Logging in...';
 				document.getElementsByClassName('background')[0].textContent = 'Logging in...';
+				document.getElementById('submit').classList.add('cancel')
+				document.getElementById('submit').classList.remove('save');
+				isLoggingIn = true;
 			})
 		</script>
 		<div id="login">
