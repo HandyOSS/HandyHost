@@ -108,6 +108,9 @@ export class CommonUtils{
 			const path = '/HandyOSS/HandyHost/master/VERSION';
 			return this.queryHTTPSResponse(host,path).then(versionRepo=>{
 				const localVersion = fs.readFileSync("./VERSION",'utf8').trim();
+				if(typeof process.env.HANDYHOST_TEST_BRANCH != "undefined"){
+					versionRepo = process.env.HANDYHOST_TEST_BRANCH;
+				}
 				resolve({
 					latest:versionRepo,
 					local:localVersion,
