@@ -375,6 +375,7 @@ export class CommonUtils{
 			//settings exist, check if auth is enabled or needs enabled
 			let settings = JSON.parse(fs.readFileSync(settingsPath,'utf8'));
 			if(settings.enabled && !settings.hasInitialized){
+				fs.writeFileSync(jwtPath,jwtKeyDefault,'utf8'); //bounce the jwtKey in case we were trying to lock out other users
 				const jwtKey = fs.readFileSync(jwtPath,'utf8').trim();
 				//somebody just turned on auth, lets enable it
 				const initialKey = crypto.createHash('sha256').update(settings.initialPassword).update(jwtKey).digest('hex');

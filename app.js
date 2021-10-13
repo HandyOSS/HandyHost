@@ -196,7 +196,7 @@ function handleServerRequest(request,response){
             if(safe.indexOf('/api/passwordreset') == 0){
               //its a reset or init
               utils.changeAuth(creds.newpw,creds.oldpw).then(wasSuccessful=>{
-                console.log('was reset successful',wasSuccessful);
+                console.log('password was reset successful',wasSuccessful);
                 if(wasSuccessful){
                   //respond
                   utils.bumpToken().then(token=>{
