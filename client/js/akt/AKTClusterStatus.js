@@ -415,12 +415,12 @@ export class AKTClusterStatus{
 			balance = balance / 1000000;
 		}
 		
-		//no easy way to lookup so:: 50akt per contract * pods = locked.....
+		//no easy way to lookup so:: 5akt per contract * pods = locked.....
 		k8sData.map(node=>{
-			lockedBalance += (node.realtime.pods * 50);
+			lockedBalance += (node.realtime.pods * 5);
 		});
 		let shouldDisplayLowFundsMessage = false;
-		if(balance < 50){
+		if(balance < 25){
 			shouldDisplayLowFundsMessage = true;
 		}
 		balance =  numeral(balance).format('0,0.0000')+' AKT';
@@ -446,7 +446,7 @@ export class AKTClusterStatus{
 			</div>
 		`)
 		if(shouldDisplayLowFundsMessage){
-			$('.balanceMeta',$balance).append('<div class="lowFundsNote">Note: Each contract will lock up 50AKT in collateral. Please add more funds to provide hosts.</div>')
+			$('.balanceMeta',$balance).append('<div class="lowFundsNote">Note: Each contract will lock up a 5AKT deposit. Please add more funds to provide hosts.</div>')
 		}
 
 		/*if(lockedBalance > 0){

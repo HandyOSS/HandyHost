@@ -1,0 +1,383 @@
+<html>
+	<head>
+		<title>HandyHost Login</title>
+		<style>
+			body,html{
+				background:#111;
+				color:#eee;
+				margin:0;
+				padding:0;
+				font-family:Helvetica,Arial,Sans-serif;
+			}
+			#login{
+				float:left;
+				width: calc(50% - 40px);
+				height: auto;
+				margin-top: 50px;
+				padding: 20px;
+				border-radius: 10px;
+				background:#222;
+				text-align:center;
+				margin-left:25%;
+				box-shadow: 0px 20px 40px #000;
+				text-align: center;
+			}
+			.passField.change{
+				display:none;
+			}
+			/*buttons and toggles*/
+
+			.button{
+			    padding: 20px;
+			    margin: 10px auto;
+			    color: #fff;
+			    cursor: pointer;
+			    opacity: 1.0;
+			    position: relative;
+			    transition: all 0.3s linear;
+			    width: 100px;
+			    height: 20px;
+			    text-align: center;
+			    font-size: 18px;
+			    font-weight: 100;
+			    float: left;
+			    width: calc(100% - 40px);
+			    font-size: 24px;
+			    line-height: 20px;
+			}
+			.button .foreground, .button .background{
+				border-radius: 20px;
+				top:0;
+				left:0;
+				float:left;
+				position:absolute;
+				width:100%;
+				height:100%;
+				line-height: 60px;
+				vertical-align:middle;
+				transition: box-shadow 0.3s linear;
+			}
+			.button.save .foreground, .button.save .background{
+				box-shadow: 2px 0px 6px #24ed82;
+				
+			}
+
+			.button.save .foreground{
+				background: #3257db; /* Old browsers */
+				background: -moz-linear-gradient(45deg,  #3257db 1%, #24ed82 100%); /* FF3.6-15 */
+				background: -webkit-linear-gradient(45deg,  #3257db 1%,#24ed82 100%); /* Chrome10-25,Safari5.1-6 */
+				background: linear-gradient(45deg,  #3257db 1%,#24ed82 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+				filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#3257db', endColorstr='#24ed82',GradientType=1 ); /* IE6-9 fallback on horizontal gradient */
+				opacity:1;
+				z-index:1;
+				transition: opacity 0.3s linear;
+			}
+			.button.save .background{
+				background: #be2fce; /* Old browsers */
+				background: -moz-linear-gradient(45deg,  #be2fce 0%, #3257db 26%, #24ed82 100%); /* FF3.6-15 */
+				background: -webkit-linear-gradient(45deg,  #be2fce 0%,#3257db 26%,#24ed82 100%); /* Chrome10-25,Safari5.1-6 */
+				background: linear-gradient(45deg,  #be2fce 0%,#3257db 26%,#24ed82 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+				filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#be2fce', endColorstr='#24ed82',GradientType=1 ); /* IE6-9 fallback on horizontal gradient */
+				opacity:1;
+				z-index:0;
+			}
+			.button.cancel .foreground{
+				/* Permalink - use to edit and share this gradient: https://colorzilla.com/gradient-editor/#c4c4c4+0,ffffff+100 */
+				/* Permalink - use to edit and share this gradient: https://colorzilla.com/gradient-editor/#7f7f7f+0,dbdbdb+100 */
+				background: #7f7f7f; /* Old browsers */
+				background: -moz-linear-gradient(45deg,  #7f7f7f 0%, #dbdbdb 100%); /* FF3.6-15 */
+				background: -webkit-linear-gradient(45deg,  #7f7f7f 0%,#dbdbdb 100%); /* Chrome10-25,Safari5.1-6 */
+				background: linear-gradient(45deg,  #7f7f7f 0%,#dbdbdb 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+				filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#7f7f7f', endColorstr='#dbdbdb',GradientType=1 ); /* IE6-9 fallback on horizontal gradient */
+				color:#fff;
+				opacity:1;
+				z-index:1;
+				transition: opacity 0.3s linear;
+			}
+			.button.cancel .background{
+				/* Permalink - use to edit and share this gradient: https://colorzilla.com/gradient-editor/#c4c4c4+0,ffffff+100 */
+				background: #c4c4c4; /* Old browsers */
+				background: -moz-linear-gradient(45deg,  #c4c4c4 0%, #ffffff 100%); /* FF3.6-15 */
+				background: -webkit-linear-gradient(45deg,  #c4c4c4 0%,#ffffff 100%); /* Chrome10-25,Safari5.1-6 */
+				background: linear-gradient(45deg,  #c4c4c4 0%,#ffffff 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+				filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#c4c4c4', endColorstr='#ffffff',GradientType=1 ); /* IE6-9 fallback on horizontal gradient */
+				color:#444;
+				opacity:1;
+				z-index:0;
+			}
+			.button.save:hover .background{
+				box-shadow: -2px 0px 7px #be2fce;
+			}
+			.button:hover .foreground{
+				opacity:0;
+			}
+
+			.styledInput{
+				font-size: 16px;
+			    outline: none;
+			    border-radius: 5px;
+			    padding: 5px;
+			    clear: both;
+			    box-shadow: inset 1px 1px 5px #ccc;
+			    border-top: #aaa;
+			    border-left: #aaa;
+			    border-right: #eee;
+			    border-bottom: #eee;
+			    border-width: 1px;
+			    border-style: solid;
+			    color:#333;
+			    font-weight:100;
+			    font-family: 'Roboto',Sans-serif;
+				float:left;
+				width: 100%;
+				font-size: 36px;
+				padding: 10px;
+				border-radius: 10px;
+				margin: 10px 0;
+				padding-right:48px;
+			}
+			#logo{
+				height: 150px;
+				text-align: center;
+			}
+			#logo svg{
+				width: 150px;
+				height: 150px;
+			}
+			#reset{
+				float:right;
+				cursor:pointer;
+				margin: 5px;
+				font-size: 12px;
+			}
+			#warnings{
+				color:#c00;
+				display: none;
+			}
+		</style>
+	</head>
+	<body>
+		<script type="module">
+			const formMode = "__FORMMODE__";
+			let mode = 'login';
+			let isLoggingIn = false;
+			if(formMode == 'new'){
+				setAsNewOrReset(true);
+			}
+			function doSha256(str){
+				return new Promise((resolve,reject)=>{
+					let hash = sha256.create();
+					hash.update(str);
+					resolve(hash.hex());
+				})
+			}
+			function setAsNewOrReset(isBrandNew){
+				let len = document.getElementsByClassName('change').length;
+				const start = isBrandNew ? 1 : 0;
+				for(let i=start;i<len;i++){
+					document.getElementsByClassName('change')[i].style.display = 'block';
+				}
+				document.getElementById('reset').style.display = 'none';
+				document.getElementById('loginField').style.display = 'none';
+				document.getElementById('warnings').style.display = 'none';
+				mode = 'reset';
+				const buttonLabel = isBrandNew ? 'Set a Password' : 'Change Password';
+				document.getElementsByClassName('foreground')[0].textContent = buttonLabel;
+				document.getElementsByClassName('background')[0].textContent = buttonLabel;
+			}
+			function fail(){
+				document.getElementById('warnings').textContent = 'Incorrect Password';
+				document.getElementById('warnings').style.display = 'block';
+				document.getElementsByClassName('foreground')[0].textContent = 'Login';
+				document.getElementsByClassName('background')[0].textContent = 'Login';
+				document.getElementById('submit').classList.remove('cancel')
+				document.getElementById('submit').classList.add('save');
+				isLoggingIn = false;	
+			}
+			function doLogin(pw){
+				doSha256(pw).then(pwSHA256=>{
+					fetch('/api/login',{
+					    headers: {
+					      'Accept': 'application/json',
+					      'Content-Type': 'application/json'
+					    },
+					    method: "POST",
+					    body: JSON.stringify({pw:pwSHA256}),
+					    credentials:'include'
+					})
+					.then((res)=>res.json()).then(data=>{
+						//console.log('data',data);
+						if(data.success){
+							document.cookie = "handyhostToken="+data.token+";  path=/; max-age=2628000"; //1 month
+							window.location.href = window.location.href;
+						}
+						else{
+							fail();
+							return;
+						}
+					}).catch(error=>{
+						console.log('error',error)
+					})
+				})
+			}
+			
+			function doReset(oldpw,newpw){
+				doSha256(oldpw).then(oldpwSHA256=>{
+					doSha256(newpw).then(newpwSHA256=>{
+						fetch('/api/passwordreset',{
+						    headers: {
+						      'Accept': 'application/json',
+						      'Content-Type': 'application/json'
+						    },
+						    method: "POST",
+						    body: JSON.stringify({oldpw:oldpwSHA256,newpw:newpwSHA256}),
+						    credentials:'include'
+						})
+						.then((res)=>res.json()).then(data=>{
+							//console.log('data',data);
+							if(data.success){
+								document.cookie = "handyhostToken="+data.token+'; path=/; max-age=2628000";';
+								window.location.href = window.location.href;
+							}
+							else{
+								console.log("no success",data);
+								fail();
+								return;
+							}
+						}).catch(error=>{
+							console.log('error',error)
+						})
+					})
+				})
+				
+			}
+			document.getElementById('reset').addEventListener('click',()=>{
+				setAsNewOrReset(false);
+			});
+			document.getElementById('submit').addEventListener('click',()=>{
+				if(isLoggingIn){
+					return false
+				}
+				if(mode == 'login'){
+					const pw = document.getElementById('loginPass').value;
+					if(pw == ''){
+						//cannot be blank
+						document.getElementById('warnings').textContent = 'Password cannot be blank';
+						document.getElementById('warnings').style.display = 'block';
+						document.getElementsByClassName('foreground')[0].textContent = 'Login';
+						document.getElementsByClassName('background')[0].textContent = 'Login';
+
+						return;
+					}
+					else{
+						document.getElementById('warnings').style.display = 'none';
+					}
+					doLogin(pw);
+				}
+				if(mode == 'reset'){
+					const oldpw = document.getElementById('oldPass').value;
+					const newpw = document.getElementById('newPass').value;
+					const confirmpw = document.getElementById('confirmPass').value;
+					if(newpw != confirmpw){
+						document.getElementById('warnings').textContent = 'Passwords do not match';
+						document.getElementById('warnings').style.display = 'block';
+						return;
+					}
+					else if(newpw == ''){
+						document.getElementById('warnings').textContent = 'Password cannot be blank';
+						document.getElementById('warnings').style.display = 'block';
+						return;
+					}
+					else{
+						document.getElementById('warnings').style.display = 'none';
+					}
+					doReset(oldpw,newpw);
+				}
+				document.getElementsByClassName('foreground')[0].textContent = 'Logging in...';
+				document.getElementsByClassName('background')[0].textContent = 'Logging in...';
+				document.getElementById('submit').classList.add('cancel')
+				document.getElementById('submit').classList.remove('save');
+				isLoggingIn = true;
+			})
+			/**
+			 * [js-sha256]{@link https://github.com/emn178/js-sha256}
+			 *
+			 * @version 0.9.0
+			 * @author Chen, Yi-Cyuan [emn178@gmail.com]
+			 * @copyright Chen, Yi-Cyuan 2014-2017
+			 * @license MIT
+			 */
+			!function(){"use strict";function t(t,i){i?(d[0]=d[16]=d[1]=d[2]=d[3]=d[4]=d[5]=d[6]=d[7]=d[8]=d[9]=d[10]=d[11]=d[12]=d[13]=d[14]=d[15]=0,this.blocks=d):this.blocks=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],t?(this.h0=3238371032,this.h1=914150663,this.h2=812702999,this.h3=4144912697,this.h4=4290775857,this.h5=1750603025,this.h6=1694076839,this.h7=3204075428):(this.h0=1779033703,this.h1=3144134277,this.h2=1013904242,this.h3=2773480762,this.h4=1359893119,this.h5=2600822924,this.h6=528734635,this.h7=1541459225),this.block=this.start=this.bytes=this.hBytes=0,this.finalized=this.hashed=!1,this.first=!0,this.is224=t}function i(i,r,s){var e,n=typeof i;if("string"===n){var o,a=[],u=i.length,c=0;for(e=0;e<u;++e)(o=i.charCodeAt(e))<128?a[c++]=o:o<2048?(a[c++]=192|o>>6,a[c++]=128|63&o):o<55296||o>=57344?(a[c++]=224|o>>12,a[c++]=128|o>>6&63,a[c++]=128|63&o):(o=65536+((1023&o)<<10|1023&i.charCodeAt(++e)),a[c++]=240|o>>18,a[c++]=128|o>>12&63,a[c++]=128|o>>6&63,a[c++]=128|63&o);i=a}else{if("object"!==n)throw new Error(h);if(null===i)throw new Error(h);if(f&&i.constructor===ArrayBuffer)i=new Uint8Array(i);else if(!(Array.isArray(i)||f&&ArrayBuffer.isView(i)))throw new Error(h)}i.length>64&&(i=new t(r,!0).update(i).array());var y=[],p=[];for(e=0;e<64;++e){var l=i[e]||0;y[e]=92^l,p[e]=54^l}t.call(this,r,s),this.update(p),this.oKeyPad=y,this.inner=!0,this.sharedMemory=s}var h="input is invalid type",r="object"==typeof window,s=r?window:{};s.JS_SHA256_NO_WINDOW&&(r=!1);var e=!r&&"object"==typeof self,n=!s.JS_SHA256_NO_NODE_JS&&"object"==typeof process&&process.versions&&process.versions.node;n?s=global:e&&(s=self);var o=!s.JS_SHA256_NO_COMMON_JS&&"object"==typeof module&&module.exports,a="function"==typeof define&&define.amd,f=!s.JS_SHA256_NO_ARRAY_BUFFER&&"undefined"!=typeof ArrayBuffer,u="0123456789abcdef".split(""),c=[-2147483648,8388608,32768,128],y=[24,16,8,0],p=[1116352408,1899447441,3049323471,3921009573,961987163,1508970993,2453635748,2870763221,3624381080,310598401,607225278,1426881987,1925078388,2162078206,2614888103,3248222580,3835390401,4022224774,264347078,604807628,770255983,1249150122,1555081692,1996064986,2554220882,2821834349,2952996808,3210313671,3336571891,3584528711,113926993,338241895,666307205,773529912,1294757372,1396182291,1695183700,1986661051,2177026350,2456956037,2730485921,2820302411,3259730800,3345764771,3516065817,3600352804,4094571909,275423344,430227734,506948616,659060556,883997877,958139571,1322822218,1537002063,1747873779,1955562222,2024104815,2227730452,2361852424,2428436474,2756734187,3204031479,3329325298],l=["hex","array","digest","arrayBuffer"],d=[];!s.JS_SHA256_NO_NODE_JS&&Array.isArray||(Array.isArray=function(t){return"[object Array]"===Object.prototype.toString.call(t)}),!f||!s.JS_SHA256_NO_ARRAY_BUFFER_IS_VIEW&&ArrayBuffer.isView||(ArrayBuffer.isView=function(t){return"object"==typeof t&&t.buffer&&t.buffer.constructor===ArrayBuffer});var A=function(i,h){return function(r){return new t(h,!0).update(r)[i]()}},w=function(i){var h=A("hex",i);n&&(h=b(h,i)),h.create=function(){return new t(i)},h.update=function(t){return h.create().update(t)};for(var r=0;r<l.length;++r){var s=l[r];h[s]=A(s,i)}return h},b=function(t,i){var r=eval("require('crypto')"),s=eval("require('buffer').Buffer"),e=i?"sha224":"sha256",n=function(i){if("string"==typeof i)return r.createHash(e).update(i,"utf8").digest("hex");if(null===i||void 0===i)throw new Error(h);return i.constructor===ArrayBuffer&&(i=new Uint8Array(i)),Array.isArray(i)||ArrayBuffer.isView(i)||i.constructor===s?r.createHash(e).update(new s(i)).digest("hex"):t(i)};return n},v=function(t,h){return function(r,s){return new i(r,h,!0).update(s)[t]()}},_=function(t){var h=v("hex",t);h.create=function(h){return new i(h,t)},h.update=function(t,i){return h.create(t).update(i)};for(var r=0;r<l.length;++r){var s=l[r];h[s]=v(s,t)}return h};t.prototype.update=function(t){if(!this.finalized){var i,r=typeof t;if("string"!==r){if("object"!==r)throw new Error(h);if(null===t)throw new Error(h);if(f&&t.constructor===ArrayBuffer)t=new Uint8Array(t);else if(!(Array.isArray(t)||f&&ArrayBuffer.isView(t)))throw new Error(h);i=!0}for(var s,e,n=0,o=t.length,a=this.blocks;n<o;){if(this.hashed&&(this.hashed=!1,a[0]=this.block,a[16]=a[1]=a[2]=a[3]=a[4]=a[5]=a[6]=a[7]=a[8]=a[9]=a[10]=a[11]=a[12]=a[13]=a[14]=a[15]=0),i)for(e=this.start;n<o&&e<64;++n)a[e>>2]|=t[n]<<y[3&e++];else for(e=this.start;n<o&&e<64;++n)(s=t.charCodeAt(n))<128?a[e>>2]|=s<<y[3&e++]:s<2048?(a[e>>2]|=(192|s>>6)<<y[3&e++],a[e>>2]|=(128|63&s)<<y[3&e++]):s<55296||s>=57344?(a[e>>2]|=(224|s>>12)<<y[3&e++],a[e>>2]|=(128|s>>6&63)<<y[3&e++],a[e>>2]|=(128|63&s)<<y[3&e++]):(s=65536+((1023&s)<<10|1023&t.charCodeAt(++n)),a[e>>2]|=(240|s>>18)<<y[3&e++],a[e>>2]|=(128|s>>12&63)<<y[3&e++],a[e>>2]|=(128|s>>6&63)<<y[3&e++],a[e>>2]|=(128|63&s)<<y[3&e++]);this.lastByteIndex=e,this.bytes+=e-this.start,e>=64?(this.block=a[16],this.start=e-64,this.hash(),this.hashed=!0):this.start=e}return this.bytes>4294967295&&(this.hBytes+=this.bytes/4294967296<<0,this.bytes=this.bytes%4294967296),this}},t.prototype.finalize=function(){if(!this.finalized){this.finalized=!0;var t=this.blocks,i=this.lastByteIndex;t[16]=this.block,t[i>>2]|=c[3&i],this.block=t[16],i>=56&&(this.hashed||this.hash(),t[0]=this.block,t[16]=t[1]=t[2]=t[3]=t[4]=t[5]=t[6]=t[7]=t[8]=t[9]=t[10]=t[11]=t[12]=t[13]=t[14]=t[15]=0),t[14]=this.hBytes<<3|this.bytes>>>29,t[15]=this.bytes<<3,this.hash()}},t.prototype.hash=function(){var t,i,h,r,s,e,n,o,a,f=this.h0,u=this.h1,c=this.h2,y=this.h3,l=this.h4,d=this.h5,A=this.h6,w=this.h7,b=this.blocks;for(t=16;t<64;++t)i=((s=b[t-15])>>>7|s<<25)^(s>>>18|s<<14)^s>>>3,h=((s=b[t-2])>>>17|s<<15)^(s>>>19|s<<13)^s>>>10,b[t]=b[t-16]+i+b[t-7]+h<<0;for(a=u&c,t=0;t<64;t+=4)this.first?(this.is224?(e=300032,w=(s=b[0]-1413257819)-150054599<<0,y=s+24177077<<0):(e=704751109,w=(s=b[0]-210244248)-1521486534<<0,y=s+143694565<<0),this.first=!1):(i=(f>>>2|f<<30)^(f>>>13|f<<19)^(f>>>22|f<<10),r=(e=f&u)^f&c^a,w=y+(s=w+(h=(l>>>6|l<<26)^(l>>>11|l<<21)^(l>>>25|l<<7))+(l&d^~l&A)+p[t]+b[t])<<0,y=s+(i+r)<<0),i=(y>>>2|y<<30)^(y>>>13|y<<19)^(y>>>22|y<<10),r=(n=y&f)^y&u^e,A=c+(s=A+(h=(w>>>6|w<<26)^(w>>>11|w<<21)^(w>>>25|w<<7))+(w&l^~w&d)+p[t+1]+b[t+1])<<0,i=((c=s+(i+r)<<0)>>>2|c<<30)^(c>>>13|c<<19)^(c>>>22|c<<10),r=(o=c&y)^c&f^n,d=u+(s=d+(h=(A>>>6|A<<26)^(A>>>11|A<<21)^(A>>>25|A<<7))+(A&w^~A&l)+p[t+2]+b[t+2])<<0,i=((u=s+(i+r)<<0)>>>2|u<<30)^(u>>>13|u<<19)^(u>>>22|u<<10),r=(a=u&c)^u&y^o,l=f+(s=l+(h=(d>>>6|d<<26)^(d>>>11|d<<21)^(d>>>25|d<<7))+(d&A^~d&w)+p[t+3]+b[t+3])<<0,f=s+(i+r)<<0;this.h0=this.h0+f<<0,this.h1=this.h1+u<<0,this.h2=this.h2+c<<0,this.h3=this.h3+y<<0,this.h4=this.h4+l<<0,this.h5=this.h5+d<<0,this.h6=this.h6+A<<0,this.h7=this.h7+w<<0},t.prototype.hex=function(){this.finalize();var t=this.h0,i=this.h1,h=this.h2,r=this.h3,s=this.h4,e=this.h5,n=this.h6,o=this.h7,a=u[t>>28&15]+u[t>>24&15]+u[t>>20&15]+u[t>>16&15]+u[t>>12&15]+u[t>>8&15]+u[t>>4&15]+u[15&t]+u[i>>28&15]+u[i>>24&15]+u[i>>20&15]+u[i>>16&15]+u[i>>12&15]+u[i>>8&15]+u[i>>4&15]+u[15&i]+u[h>>28&15]+u[h>>24&15]+u[h>>20&15]+u[h>>16&15]+u[h>>12&15]+u[h>>8&15]+u[h>>4&15]+u[15&h]+u[r>>28&15]+u[r>>24&15]+u[r>>20&15]+u[r>>16&15]+u[r>>12&15]+u[r>>8&15]+u[r>>4&15]+u[15&r]+u[s>>28&15]+u[s>>24&15]+u[s>>20&15]+u[s>>16&15]+u[s>>12&15]+u[s>>8&15]+u[s>>4&15]+u[15&s]+u[e>>28&15]+u[e>>24&15]+u[e>>20&15]+u[e>>16&15]+u[e>>12&15]+u[e>>8&15]+u[e>>4&15]+u[15&e]+u[n>>28&15]+u[n>>24&15]+u[n>>20&15]+u[n>>16&15]+u[n>>12&15]+u[n>>8&15]+u[n>>4&15]+u[15&n];return this.is224||(a+=u[o>>28&15]+u[o>>24&15]+u[o>>20&15]+u[o>>16&15]+u[o>>12&15]+u[o>>8&15]+u[o>>4&15]+u[15&o]),a},t.prototype.toString=t.prototype.hex,t.prototype.digest=function(){this.finalize();var t=this.h0,i=this.h1,h=this.h2,r=this.h3,s=this.h4,e=this.h5,n=this.h6,o=this.h7,a=[t>>24&255,t>>16&255,t>>8&255,255&t,i>>24&255,i>>16&255,i>>8&255,255&i,h>>24&255,h>>16&255,h>>8&255,255&h,r>>24&255,r>>16&255,r>>8&255,255&r,s>>24&255,s>>16&255,s>>8&255,255&s,e>>24&255,e>>16&255,e>>8&255,255&e,n>>24&255,n>>16&255,n>>8&255,255&n];return this.is224||a.push(o>>24&255,o>>16&255,o>>8&255,255&o),a},t.prototype.array=t.prototype.digest,t.prototype.arrayBuffer=function(){this.finalize();var t=new ArrayBuffer(this.is224?28:32),i=new DataView(t);return i.setUint32(0,this.h0),i.setUint32(4,this.h1),i.setUint32(8,this.h2),i.setUint32(12,this.h3),i.setUint32(16,this.h4),i.setUint32(20,this.h5),i.setUint32(24,this.h6),this.is224||i.setUint32(28,this.h7),t},i.prototype=new t,i.prototype.finalize=function(){if(t.prototype.finalize.call(this),this.inner){this.inner=!1;var i=this.array();t.call(this,this.is224,this.sharedMemory),this.update(this.oKeyPad),this.update(i),t.prototype.finalize.call(this)}};var B=w();B.sha256=B,B.sha224=w(!0),B.sha256.hmac=_(),B.sha224.hmac=_(!0),o?module.exports=B:(s.sha256=B.sha256,s.sha224=B.sha224,a&&define(function(){return B}))}();
+		</script>
+		<div id="login">
+			<div id="logo">
+				<svg viewBox="0 0 460 460" width="460.6" height="460.6" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" version="1.1">
+
+					 <g>
+					  <title>Layer 1</title>
+					  <g stroke="null" id="svg_1">
+					   <path stroke="null" d="m169.95899,104.36586l-0.31292,0c-26.5986,0 -50.85027,23.78228 -52.25843,51.00673c0.15646,0.78231 0.46939,1.72109 0.62585,2.5034c0.31292,1.56462 0.62585,3.44217 1.40816,4.22448c0.93877,1.09524 3.28571,1.87755 5.0068,1.87755c0.15646,0 0.31292,0 0.46939,0c2.03401,-0.15646 3.12925,-1.2517 3.7551,-6.57142c3.44217,-26.28568 15.64624,-38.48974 42.08837,-42.55776c6.10203,-0.93877 6.41496,-3.12925 6.10203,-5.94557c-0.31292,-2.97278 -1.40816,-4.53741 -6.88434,-4.53741z" fill="#49226B" class="st0" id="XMLID_226_"/>
+					   <path stroke="null" d="m366.31925,210.6038c-3.59863,-0.46939 -7.51019,-0.78231 -10.01359,2.34694c-0.78231,0.93877 -1.09524,1.87755 -0.93877,3.12925c0.46939,3.12925 1.72109,4.53741 7.82312,4.69387c15.48977,0.15646 23.46935,7.19727 25.97275,22.99997c1.09524,6.72788 4.06802,6.72788 5.47618,6.72788c0.15646,0 0.31292,0 0.46939,0c1.87755,-0.15646 5.16326,0 4.85033,-7.66666c-0.31292,-9.5442 -5.31972,-18.46256 -12.67345,-24.40813c-3.59863,-2.97278 -7.97958,-5.31972 -12.51699,-6.57142c-2.34694,-0.62585 -4.53741,-0.78231 -6.88434,-1.09524c-0.31292,0 -0.93877,-0.15646 -1.56462,-0.15646z" fill="#49226B" class="st0" id="XMLID_131_"/>
+					   <path stroke="null" d="m100.4897,269.43365c-15.64624,-2.5034 -21.27888,-7.97958 -23.93874,-23.93874c-0.78231,-4.85033 -2.65986,-5.78911 -5.63264,-5.78911c-0.15646,0 -0.31292,0 -0.31292,0c-1.09524,0 -4.69387,0.15646 -4.69387,6.57142c0,16.89793 16.11562,33.48294 33.17002,33.95233c0.15646,0 0.31292,0 0.62585,0c5.31972,0 6.10203,-2.34694 6.41496,-4.53741c0.31292,-3.28571 -0.46939,-5.47618 -5.63264,-6.25849z" fill="#49226B" class="st0" id="XMLID_163_"/>
+					   <g stroke="null" id="XMLID_52_">
+					    <path stroke="null" d="m106.27881,378.01852l-18.14963,0l0,18.46256l-8.29251,0l0,-43.653l8.29251,0l0,17.83671l18.14963,0l0,-17.83671l8.29251,0l0,43.653l-8.29251,0l0,-18.46256z" id="XMLID_53_" fill="#ffffff"/>
+					    <path stroke="null" d="m147.58487,396.48108c-1.72109,0 -3.12925,-0.46939 -4.22448,-1.56462c-1.09524,-1.09524 -1.72109,-2.34694 -1.87755,-4.06802l-0.31292,0c-0.46939,2.19047 -1.72109,3.7551 -3.28571,4.85033c-1.72109,1.09524 -3.7551,1.56462 -6.25849,1.56462c-3.28571,0 -5.94557,-0.93877 -7.66666,-2.65986c-1.72109,-1.72109 -2.65986,-4.06802 -2.65986,-7.04081c0,-3.28571 1.2517,-5.78911 3.59863,-7.51019c2.34694,-1.56462 5.78911,-2.5034 10.32652,-2.5034l5.63264,0l0,-2.34694c0,-1.87755 -0.46939,-3.28571 -1.40816,-4.22448c-0.93877,-0.93877 -2.5034,-1.56462 -4.69387,-1.56462c-1.87755,0 -3.44217,0.46939 -4.53741,1.2517c-1.09524,0.78231 -2.19047,1.72109 -2.97278,2.97278l-4.69387,-4.22448c1.2517,-1.87755 2.81632,-3.44217 4.85033,-4.53741s4.69387,-1.72109 7.97958,-1.72109c4.38095,0 7.82312,0.93877 10.01359,2.97278c2.34694,2.03401 3.44217,4.85033 3.44217,8.60543l0,15.33331l3.28571,0l0,6.41496l-4.53741,0zm-13.14284,-5.0068c1.72109,0 3.28571,-0.46939 4.53741,-1.2517c1.2517,-0.78231 1.87755,-1.87755 1.87755,-3.44217l0,-4.22448l-5.16326,0c-4.22448,0 -6.25849,1.2517 -6.25849,3.91156l0,1.09524c0,1.2517 0.46939,2.34694 1.2517,2.97278c0.93877,0.62585 2.03401,0.93877 3.7551,0.93877z" id="XMLID_55_" fill="#ffffff"/>
+					    <path stroke="null" d="m157.75493,396.48108l0,-32.54417l7.97958,0l0,5.47618l0.31292,0c0.62585,-1.72109 1.72109,-3.28571 3.12925,-4.38095c1.40816,-1.2517 3.44217,-1.72109 5.94557,-1.72109c3.44217,0 5.94557,1.09524 7.82312,3.28571c1.72109,2.19047 2.65986,5.31972 2.65986,9.38774l0,20.65303l-7.97958,0l0,-19.87072c0,-2.34694 -0.46939,-4.06802 -1.2517,-5.31972c-0.78231,-1.09524 -2.19047,-1.72109 -4.06802,-1.72109c-0.78231,0 -1.56462,0.15646 -2.34694,0.31292s-1.40816,0.62585 -2.03401,0.93877c-0.62585,0.46939 -1.09524,0.93877 -1.40816,1.56462c-0.31292,0.62585 -0.62585,1.40816 -0.62585,2.34694l0,21.59181l-8.13604,0z" id="XMLID_58_" fill="#ffffff"/>
+					    <path stroke="null" d="m213.92491,391.0049l-0.31292,0c-0.62585,1.87755 -1.72109,3.44217 -3.28571,4.53741s-3.44217,1.72109 -5.63264,1.72109c-4.06802,0 -7.35373,-1.40816 -9.38774,-4.38095c-2.19047,-2.97278 -3.28571,-7.19727 -3.28571,-12.67345c0,-5.47618 1.09524,-9.70067 3.28571,-12.51699s5.31972,-4.38095 9.38774,-4.38095c2.19047,0 4.06802,0.62585 5.63264,1.72109c1.56462,1.09524 2.65986,2.65986 3.28571,4.53741l0.31292,0l0,-18.93195l7.97958,0l0,46.1564l-7.97958,0l0,-5.78911zm-6.72788,-0.31292c1.87755,0 3.44217,-0.46939 4.85033,-1.40816c1.2517,-0.93877 1.87755,-2.19047 1.87755,-3.91156l0,-10.32652c0,-1.56462 -0.62585,-2.81632 -1.87755,-3.7551c-1.2517,-0.93877 -2.97278,-1.40816 -4.85033,-1.40816c-2.03401,0 -3.7551,0.62585 -5.0068,2.03401s-1.87755,3.28571 -1.87755,5.63264l0,5.63264c0,2.34694 0.62585,4.22448 1.87755,5.63264c1.2517,1.09524 2.97278,1.87755 5.0068,1.87755z" id="XMLID_60_" fill="#ffffff"/>
+					    <path stroke="null" d="m250.38064,363.93691l7.51019,0l-13.14284,38.48974c-0.46939,1.09524 -0.93877,2.19047 -1.40816,2.97278c-0.46939,0.78231 -1.09524,1.56462 -1.87755,2.03401c-0.78231,0.46939 -1.56462,0.93877 -2.5034,1.2517c-0.93877,0.31292 -2.19047,0.31292 -3.44217,0.31292l-4.85033,0l0,-6.41496l5.94557,0l1.56462,-4.53741l-11.73468,-34.10879l7.97958,0l5.63264,17.21086l2.19047,8.29251l0.31292,0l2.19047,-8.29251l5.63264,-17.21086z" id="XMLID_63_" fill="#ffffff"/>
+					    <path stroke="null" d="m289.49623,378.01852l-18.14963,0l0,18.46256l-8.29251,0l0,-43.653l8.29251,0l0,17.83671l18.14963,0l0,-17.83671l8.29251,0l0,43.653l-8.29251,0l0,-18.46256z" id="XMLID_65_" fill="#ffffff"/>
+					    <path stroke="null" d="m319.84993,397.26339c-2.34694,0 -4.38095,-0.46939 -6.25849,-1.2517c-1.87755,-0.78231 -3.44217,-1.87755 -4.69387,-3.44217s-2.34694,-3.28571 -2.97278,-5.47618c-0.78231,-2.03401 -1.09524,-4.53741 -1.09524,-7.04081c0,-2.65986 0.31292,-5.0068 1.09524,-7.04081c0.78231,-2.03401 1.72109,-3.91156 2.97278,-5.31972c1.2517,-1.40816 2.81632,-2.65986 4.69387,-3.44217c1.87755,-0.78231 3.91156,-1.2517 6.25849,-1.2517c2.34694,0 4.38095,0.46939 6.25849,1.2517c1.87755,0.78231 3.44217,1.87755 4.85033,3.44217c1.2517,1.40816 2.34694,3.28571 2.97278,5.31972c0.78231,2.03401 1.09524,4.38095 1.09524,7.04081c0,2.65986 -0.31292,5.0068 -1.09524,7.04081c-0.78231,2.03401 -1.72109,3.91156 -2.97278,5.47618c-1.2517,1.56462 -2.97278,2.65986 -4.85033,3.44217c-1.87755,0.78231 -3.91156,1.2517 -6.25849,1.2517zm0,-6.41496c2.19047,0 3.7551,-0.62585 5.0068,-1.87755c1.2517,-1.2517 1.87755,-3.12925 1.87755,-5.63264l0,-6.10203c0,-2.5034 -0.62585,-4.38095 -1.87755,-5.63264c-1.2517,-1.2517 -2.81632,-1.87755 -5.0068,-1.87755c-2.03401,0 -3.7551,0.62585 -5.0068,1.87755c-1.2517,1.2517 -1.87755,3.12925 -1.87755,5.63264l0,6.10203c0,2.5034 0.62585,4.38095 1.87755,5.63264c1.2517,1.2517 2.97278,1.87755 5.0068,1.87755z" id="XMLID_67_" fill="#ffffff"/>
+					    <path stroke="null" d="m351.76825,397.26339c-3.12925,0 -5.78911,-0.46939 -7.82312,-1.56462c-2.19047,-1.09524 -4.06802,-2.5034 -5.63264,-4.38095l4.85033,-4.69387c1.2517,1.40816 2.5034,2.5034 3.91156,3.28571c1.40816,0.78231 3.12925,1.2517 5.0068,1.2517c1.87755,0 3.28571,-0.31292 4.22448,-0.93877c0.78231,-0.62585 1.2517,-1.56462 1.2517,-2.81632c0,-0.93877 -0.31292,-1.72109 -0.93877,-2.34694s-1.56462,-0.93877 -3.12925,-1.09524l-3.28571,-0.46939c-3.59863,-0.46939 -6.25849,-1.40816 -8.13604,-2.97278c-1.87755,-1.56462 -2.81632,-3.91156 -2.81632,-6.88434c0,-1.56462 0.31292,-2.97278 0.93877,-4.22448c0.62585,-1.2517 1.40816,-2.34694 2.5034,-3.28571c1.09524,-0.93877 2.34694,-1.56462 3.91156,-2.03401s3.28571,-0.78231 5.16326,-0.78231c1.56462,0 2.97278,0.15646 4.22448,0.31292c1.2517,0.15646 2.34694,0.62585 3.28571,0.93877c0.93877,0.46939 1.87755,0.93877 2.81632,1.56462c0.78231,0.62585 1.72109,1.40816 2.5034,2.19047l-4.69387,4.69387c-0.93877,-0.93877 -2.03401,-1.87755 -3.44217,-2.5034c-1.40816,-0.62585 -2.81632,-0.93877 -4.38095,-0.93877c-1.72109,0 -2.97278,0.31292 -3.7551,0.93877c-0.78231,0.62585 -1.09524,1.40816 -1.09524,2.5034c0,1.09524 0.31292,1.87755 0.93877,2.5034c0.62585,0.62585 1.72109,0.93877 3.28571,1.2517l3.28571,0.46939c7.04081,0.93877 10.48298,4.22448 10.48298,9.5442c0,1.56462 -0.31292,2.97278 -0.93877,4.38095c-0.62585,1.2517 -1.56462,2.5034 -2.65986,3.44217c-1.09524,0.93877 -2.5034,1.72109 -4.22448,2.19047c-1.72109,0.15646 -3.59863,0.46939 -5.63264,0.46939z" id="XMLID_70_" fill="#ffffff"/>
+					    <path stroke="null" d="m381.96549,396.48108c-2.81632,0 -4.85033,-0.78231 -6.25849,-2.19047s-2.19047,-3.44217 -2.19047,-6.10203l0,-17.83671l-4.85033,0l0,-6.41496l2.5034,0c1.2517,0 2.03401,-0.31292 2.5034,-0.78231c0.46939,-0.62585 0.62585,-1.40816 0.62585,-2.5034l0,-5.63264l7.19727,0l0,8.91835l6.72788,0l0,6.41496l-6.72788,0l0,19.71426l6.25849,0l0,6.41496l-5.78911,0z" id="XMLID_72_" fill="#ffffff"/>
+					   </g>
+					   <g stroke="null" id="XMLID_29_">
+					    <path stroke="null" d="m133.03387,422.14091l8.44897,0c1.56462,0 2.97278,0.31292 4.22448,0.78231c1.2517,0.46939 2.34694,1.2517 3.12925,2.19047c0.93877,0.93877 1.56462,2.19047 2.03401,3.7551c0.46939,1.56462 0.78231,3.28571 0.78231,5.31972c0,2.03401 -0.31292,3.7551 -0.78231,5.31972c-0.46939,1.56462 -1.09524,2.81632 -2.03401,3.7551c-0.93877,0.93877 -1.87755,1.72109 -3.12925,2.19047c-1.2517,0.46939 -2.65986,0.78231 -4.22448,0.78231l-8.44897,0l0,-24.0952zm8.44897,20.65303c1.72109,0 3.28571,-0.62585 4.38095,-1.72109c1.09524,-1.09524 1.72109,-2.81632 1.72109,-5.0068l0,-3.91156c0,-2.19047 -0.62585,-3.7551 -1.72109,-5.0068c-1.09524,-1.09524 -2.5034,-1.72109 -4.38095,-1.72109l-4.53741,0l0,17.21086l4.53741,0l0,0.15646z" fill="#49226B" class="st0" id="XMLID_30_"/>
+					    <path stroke="null" d="m159.78894,446.23611l-5.63264,-24.0952l3.91156,0l2.5034,11.57821l1.72109,7.97958l0.15646,0l1.87755,-7.97958l2.81632,-11.57821l4.38095,0l2.81632,11.57821l1.87755,7.97958l0.15646,0l1.72109,-7.97958l2.5034,-11.57821l3.7551,0l-5.94557,24.0952l-4.38095,0l-3.12925,-12.36053l-1.72109,-7.35373l0,0l-1.87755,7.35373l-3.12925,12.36053l-4.38095,0z" fill="#49226B" class="st0" id="XMLID_33_"/>
+					    <path stroke="null" d="m194.21066,446.54904c-1.2517,0 -2.5034,-0.15646 -3.44217,-0.62585s-1.87755,-1.09524 -2.5034,-1.87755s-1.2517,-1.87755 -1.56462,-2.97278c-0.31292,-1.09524 -0.62585,-2.5034 -0.62585,-3.91156s0.15646,-2.65986 0.62585,-3.91156c0.31292,-1.09524 0.93877,-2.19047 1.56462,-2.97278s1.56462,-1.40816 2.5034,-1.87755c0.93877,-0.46939 2.19047,-0.62585 3.44217,-0.62585c1.2517,0 2.5034,0.15646 3.44217,0.62585c0.93877,0.46939 1.87755,1.09524 2.5034,1.87755s1.09524,1.72109 1.56462,2.81632s0.46939,2.19047 0.46939,3.44217l0,1.40816l-12.36053,0l0,0.62585c0,1.40816 0.46939,2.5034 1.2517,3.44217c0.78231,0.93877 2.03401,1.2517 3.44217,1.2517c1.09524,0 2.03401,-0.31292 2.81632,-0.78231c0.78231,-0.46939 1.40816,-1.09524 1.87755,-1.87755l2.19047,2.19047c-0.62585,1.09524 -1.56462,2.03401 -2.81632,2.65986c-1.2517,0.78231 -2.65986,1.09524 -4.38095,1.09524zm0,-15.8027c-0.62585,0 -1.2517,0.15646 -1.72109,0.31292c-0.46939,0.15646 -0.93877,0.62585 -1.40816,0.93877c-0.31292,0.46939 -0.62585,0.93877 -0.93877,1.40816c-0.15646,0.62585 -0.31292,1.2517 -0.31292,1.87755l0,0.31292l8.29251,0l0,-0.31292c0,-1.40816 -0.31292,-2.5034 -1.09524,-3.28571c-0.62585,-0.78231 -1.56462,-1.2517 -2.81632,-1.2517z" fill="#49226B" class="st0" id="XMLID_35_"/>
+					    <path stroke="null" d="m206.25826,420.73275l3.7551,0l0,10.48298l0.15646,0c0.31292,-1.09524 1.09524,-1.87755 1.87755,-2.5034s1.87755,-0.93877 3.12925,-0.93877c2.34694,0 4.06802,0.78231 5.31972,2.5034c1.2517,1.56462 1.87755,3.91156 1.87755,6.88434c0,2.97278 -0.62585,5.31972 -1.87755,6.88434c-1.2517,1.56462 -2.97278,2.5034 -5.31972,2.5034c-1.2517,0 -2.19047,-0.31292 -3.12925,-0.93877c-0.93877,-0.62585 -1.56462,-1.40816 -1.87755,-2.5034l-0.15646,0l0,2.97278l-3.7551,0l0,-25.3469zm7.82312,22.68704c1.2517,0 2.34694,-0.46939 3.12925,-1.2517c0.78231,-0.78231 1.09524,-1.87755 1.09524,-3.28571l0,-3.12925c0,-1.40816 -0.31292,-2.5034 -1.09524,-3.28571s-1.87755,-1.2517 -3.12925,-1.2517c-1.09524,0 -2.03401,0.31292 -2.81632,0.78231s-1.09524,1.2517 -1.09524,2.19047l0,6.10203c0,0.93877 0.31292,1.72109 1.09524,2.19047s1.72109,0.93877 2.81632,0.93877z" fill="#49226B" class="st0" id="XMLID_38_"/>
+					    <path stroke="null" d="m240.83644,444.04564l0,-6.88434l-6.25849,0l0,-3.12925l6.25849,0l0,-6.88434l3.44217,0l0,6.88434l6.25849,0l0,3.12925l-6.25849,0l0,6.88434l-3.44217,0z" fill="#49226B" class="st0" id="XMLID_42_"/>
+					    <path stroke="null" d="m269.46905,446.23611l0,-9.38774l-8.13604,-14.70746l4.38095,0l5.78911,10.63944l0.15646,0l5.78911,-10.63944l4.22448,0l-8.29251,14.551l0,9.5442l-3.91156,0z" fill="#49226B" class="st0" id="XMLID_45_"/>
+					    <path stroke="null" d="m289.96562,446.54904c-1.2517,0 -2.34694,-0.15646 -3.44217,-0.62585c-1.09524,-0.46939 -1.87755,-1.09524 -2.65986,-1.87755c-0.78231,-0.78231 -1.2517,-1.87755 -1.72109,-2.97278c-0.31292,-1.09524 -0.62585,-2.5034 -0.62585,-3.91156s0.15646,-2.65986 0.62585,-3.91156c0.46939,-1.09524 0.93877,-2.19047 1.72109,-2.97278c0.78231,-0.78231 1.56462,-1.40816 2.65986,-1.87755c1.09524,-0.46939 2.19047,-0.62585 3.44217,-0.62585s2.34694,0.15646 3.44217,0.62585c1.09524,0.46939 1.87755,1.09524 2.65986,1.87755c0.78231,0.78231 1.2517,1.87755 1.72109,2.97278c0.31292,1.09524 0.62585,2.5034 0.62585,3.91156s-0.15646,2.65986 -0.62585,3.91156c-0.46939,1.09524 -0.93877,2.19047 -1.72109,2.97278c-0.78231,0.78231 -1.56462,1.40816 -2.65986,1.87755c-1.09524,0.46939 -2.19047,0.62585 -3.44217,0.62585zm0,-3.12925c1.2517,0 2.34694,-0.46939 3.12925,-1.2517c0.78231,-0.78231 1.09524,-2.03401 1.09524,-3.59863l0,-2.97278c0,-1.56462 -0.31292,-2.81632 -1.09524,-3.59863s-1.87755,-1.2517 -3.12925,-1.2517c-1.2517,0 -2.34694,0.46939 -3.12925,1.2517s-1.09524,2.03401 -1.09524,3.59863l0,2.97278c0,1.56462 0.31292,2.81632 1.09524,3.59863c0.78231,0.93877 1.87755,1.2517 3.12925,1.2517z" fill="#49226B" class="st0" id="XMLID_47_"/>
+					    <path stroke="null" d="m313.27851,443.26333l0,0c-0.31292,0.46939 -0.46939,0.78231 -0.78231,1.2517c-0.31292,0.46939 -0.62585,0.78231 -0.93877,1.09524s-0.93877,0.62585 -1.40816,0.78231s-1.2517,0.31292 -1.87755,0.31292c-1.87755,0 -3.28571,-0.62585 -4.38095,-1.72109c-1.09524,-1.2517 -1.56462,-2.97278 -1.56462,-5.16326l0,-11.42175l3.7551,0l0,10.95237c0,2.81632 1.09524,4.22448 3.44217,4.22448c0.46939,0 0.93877,0 1.40816,-0.15646c0.46939,-0.15646 0.93877,-0.31292 1.2517,-0.62585c0.31292,-0.31292 0.62585,-0.62585 0.78231,-0.93877c0.15646,-0.31292 0.31292,-0.78231 0.31292,-1.40816l0,-12.0476l3.7551,0l0,17.83671l-3.7551,0l0,-2.97278z" fill="#49226B" class="st0" id="XMLID_50_"/>
+					   </g>
+					   <g stroke="null" id="XMLID_79_">
+					    <g stroke="null" id="XMLID_41_">
+					     <path stroke="null" fill="#000000" d="m202.03377,137.8488l66.96589,-120.00663c1.2517,-2.19047 3.44217,-3.44217 5.94557,-3.44217l27.22445,0c2.34694,0 4.53741,1.2517 5.78911,3.12925l15.64624,24.0952c1.40816,2.03401 1.40816,4.69387 0.31292,6.88434l-12.98638,23.78228c-2.5034,4.53741 0.78231,10.17005 5.94557,10.17005l0,0c2.5034,0 4.85033,-1.40816 5.94557,-3.59863l12.36053,-22.37412c1.2517,-2.19047 3.44217,-3.59863 5.94557,-3.59863l29.72785,0c2.34694,0 4.69387,1.2517 5.94557,3.44217l14.23807,24.25167c1.2517,2.03401 1.2517,4.69387 0.15646,6.72788l-65.71419,120.47602c-1.2517,2.19047 -3.44217,3.59863 -5.94557,3.59863l-28.63261,0c-2.34694,0 -4.53741,-1.2517 -5.78911,-3.12925l-15.64624,-24.56459c-1.40816,-2.19047 -1.40816,-4.85033 -0.15646,-7.04081l12.98638,-23.31289c2.5034,-4.53741 -0.78231,-10.17005 -5.94557,-10.17005l-2.03401,0c-2.5034,0 -4.85033,1.40816 -6.10203,3.59863l-10.63944,20.34011c-1.2517,2.19047 -3.44217,3.59863 -6.10203,3.59863l-29.25846,0c-2.34694,0 -4.53741,-1.2517 -5.78911,-3.28571l-14.08161,-22.8435c-1.40816,-1.87755 -1.40816,-4.53741 -0.31292,-6.72788z" id="XMLID_44_"/>
+					    </g>
+					    <path stroke="null" d="m212.51675,143.48145c1.87755,1.56462 0,-0.15646 7.66666,12.20406l3.59863,5.78911c0.31292,0.46939 0.93877,0.78231 1.56462,0.78231l0,0c0.78231,0 6.41496,0 12.0476,0c3.44217,0 6.72788,0.46939 9.23128,0.46939l-10.95237,-19.08841l-23.15643,0l0,-0.15646z" fill="#FFFFFF" class="st1" id="XMLID_87_"/>
+					    <path stroke="null" d="m249.44187,110.62435c0.62585,-1.09524 1.72109,-1.72109 2.81632,-1.72109c0,0 0,0 0.15646,0l83.70736,0c-1.2517,-3.12925 -2.65986,-5.0068 -4.53741,-8.13604c-2.34694,-4.06802 -5.16326,-8.60543 -6.57142,-11.10883c-4.38095,0 -50.53734,0.31292 -56.63937,0c-1.40816,0 -2.97278,-1.09524 -3.7551,-2.34694c-1.40816,-2.19047 1.09524,-5.16326 2.19047,-7.19727c1.40816,-2.5034 2.81632,-5.16326 4.22448,-7.66666c4.06802,-7.19727 7.97958,-14.23807 12.0476,-21.43534c3.7551,-6.72788 7.51019,-13.45576 11.26529,-20.02718c1.40816,-2.5034 2.81632,-5.0068 4.22448,-7.51019l-21.90473,0c-0.15646,0 -0.93877,0.62585 -1.40816,1.56462c-0.62585,1.2517 -52.25843,96.69374 -62.27202,112.33997l22.8435,0l13.61223,-26.75506z" fill="#FFFFFF" class="st1" id="XMLID_86_"/>
+					    <path stroke="null" d="m341.75466,105.30463l11.26529,-20.96596l-11.10883,-19.71426c-2.65986,4.85033 -9.07482,16.58501 -11.42175,20.96596c1.2517,2.19047 3.59863,6.25849 6.72788,11.57821c1.56462,2.97278 3.28571,5.78911 4.53741,8.13604z" fill="#FFFFFF" class="st1" id="XMLID_85_"/>
+					    <path stroke="null" d="m295.12888,82.46113l19.87072,-35.82988c0.31292,-0.62585 0.31292,-1.2517 0.15646,-1.56462c-0.46939,-0.93877 -5.63264,-9.23128 -9.07482,-15.02039l-2.03401,-3.28571l-31.13601,55.7006l22.21766,0z" fill="#FFFFFF" class="st1" id="XMLID_84_"/>
+					    <path stroke="null" d="m299.35336,141.29097c-3.7551,6.72788 -19.08841,34.26526 -19.87072,35.82988c-0.31292,0.62585 -0.31292,1.2517 -0.15646,1.56462c0.46939,0.78231 5.0068,8.13604 8.44897,13.92515c1.09524,1.72109 2.03401,3.28571 2.65986,4.53741l31.13601,-55.85706l-22.21766,0z" fill="#FFFFFF" class="st1" id="XMLID_83_"/>
+					    <path stroke="null" d="m370.54373,62.43394c-0.31292,-0.46939 -0.93877,-0.93877 -1.56462,-0.93877l-21.27888,-0.15646l10.95237,19.40133l23.15643,0c-1.72109,-1.56462 -4.69387,-7.51019 -7.19727,-11.73468c-1.87755,-3.28571 -3.7551,-5.94557 -4.06802,-6.57142z" fill="#FFFFFF" class="st1" id="XMLID_82_"/>
+					    <path stroke="null" d="m241.30583,139.25696l11.10883,19.71426c2.34694,-4.53741 7.82312,-14.70746 11.26529,-21.27888l-11.26529,-19.40133l-11.10883,20.96596z" fill="#FFFFFF" class="st1" id="XMLID_81_"/>
+					    <path stroke="null" d="m344.88391,112.18897c-0.46939,0.93877 -1.2517,2.03401 -2.19047,2.5034c-1.40816,0.78231 -11.73468,0.62585 -16.74147,0.62585c-2.5034,0 -5.0068,0 -7.66666,0c-2.81632,0 -5.63264,0 -8.29251,0c-2.97278,0 -5.78911,0 -8.76189,0c-2.97278,0 -5.78911,0 -8.76189,0c-2.81632,0 -5.63264,0 -8.44897,0c-2.65986,0 -5.16326,0 -7.82312,0c-2.34694,0 -4.53741,0 -6.88434,0c-1.87755,0 -3.7551,0 -5.47618,0c-1.2517,0 -2.5034,0 -3.91156,0c-0.62585,0 -1.2517,0 -1.87755,0c0,0 0,0 -0.15646,0l11.42175,19.24487c0,0 57.73461,-0.62585 57.73461,-0.62585c1.09524,0 2.19047,0.93877 2.81632,1.87755c0.62585,0.93877 0.62585,2.81632 0,3.7551l-34.42172,63.21079c3.12925,0 13.61223,0 13.61223,0l8.76189,0c0.15646,0 63.68018,-117.34677 63.68018,-117.34677l-22.8435,0c0.15646,0.15646 -13.76869,26.75506 -13.76869,26.75506z" fill="#FFFFFF" class="st1" id="XMLID_80_"/>
+					   </g>
+					   <path stroke="null" d="m389.94507,171.01882c-7.19727,-2.34694 -14.86392,-3.59863 -22.37412,-4.69387c-2.34694,4.22448 -4.69387,8.60543 -7.04081,12.82991c17.83671,-0.62585 35.04757,4.85033 48.34687,16.89793c18.3061,16.58501 25.50336,38.17682 20.65303,62.27202c-4.85033,24.25167 -20.18364,41.30606 -44.43531,49.44211c-6.25849,2.03401 -13.61223,3.12925 -22.21766,3.12925c-32.38771,0.15646 -65.40127,0.15646 -97.31959,0.15646c-23.78228,0 -47.72102,0 -71.5033,-0.15646c-30.04077,-0.15646 -61.17678,-0.15646 -91.68694,0.31292c-0.31292,0 -0.62585,0 -0.93877,0c-30.66662,0 -58.51692,-21.74827 -64.93188,-50.85027c-7.04081,-31.44893 6.25849,-59.61216 35.20403,-75.41486c2.19047,-1.2517 4.53741,-2.03401 6.88434,-2.81632c1.40816,-0.46939 2.81632,-0.93877 4.22448,-1.56462c3.91156,-1.72109 5.31972,-4.22448 4.53741,-7.97958c-7.66666,-33.48294 11.26529,-79.01349 55.23121,-94.50327c23.78228,-8.29251 48.97272,-5.63264 69.62575,5.78911l6.25849,-11.10883c-27.06799,-14.70746 -60.7074,-16.74147 -88.5577,-2.5034c-36.45573,18.61902 -55.07475,48.50333 -55.07475,88.87062c0,7.51019 -1.56462,12.51699 -9.85713,16.27209c-29.25846,13.61223 -48.03394,50.38088 -41.61899,81.82981c8.13604,40.68021 39.11559,66.18358 80.57812,66.4965c11.10883,0.15646 22.37412,0.15646 33.17002,0c6.72788,0 13.2993,0 20.02718,0c0.31292,0 4.53741,-0.31292 11.10883,-0.31292c92.31279,-0.15646 135.65287,-0.31292 139.2515,-0.31292c0.15646,0 0.46939,0 0.62585,0c5.47618,0 10.7959,0.31292 16.27209,0.31292c11.89114,0.15646 24.0952,0.46939 36.14281,-0.15646c12.36053,-0.62585 22.37412,-2.19047 30.66662,-5.0068c31.91832,-11.10883 52.41489,-40.52375 52.10197,-75.10193c0.15646,-32.07478 -21.90473,-61.80263 -53.35366,-72.12915z" fill="#49226B" class="st0" id="XMLID_123_"/>
+					  </g>
+					 </g>
+					</svg>
+				</div>
+			<div class="passField change old">
+				<input id="oldPass" type="password" placeholder="Old Password" class="styledInput" />
+			</div>
+			<div class="passField change">
+				<input id="newPass" type="password" placeholder="New Password" class="styledInput" />
+			</div>
+			<div class="passField change">
+				<input id="confirmPass" type="password" placeholder="Confirm New Password" class="styledInput" />
+			</div>
+			<div class="passField" id="loginField">
+				<input id="loginPass" type="password" placeholder="Password" class="styledInput" />
+			</div>
+			<div id="warnings">
+				Passwords Do Not Match
+			</div>
+			<a id="reset">Reset</a>
+			<div class="button save" id="submit">
+				<div class="foreground">Login</div>
+				<div class="background">Login</div>
+			</div>
+		</div>
+	</body>
+</html>

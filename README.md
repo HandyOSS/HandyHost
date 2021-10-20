@@ -24,6 +24,7 @@ Ubuntu Recommended Versions: We have tested extensively with Ubuntu 20.04 and 21
 6. Network uptime. For any of these services you should have a hardwired ethernet connection to any devices that is always (within reason) up and on.
 7. You should have familiarity with crypto wallets, mainly: keeping your keys safe somewhere non-electronic and how to buy crypto ($SC, $AKT, $DVPN). $SC is easy to buy/hold on Kraken. $AKT and $DVPN can easily be swapped for $ATOM (also available on Kraken) on [osmosis.zone](https://osmosis.zone) via [keplr wallet](https://wallet.keplr.app/).
 8. (things you should aspire to do) Staking. $AKT and $DVPN can be staked for very high APY% within either [keplr wallet](https://wallet.keplr.app/) for desktop and/or [Cosmostation](https://wallet.cosmostation.io/) for mobile. In addition you can look into Liquidity Pool Mining through [osmosis.zone](https://osmosis.zone) for a very (very) high APY%.
+9. If you plan to run HandyHost on a VPS or machine outside of your network, please read our [Authentication](#auth) guide.
 
 ### Installation (Ubuntu Desktop 64-bit)
 There is a compiled .deb package that can be found in Releases. There are many apt dependencies and thus you will have to download it and install thru dpkg and apt like:
@@ -116,6 +117,57 @@ Why all the tldr;? To host some of these services (Sia, for instance), your wall
 
 We go an extra step further than the recommendations and encrypt the unlock keys at rest, and only provide an encrypted key location to the HandyHost application on startup. After the application has decrypted and used the passwords, the temporary encrypted key file is deleted.
 I'm still not crazy about the idea but it's about as good as it gets for running a daemon that needs to auto-startup without you sitting at the keyboard.
+
+<a id="auth"></a>
+### Setting up Authentication for machines you will access outside of your local network
+
+Generally, HandyHost is designed for use on your local network, accessing over port 8008 (http) and 58008 (https). However some users may wish to setup HandyHost on a VPS or machine outside of their local network. If you do this: Either use SSH tunneling (port forwarding), or setup Authentication if you want to access it externally.
+
+#### Using SSH Tunneling
+The most locked down way to access HandyHost on your external host is to port forward over ssh (aka ssh tunneling). It is very simple to do, assuming you have SSH setup on your machine.
+
+From your local machine that you will view HandyHost UI on, run this command:
+```ssh -L 8008:127.0.0.1:8008 myvps_user@myvps_ip```
+where myvps_user is your vps ssh username and myvps_ip is the vps ip address.
+Then you can just load ```http://localhost:8008``` in your browser and you will have HandyHost accessible on your local machine.
+
+#### Setting up Authentication
+
+HandyHost has an extra layer of authentication for folks who wish to access their machine externally. Note: SSH Tunneling is the most locked down option for remote access. We highly (highly) recommend that when loading HandyHost externally (not SSH tunneled) with Authentication that you use the ```https://your-external-ip:58008``` SSL url (FYI: self-signed certificate, created by you when you install HandyHost. You will have to accept the self signed certificate once when you initially load the site).
+
+By default, authentication is disabled. How to enable it:
+
+1. Stop the HandyHost service. Mac: Use the TaskBar UI, Linux: ```sudo systemctl stop handyhost```
+2. On the machine, edit the file ```~/.HandyHost/authSettings.json``` (on linux: ```/root/.HandyHost/authSettings.json```).
+
+The auth settings file will look like:
+```
+{
+  "enabled": false,
+  "initialPassword": "changemeplease",
+  "hasInitialized": false,
+  "tokenTTL": "30d"
+}
+```
+
+3. All you need to edit to enable auth is: 
+```"enabled": true,``` setting to true will enable auth on next start. No quotes but make sure the comma is present.
+```"initialPassword": "changemeplease",``` change the default password, keep it within the quotes pls.
+```tokenTTL: "30d"``` optional. How long does a login token live until you must reset it.
+
+4. After saving the authSettings.json file, you can restart HandyHost. Mac users can use the TaskBar UI, Linux users: ```sudo systemctl start handyhost```
+
+5. Now when you load any HandyHost URL you will first be prompted with a UI to set/confirm your access password (to something different than the initial password).
+
+6. Subsequent loads will pass thru your authentication token (preserved in the browser for 30 days). Note: incognito browser sessions will login after each browser session (ie full close/restart of the browser).
+
+Feel free to set this up on your local network for an extra layer of security. Note: Without Authentication, all wallet routines are password protected so your funds are always safe. This is more of an extra layer of security around your HandyHost configurations.
+
+#### Forgot your password?
+
+Follow the steps above to enable auth. In step 3, add this: 
+In authSettings.json, set ```"hasInitialized":false,```. After restarting handyhost you can now set your new password.
+
 
 ##### [LICENSE](https://github.com/HandyOSS/HandyHost/blob/master/LICENSE) 
 

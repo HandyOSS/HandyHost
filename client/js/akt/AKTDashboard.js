@@ -159,11 +159,13 @@ export class AKTDashboard {
 					' Instances';
 				}
 				msg = absVal+label+action;
+				/*
+				deprecating this, it's not adding much value tbh
 				$('#aktMain .options ul').append('<li id="changeMessage">'+msg+'</li>')
 				$('li#changeMessage').fadeOut(15000);
 				setTimeout(()=>{
 					$('li#changeMessage').remove();
-				},15000)
+				},15000)*/
 			}
 		}
 		if(data.providerIsRunning){
@@ -546,8 +548,8 @@ export class AKTDashboard {
 		</div>
 		*/
 		$('#runSave').off('click').on('click',()=>{
-			const fees = $('#runFees').val() == '' ? 10000 : parseInt($('#runFees').val());
-			const cpu = $('#cpuPrice').val() == '' ? 10 : parseInt($('#cpuPrice').val());
+			const fees = $('#runFees').val() == '' ? 1000 : parseInt($('#runFees').val());
+			const cpu = $('#cpuPrice').val() == '' ? 1 : parseFloat($('#cpuPrice').val());
 			const autostart = $('#autostart').is(':checked');
 			$('#runSave .foreground').html('Starting Up...');
 			$('#runSave .background').html('Starting Up...');

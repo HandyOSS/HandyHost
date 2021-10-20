@@ -156,6 +156,7 @@ export class DVPNSetup{
 			    console.log('stdout',d.toString());
 			})
 			s.stderr.on('data',d=>{
+				//test this on ubuntu 18.04 because stderr might be getting output for stdout/etc warning.
 			    console.log('stderr',d.toString());
 			    this.utils.checkForM1RosettaFun().then(isRosetta=>{
 			    	if(!isRosetta){

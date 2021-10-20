@@ -800,7 +800,7 @@ export class Wallet{
 					opensslLoc = 'openssl'
 				}
 				this.commonUtils.encrypt(params.pw).then(pwLoc=>{
-					const args = [pwLoc,this.commonUtils.escapeBashString(params.walletName),params.serverHost,params.cpuPrice,params.fees,opensslLoc];
+					const args = [pwLoc,params.walletName,params.serverHost,params.cpuPrice,params.fees,opensslLoc];
 					const s = spawn('./runProviderAutomated.sh',args,{env:process.env,cwd:process.env.PWD+'/aktAPI',detached:true});
 					fs.writeFileSync(process.env.HOME+'/.HandyHost/aktData/provider.pid',s.pid.toString());
 					let logsPath = process.env.HOME+'/.HandyHost/aktData/providerRun.log';

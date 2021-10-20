@@ -604,7 +604,7 @@ export class HandySia{
 				})
 				//resolve(out);
 			}).catch(e=>{
-				console.log('host info fail',e);
+				console.log('sia: getHostMetrics err',e);
 			})
 		})
 	}
