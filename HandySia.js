@@ -603,6 +603,8 @@ export class HandySia{
 					resolve(out);
 				})
 				//resolve(out);
+			}).catch(e=>{
+				console.log('host info fail',e);
 			})
 		})
 	}

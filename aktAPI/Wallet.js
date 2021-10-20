@@ -789,82 +789,85 @@ export class Wallet{
 			//unfortunately this command doesnt accept a pw as stdin
 			//so we encrypt to a readonly file and pass to the expect script
 			//the expect script deletes the encrypted file after reading it.
-			let opensslLoc;
-			const homebrewPrefixMAC = process.arch == 'arm64' ? '/opt/homebrew' : '/usr/local';
-		  	if(process.platform == 'darwin'){
-				opensslLoc = homebrewPrefixMAC+'/opt/openssl@1.1/bin/openssl'
-			}
-			else{
-				opensslLoc = 'openssl'
-			}
-			this.commonUtils.encrypt(params.pw).then(pwLoc=>{
-				const args = [pwLoc,this.commonUtils.escapeBashString(params.walletName),params.serverHost,params.cpuPrice,params.fees,opensslLoc];
-				const s = spawn('./runProviderAutomated.sh',args,{env:process.env,cwd:process.env.PWD+'/aktAPI',detached:true});
-				fs.writeFileSync(process.env.HOME+'/.HandyHost/aktData/provider.pid',s.pid.toString());
-				let logsPath = process.env.HOME+'/.HandyHost/aktData/providerRun.log';
-				if(fs.existsSync(logsPath)){
-					//unlink if exists
-					fs.unlinkSync(logsPath);
+			this.commonUtils.checkForM1RosettaFun().then(isRosetta=>{
+		  		const homebrewPrefixMAC = isRosetta ? '/opt/homebrew' : '/usr/local';
+				let opensslLoc;
+				//const homebrewPrefixMAC = process.arch == 'arm64' ? '/opt/homebrew' : '/usr/local';
+			  	if(process.platform == 'darwin'){
+					opensslLoc = homebrewPrefixMAC+'/opt/openssl@1.1/bin/openssl'
 				}
-				let intervalsPassed = 0;
-				
-				logInterval = setInterval(()=>{
-					intervalsPassed += 1;
-					if(intervalsPassed >= 180){
-						intervalsPassed = 0;
-						fs.truncateSync(logsPath); //clear logs
+				else{
+					opensslLoc = 'openssl'
+				}
+				this.commonUtils.encrypt(params.pw).then(pwLoc=>{
+					const args = [pwLoc,this.commonUtils.escapeBashString(params.walletName),params.serverHost,params.cpuPrice,params.fees,opensslLoc];
+					const s = spawn('./runProviderAutomated.sh',args,{env:process.env,cwd:process.env.PWD+'/aktAPI',detached:true});
+					fs.writeFileSync(process.env.HOME+'/.HandyHost/aktData/provider.pid',s.pid.toString());
+					let logsPath = process.env.HOME+'/.HandyHost/aktData/providerRun.log';
+					if(fs.existsSync(logsPath)){
+						//unlink if exists
+						fs.unlinkSync(logsPath);
 					}
-					fs.appendFileSync(logsPath,output,'utf8');
-					output = '';
-
-				},10*1000);
-				let hasReturned = false;
-				let returnTimeout = setTimeout(()=>{
-					if(!hasReturned){
-						resolve({success:true});
-					}
-				},2000);
-				
-				let output = '';
-				s.stdout.on('data',d=>{
-					//console.log('stdout',d.toString());
-					output += d.toString();
-				})
-				s.stderr.on('data',d=>{
-					console.log('provider stderr:',d.toString());
-					output += d.toString();
-				})
-				s.on('close',()=>{
-					console.log('provider is closed');
-					fs.appendFileSync(logsPath,"\n###########  PROVIDER WAS CLOSED ###########\n",'utf8');
-					hasReturned = true;
-					clearTimeout(returnTimeout);
-					clearInterval(logInterval);
-					resolve({success:false,error:output});
+					let intervalsPassed = 0;
 					
-					if(this.providerWasHalted){
-						//let it die
-						this.providerWasHalted = false;
-						if(fs.existsSync(process.env.HOME+'/.HandyHost/aktData/provider.pid')){
-							fs.unlinkSync(process.env.HOME+'/.HandyHost/aktData/provider.pid');
+					logInterval = setInterval(()=>{
+						intervalsPassed += 1;
+						if(intervalsPassed >= 180){
+							intervalsPassed = 0;
+							fs.truncateSync(logsPath); //clear logs
 						}
-					}
-					else{
-						fs.appendFileSync(logsPath,"\n###########  RESTARTING PROVIDER ###########\n",'utf8');
-					
-						//accidental death, likely due to RPC errors
-						//keep things alive
-						this.envUtils.setEnv().then(()=>{
-							//ok we set the env
-							this.startProvider(params);
-						}).catch(e=>{
-							console.log('error setting new envs',e);
-							//try spawning again anyway
-							this.startProvider(params);
-						})
+						fs.appendFileSync(logsPath,output,'utf8');
+						output = '';
 
-					}
-				})
+					},10*1000);
+					let hasReturned = false;
+					let returnTimeout = setTimeout(()=>{
+						if(!hasReturned){
+							resolve({success:true});
+						}
+					},2000);
+					
+					let output = '';
+					s.stdout.on('data',d=>{
+						//console.log('stdout',d.toString());
+						output += d.toString();
+					})
+					s.stderr.on('data',d=>{
+						console.log('provider stderr:',d.toString());
+						output += d.toString();
+					})
+					s.on('close',()=>{
+						console.log('provider is closed');
+						fs.appendFileSync(logsPath,"\n###########  PROVIDER WAS CLOSED ###########\n",'utf8');
+						hasReturned = true;
+						clearTimeout(returnTimeout);
+						clearInterval(logInterval);
+						resolve({success:false,error:output});
+						
+						if(this.providerWasHalted){
+							//let it die
+							this.providerWasHalted = false;
+							if(fs.existsSync(process.env.HOME+'/.HandyHost/aktData/provider.pid')){
+								fs.unlinkSync(process.env.HOME+'/.HandyHost/aktData/provider.pid');
+							}
+						}
+						else{
+							fs.appendFileSync(logsPath,"\n###########  RESTARTING PROVIDER ###########\n",'utf8');
+						
+							//accidental death, likely due to RPC errors
+							//keep things alive
+							this.envUtils.setEnv().then(()=>{
+								//ok we set the env
+								this.startProvider(params);
+							}).catch(e=>{
+								console.log('error setting new envs',e);
+								//try spawning again anyway
+								this.startProvider(params);
+							})
+
+						}
+					})
+				});
 			});
 				
 		});

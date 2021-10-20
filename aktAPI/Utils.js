@@ -563,10 +563,13 @@ export class AKTUtils{
 					if(process.platform == 'darwin'){
 						this.commonUtils.encrypt(nodePW).then(encPath=>{
 							//cpid = spawn('./sshCopyIdAutomated.sh',[nodeUser,node.ip,nodePW,process.env.HOME+'/.ssh/handyhost'],{env:process.env,cwd:process.env.PWD+'/aktAPI'})
-							const homebrewPrefixMAC = process.arch == 'arm64' ? '/opt/homebrew' : '/usr/local';
-							command = './sshCopyIdAutomated.sh';
-							args = [nodeUser,node.ip,encPath,process.env.HOME+'/.ssh/handyhost',homebrewPrefixMAC+'/opt/openssl@1.1/bin/openssl'];
-							finish();
+							this.commonUtils.checkForM1RosettaFun().then(isRosetta=>{
+			  					const homebrewPrefixMAC = isRosetta ? '/opt/homebrew' : '/usr/local';
+								//const homebrewPrefixMAC = process.arch == 'arm64' ? '/opt/homebrew' : '/usr/local';
+								command = './sshCopyIdAutomated.sh';
+								args = [nodeUser,node.ip,encPath,process.env.HOME+'/.ssh/handyhost',homebrewPrefixMAC+'/opt/openssl@1.1/bin/openssl'];
+								finish();
+							});
 						})
 						
 					}

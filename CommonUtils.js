@@ -173,23 +173,53 @@ export class CommonUtils{
 			request.end();
 		})
 	}
+	checkForM1RosettaFun(){
+		//check if this is running in macos rosetta, nice.
+		return new Promise((resolve,reject)=>{
+			if(process.platform != 'darwin'){
+				resolve(false);
+				return;
+			}
+
+			const s = spawn('sysctl', ['sysctl.proc_translated']);
+			let out = '';
+			s.stdout.on('data',d=>{
+				out += d.toString();
+			})
+			s.on('close',()=>{
+				let o = out.split(':');
+				o = o[o.length-1];
+				if(o.trim() == '1'){
+					//is fn arm64
+					resolve(true);
+				}
+				else{
+					resolve(false);
+				}
+			})
+		})
+		
+	}
 	initKeystore(){
 		if(!fs.existsSync(process.env.HOME+'/.HandyHost/keystore')){
 			fs.mkdirSync(process.env.HOME+'/.HandyHost/keystore','0700');
 		  	//create certs
 		  	const keyPath = process.env.HOME+'/.HandyHost/keystore/handyhost.key';
 		  	const pubPath = process.env.HOME+'/.HandyHost/keystore/handyhost.pub';
-		  	const homebrewPrefixMAC = process.arch == 'arm64' ? '/opt/homebrew' : '/usr/local';
-		  	const openssl = process.platform == 'darwin' ? homebrewPrefixMAC+'/opt/openssl@1.1/bin/openssl' : 'openssl';
-		  	const create = spawn(openssl,['genrsa', '-out', keyPath, '4096']);
-		  	create.on('close',()=>{
-		  		const createPub = spawn(openssl,['rsa', '-in', keyPath, '-pubout', '-out', pubPath])
-		  		createPub.on('close',()=>{
-		  			fs.chmodSync(keyPath,'0600');
-		  			fs.chmodSync(pubPath,'0644');
+		  	this.checkForM1RosettaFun().then(isRosetta=>{
+		  		const homebrewPrefixMAC = isRosetta ? '/opt/homebrew' : '/usr/local';
+			  	const openssl = process.platform == 'darwin' ? homebrewPrefixMAC+'/opt/openssl@1.1/bin/openssl' : 'openssl';
+			  	const create = spawn(openssl,['genrsa', '-out', keyPath, '4096']);
+			  	create.on('close',()=>{
+			  		const createPub = spawn(openssl,['rsa', '-in', keyPath, '-pubout', '-out', pubPath])
+			  		createPub.on('close',()=>{
+			  			fs.chmodSync(keyPath,'0600');
+			  			fs.chmodSync(pubPath,'0644');
 
-		  		})
-		  	})
+			  		})
+			  	})
+		  	});
+		  	
 		}
 	}
 	encrypt(value,isForDaemon,daemonServiceName){
@@ -199,51 +229,56 @@ export class CommonUtils{
 			const basePath = process.env.HOME+'/.HandyHost/keystore/';
 			const pubPath = basePath+pubKeyName;
 			const encryptedOutPath = isForDaemon ? basePath+'daemon_'+daemonServiceName : basePath+'k'+(new Date().getTime());
-			const homebrewPrefixMAC = process.arch == 'arm64' ? '/opt/homebrew' : '/usr/local';
-		  	const openssl = process.platform == 'darwin' ? homebrewPrefixMAC+'/opt/openssl@1.1/bin/openssl' : 'openssl';
-			const args = ['rsautl', '-pubin', '-inkey', pubPath, '-encrypt', '-pkcs','-out',encryptedOutPath];
-			
-			const enc = spawn(openssl,args)
-			enc.stdin.write(`${value}`);
-			let resp = '';
-			enc.stdout.on('data',d=>{
-				//console.log('stdout',d.toString());
-				resp += d.toString();
-			})
-			enc.stderr.on('data',d=>{
-				console.log('stderr',d.toString());
-			})
-			enc.on('close',()=>{
+			this.checkForM1RosettaFun().then(isRosetta=>{
+		  		const homebrewPrefixMAC = isRosetta ? '/opt/homebrew' : '/usr/local';
+				const openssl = process.platform == 'darwin' ? homebrewPrefixMAC+'/opt/openssl@1.1/bin/openssl' : 'openssl';
+				const args = ['rsautl', '-pubin', '-inkey', pubPath, '-encrypt', '-pkcs','-out',encryptedOutPath];
 				
-				fs.chmodSync(encryptedOutPath,'0600');
-				resolve(encryptedOutPath)
-			})
-			enc.stdin.end();
+				const enc = spawn(openssl,args)
+				enc.stdin.write(`${value}`);
+				let resp = '';
+				enc.stdout.on('data',d=>{
+					//console.log('stdout',d.toString());
+					resp += d.toString();
+				})
+				enc.stderr.on('data',d=>{
+					console.log('stderr',d.toString());
+				})
+				enc.on('close',()=>{
+					
+					fs.chmodSync(encryptedOutPath,'0600');
+					resolve(encryptedOutPath)
+				})
+				enc.stdin.end();
+			});
 		});
 	}
 	decrypt(encpath,isDaemon){
 		return new Promise((resolve,reject)=>{
 			const keyPath = process.env.HOME+'/.HandyHost/keystore/handyhost.key';
-			const homebrewPrefixMAC = process.arch == 'arm64' ? '/opt/homebrew' : '/usr/local';
-		  	const openssl = process.platform == 'darwin' ? homebrewPrefixMAC+'/opt/openssl@1.1/bin/openssl' : 'openssl';
-		  	const dec = spawn(openssl,['rsautl','-inkey',keyPath, '-decrypt', '-in', encpath]);
-			let out = '';
-			dec.stdout.on('data',d=>{
-				out += d.toString();
-			})
-			dec.on('close',()=>{
-				if(!isDaemon){
-					fs.unlinkSync(encpath);
-				}
-				if(out.length > 0){
-					if(out[out.length-1] == '\n'){
-						//in some cases can add a newline to end of string...
-						//and the gui doesnt allow newlines in fields
-						out = out.slice(0,-1);
+			this.checkForM1RosettaFun().then(isRosetta=>{
+		  		const homebrewPrefixMAC = isRosetta ? '/opt/homebrew' : '/usr/local';
+				//const homebrewPrefixMAC = process.arch == 'arm64' ? '/opt/homebrew' : '/usr/local';
+			  	const openssl = process.platform == 'darwin' ? homebrewPrefixMAC+'/opt/openssl@1.1/bin/openssl' : 'openssl';
+			  	const dec = spawn(openssl,['rsautl','-inkey',keyPath, '-decrypt', '-in', encpath]);
+				let out = '';
+				dec.stdout.on('data',d=>{
+					out += d.toString();
+				})
+				dec.on('close',()=>{
+					if(!isDaemon){
+						fs.unlinkSync(encpath);
 					}
-				}
-				resolve(out);
-			})
+					if(out.length > 0){
+						if(out[out.length-1] == '\n'){
+							//in some cases can add a newline to end of string...
+							//and the gui doesnt allow newlines in fields
+							out = out.slice(0,-1);
+						}
+					}
+					resolve(out);
+				})
+			});
 		})
 	}
 	getDarwinKeychainPW(serviceName){
@@ -293,22 +328,25 @@ export class CommonUtils{
 		return new Promise((resolve,reject)=>{
 			const basePath = process.env.HOME+'/.HandyHost/keystore/';
 			const encryptedOutPath = basePath+'temp'+(new Date().getTime());
-			const homebrewPrefixMAC = process.arch == 'arm64' ? '/opt/homebrew' : '/usr/local';
-		  	const openssl = process.platform == 'darwin' ? homebrewPrefixMAC+'/opt/openssl@1.1/bin/openssl' : 'openssl';
-			const enc = spawn(openssl,['rsautl','-pubin','-inkey',process.env.HOME+'/.HandyHost/keystore/daemon.pub', '-encrypt','-pkcs']);
-			const toBase64 = spawn(openssl,['enc','-base64']);
-			enc.stdin.write(`${value}`);
-			enc.stdin.end();
-			enc.stdout.pipe(toBase64.stdin);
-			
-			let out = '';
-			toBase64.stdout.on('data',d=>{
-				out += d.toString();
-			})
+			this.checkForM1RosettaFun().then(isRosetta=>{
+		  		const homebrewPrefixMAC = isRosetta ? '/opt/homebrew' : '/usr/local';
+				//const homebrewPrefixMAC = process.arch == 'arm64' ? '/opt/homebrew' : '/usr/local';
+			  	const openssl = process.platform == 'darwin' ? homebrewPrefixMAC+'/opt/openssl@1.1/bin/openssl' : 'openssl';
+				const enc = spawn(openssl,['rsautl','-pubin','-inkey',process.env.HOME+'/.HandyHost/keystore/daemon.pub', '-encrypt','-pkcs']);
+				const toBase64 = spawn(openssl,['enc','-base64']);
+				enc.stdin.write(`${value}`);
+				enc.stdin.end();
+				enc.stdout.pipe(toBase64.stdin);
+				
+				let out = '';
+				toBase64.stdout.on('data',d=>{
+					out += d.toString();
+				})
 
-			toBase64.on('close',()=>{
-				resolve(out);
-			})
+				toBase64.on('close',()=>{
+					resolve(out);
+				})
+			});
 			
 		})
 	}
