@@ -79,13 +79,15 @@ export class AKTClusterStatus{
 		/*if(typeof leasesClosed == "undefined"){
 			leasesClosed = 0;
 		}*/
-		leasesClosed = parseInt(leasesClosed) >= 1000 ? numeral(leasesClosed).format('0.0a') : leasesClosed;
+		leasesClosed = parseInt(leasesClosed) >= 1000 ? numeral(leasesClosed).format('0a') : leasesClosed;
 		let leasesActive = data.leasesActive || 0;
-		leasesActive = parseInt(leasesActive) >= 1000 ? numeral(leasesActive).format('0.0a') : leasesActive;
+		leasesActive = parseInt(leasesActive) >= 1000 ? numeral(leasesActive).format('0a') : leasesActive;
 		let bidsOpen = data.bidsOpen || 0;
-		bidsOpen = parseInt(bidsOpen) >= 1000 ? numeral(bidsOpen).format('0.0a') : bidsOpen;
+		bidsOpen = parseInt(bidsOpen) >= 1000 ? numeral(bidsOpen).format('0a') : bidsOpen;
 		let bidsClosed = data.bidsClosed || 0;
-		bidsClosed = parseInt(bidsClosed) >= 1000 ? numeral(bidsClosed).format('0.0a') : bidsClosed;
+		bidsClosed = parseInt(bidsClosed) >= 1000 ? numeral(bidsClosed).format('0a') : bidsClosed;
+		let bidsLost = data.bidsLost || 0;
+		bidsLost = parseInt(bidsLost) >= 1000 ? numeral(bidsLost).format('0a') : bidsLost; 
 		const $q0 = $(`
 		<div class="quadrant">
 			<div class="quadTitle">Leases Active</div>
@@ -106,11 +108,17 @@ export class AKTClusterStatus{
 			<div class="quadTitle">Bids Closed</div>
 			<div class="value">${bidsClosed}</div>
 		</div>`)
+		const $q4 = $(`
+		<div class="quadrant">
+			<div class="quadTitle">Bids Lost</div>
+			<div class="value">${bidsLost}</div>
+		</div>`)
 		$el.html('<div class="subtitle">Marketplace Stats</div>');
 		$el.append($q0);
 		$el.append($q1);
 		$el.append($q2);
 		$el.append($q3);
+		$el.append($q4);
 		//we device locked AKT from open bids/leases
 		const lockedBalance = (parseInt(data.leasesActive) + parseInt(data.bidsOpen)) * this.collateralAmount;
 		

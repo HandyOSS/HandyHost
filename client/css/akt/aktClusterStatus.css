@@ -219,7 +219,7 @@ a.aktStatusPageLink{
 }
 .quadrant{
 	float: left;
-    width: calc(25% - 1px);
+    width: calc(20% - 1px);
     font-size: 48px;
     font-weight: 600;
     text-align: center;

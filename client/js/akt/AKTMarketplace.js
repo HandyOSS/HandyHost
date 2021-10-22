@@ -56,6 +56,9 @@ export class AKTMarketplace{
 			'Active': 'active',
 			'Closed': 'closed'
 		};
+		if(type == 'bids'){
+			opts['Lost'] = 'lost';
+		}
 		if(type == 'leases'){
 			delete opts.Open;
 		}
@@ -248,6 +251,9 @@ export class AKTMarketplace{
 				label = 'Order ID: ';
 				let cancelBidLink = '| <a class="cancelBid akashLink">Cancel My Bid</a>';
 				if(bid.bid.state == 'closed'){
+					cancelBidLink = '';
+				}
+				if(bid.bid.state == 'lost'){
 					cancelBidLink = '';
 				}
 				$links = '<a class="seeAllBids akashLink">View All Bids</a> '+cancelBidLink;

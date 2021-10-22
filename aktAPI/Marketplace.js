@@ -165,13 +165,17 @@ export class Marketplace{
 			const argsLeasesClosed = ['query', 'market', 'lease', 'list', '--limit', 1, '--output', 'json', '--provider', wallet, '--count-total','--state','closed'];
 			const argsBidsOpen = ['query', 'market', 'bid', 'list', '--limit', 1, '--output', 'json', '--provider', wallet, '--count-total','--state','open'];
 			const argsBidsClosed = ['query', 'market', 'bid', 'list', '--limit', 1, '--output', 'json', '--provider', wallet, '--count-total','--state','closed'];
+			const argsBidsLost = ['query', 'market', 'bid', 'list', '--limit', 1, '--output', 'json', '--provider', wallet, '--count-total','--state','lost'];
+			let total = 5;
+
 			let leasesActive = 0;
 			let leasesClosed = 0;
 			let bidsOpen = 0;
 			let bidsClosed = 0;
+			let bidsLost = 0;
 			let finished = 0;
 			if(typeof wallet == "undefined"){
-				finish(4);
+				finish(total);
 			}
 			else{
 				this.getAggregatesQuery(argsLeasesActive).then(data=>{
@@ -194,16 +198,22 @@ export class Marketplace{
 					finished+=1;
 					finish(finished);
 				})
+				this.getAggregatesQuery(argsBidsLost).then(data=>{
+					bidsLost = data;
+					finished+=1;
+					finish(finished);
+				})
 			}
 			
 
 			function finish(finished){
-				if(finished == 4){
+				if(finished == total){
 					resolve({
 						leasesActive,
 						leasesClosed,
 						bidsOpen,
-						bidsClosed
+						bidsClosed,
+						bidsLost
 					})
 				}
 			}
