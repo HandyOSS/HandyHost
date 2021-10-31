@@ -161,6 +161,16 @@ export class Marketplace{
 	}
 	getMarketAggregates(wallet){
 		return new Promise((resolve,reject)=>{
+			const now = Math.floor(new Date().getTime()/1000);
+			if(typeof this.lastAggs != "undefined"){
+				//check age of last aggregate
+				//we cache for the last minute because these take forrreeevvverrrr to load from rpc..
+				let lastAggTime = this.lastAggs.time;
+				if((now - lastAggTime) < 90){
+					resolve(this.lastAggs.data);
+					return;
+				}
+			}
 			const argsLeasesActive = ['query', 'market', 'lease', 'list', '--limit', 1, '--output', 'json', '--provider', wallet, '--count-total','--state','active'];
 			const argsLeasesClosed = ['query', 'market', 'lease', 'list', '--limit', 1, '--output', 'json', '--provider', wallet, '--count-total','--state','closed'];
 			const argsBidsOpen = ['query', 'market', 'bid', 'list', '--limit', 1, '--output', 'json', '--provider', wallet, '--count-total','--state','open'];
@@ -205,16 +215,21 @@ export class Marketplace{
 				})
 			}
 			
-
+			const _this = this;
 			function finish(finished){
 				if(finished == total){
-					resolve({
+					const dataOut = {
 						leasesActive,
 						leasesClosed,
 						bidsOpen,
 						bidsClosed,
 						bidsLost
-					})
+					};
+					_this.lastAggs = {
+						time: Math.floor(new Date().getTime()/1000),
+						data: dataOut
+					};
+					resolve(dataOut)
 				}
 			}
 

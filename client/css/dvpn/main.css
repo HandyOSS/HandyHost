@@ -15,12 +15,9 @@
 	height: auto !important;
 }
 
-.darkTheme .serviceMain .options ul li:hover{
+/*.darkTheme .serviceMain .options ul li:hover{
 	border-left-color: #E85F13 !important;
-}
-.darkTheme .lds-ripple{
-	filter:invert(1.0);
-}
+}*/
 .serviceMain#dvpnMain{
 	z-index:1;
 }

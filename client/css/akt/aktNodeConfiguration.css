@@ -19,7 +19,7 @@
 	font-size: 24px;
 	font-weight: 200;
 }
-.topLevel li a, .topLevel td a, .advancedOptions a, a.getGlobalIP, a.getWallet{
+.topLevel li a, .topLevel td a, .advancedOptions a, a.getGlobalIP, a.getWallet, a.getWalletConfigurator{
 	text-decoration: underline;
 	cursor:pointer;
 	color:#ed3624;
@@ -110,8 +110,19 @@ a.getGlobalIP{
 	display:none;
 }
 
-.buildABoxModal a, .buildABoxModal a:visited/*, #nodeConfigInfo .buildLink*/{
+.buildABoxModal a, .buildABoxModal a:visited, #estimateGas/*, #nodeConfigInfo .buildLink*/{
 	color:#ed3624;
+}
+#estimateGas{
+	text-decoration: underline;
+	cursor:pointer;
+	float:right;
+}
+#estimateGasError{
+	float:left;
+	width: 100%;
+	font-weight: 12px;
+	display: none;
 }
 .buildABoxModal .step, .buildABoxModal .chooseDevice, .buildABoxModal .finishHost, .buildLink{
 	/* Permalink - use to edit and share this gradient: https://colorzilla.com/gradient-editor/#af1d22+0,af1d22+40,f03423+100 */
@@ -337,4 +348,104 @@ a.getGlobalIP{
 	color:#d00;
 	font-weight:400;
 }
+#normalForm{
+	float:left;
+	width: 100%;
+	height: auto;
+}
+#configurator{
+	position:relative;
+	top: 0px;
+	left:0px;
+	width: calc(100% - 20px);
+	height: calc(100% - 20px);
+	padding: 10px;
+	background:#eee;
+	z-index:11;
+	color:#111;
+	display:none;
+}
+.configuratorTitle{
+    font-size: 36px;
+    font-weight: 200;
+    padding: 5px 10px;
+    line-height: 36px;
+    vertical-align: middle;
+}
+.configuratorTitle img{
+	height: 36px;
+}
+#configurator .infoPanel{
+	font-size: 18px;
+	margin: 10px 0px;
+}
+#recHW, #buildDrive{
+	display:inline;
+	float:none;
+}
 
+#configurator input.styledSelect{
+	float:left;
+	width: 50%;
+}
+#configurator label{
+	float:left;
+	clear:both;
+	font-weight: 600;
+}
+#configurator .akashField{
+	float:left;
+	width: 100%;
+}
+#configurator .configuratorNote{
+	float:left;
+	width: calc(50% - 20px);
+	padding: 5px 10px;
+	font-size: 14px;
+	color:#222;
+}
+.getWalletConfigurator{
+	float:left;
+	margin-left: 10px;
+	line-height: 64px;
+
+}
+#configurator .subtitle{
+	margin-bottom: 10px;
+}
+
+#buildClusterConfigurator{
+	width: 350px;
+}
+#nextSteps{
+	width: 150px;
+}
+#saveNodeConfigsConfigurator .foreground, #saveNodeConfigsConfigurator .background, #buildClusterConfigurator .foreground, #buildClusterConfigurator .background, #nextSteps .foreground, #nextSteps .background{
+	border-radius: 10px;
+}
+.akashNodes ul{
+	list-style-type:none;
+	font-weight: 600;
+}
+.akashNodes li small{
+	font-weight: 200;
+	font-size: 14px;
+}
+#autoConfigx86 .statusLogs{
+	display:none;
+}
+#configStep4, #configStep5{
+	display: none;
+}
+#configStep5 .akashField{
+	margin-top: 15px;
+}
+#configStep5 .akashLink{
+	float:none;
+}
+#configuratorIngressPortsMessage{
+	color: #444;
+}
+#configuratorIngressPortsMessage .standout{
+	color:#000;
+}

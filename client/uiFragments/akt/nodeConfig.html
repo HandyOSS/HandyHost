@@ -180,7 +180,8 @@
 			</div>
 			
 			<div class="step" data-id="step3x86">
-				Step 3: Create your USB ThumbDrive Auto-Installer<span class="expand">+</span>
+				<span class="stepLabel" data-norm="Step 3: Create your USB ThumbDrive Auto-Installer" data-alt="ThumbDrive Instructions/Notes">Step 3: Create your USB ThumbDrive Auto-Installer</span>
+				<span class="expand">+</span>
 			</div>
 			<div class="stepInfo" id="step3x86">
 				<ol>
@@ -231,6 +232,9 @@
 						<small>
 							Note: this will take 10-15 minutes
 						</small>
+					</li>
+					<li class="bigger statusLogs">
+						
 					</li>
 					<li class="confirmation bigger">
 						Success! Now you can plug this ThumbDrive into any of your Akash server nodes (powered off), plug in internet, power them on and Ubuntu server will autoinstall and auto configure access only for HandyHost/Akash. When the machine is fully configured, you will get an alert in this UI (5-10 minutes), so stay in the Akash section of the app while configuring your nodes. 
@@ -371,108 +375,225 @@
 	</div>
 </div>
 <div id="nodeConfigInfo" class="mainPanel aktPanel">
-	<div id="buildABox" class="configPanel">
-		<a id="buildLink" class="buildLink">Setup a Raspberry Pi Cluster without the CLI <span class="expand">+</span></a>
+	<div id="configurator">
+		<div class="configuratorTitle">
+			<img src="./img/AkashAKTLogo.svg" /> 
+			Welcome To Akash
+		</div>
+		<div class="infoPanel">
+			Using HandyHost you can rent servers on Akash Marketplace for passive income generation.<br />
+			We designed this tool to make it easy for non-programmers to point and click their way thru making a hardware cluster (a group of servers) to host Akash servers.<br />
+		</div>
+		<div class="infoPanel">
+			<div class="subtitle">Step 1: Choose your Hardware</div>
+			We have built and tested <a class="akashLink" id="recHW">recommended hardware</a> guides you can follow that are affordable both from a cost perspective as well as an electricity bill.<br />
+			However that should not limit your hardware choices. You can choose to bring your own x86 (Intel or AMD) based computers into HandyHost and host Akash servers on them with our simple tools. 
+		</div>
+		<div class="infoPanel">
+			<div class="subtitle">Step 2: Install the OS</div>
+			Using a USB ThumbDrive, you will use HandyHost to create a Linux installer that will automatically setup the latest Ubuntu Server on your Akash node hardware, setup secure access for the HandyHost/Akash application and configure IP access on your local network for Akash to use.<br />
+			<a class="akashLink" id="buildDrive">Configure Your ThumbDrive</a> 
+		</div>
+		<div class="infoPanel" id="configStep3">
+			<div class="subtitle">Step 3: Confirm your Nodes</div>
+			Make sure you see all of your Akash Nodes listed here: 
+			<div class="akashNodes"></div>
+			<!-- If everything looks correct, let&#039;s move to the <a class="akashLink" id="nextSteps">next steps</a> -->
+			<div class="button cancel" id="nextSteps">
+				<div class="foreground">
+					Setup Provider
+				</div>
+				<div class="background">
+					Setup Provider
+				</div>
+			</div>
+
+		</div>
+		<div class="infoPanel" id="configStep4">
+			<div class="subtitle">Step 4: Setup Akash Provider</div>
+			<div class="akashField">
+				<label for="providerIPConfigurator">
+					Provider Domain Name
+				</label>
+				<input class="styledSelect" type="text" id="providerIPConfigurator" value="" placeholder="example: akash.hopto.org" size=32 />
+				<!-- <a class="getGlobalIP">Get My Global IP Address</a> -->
+				<span class="configuratorNote">Note: You must provide a wildcard-enabled domain name via services like: Godaddy, AWS Route53, noip.com or others. The wildcard domain should be configured to resolve to your global IP address. <a class="getGlobalIP">Get My Global IP</a> <span class="myip"></span></span> 
+			</div>
+			<div class="akashField">
+				<label for="regionNameConfigurator">
+					Akash Region Name
+				</label>
+				<input class="styledSelect" type="text" id="regionNameConfigurator" value="" placeholder="ie: us-west, or us-east" size=32 />
+				<span class="configuratorNote">A region name is a freeform name you make up for your geographic region. Common regions: westcoast, eastcoast, midwest, us-west, etc. Note that region name will not stop you from winning or losing contracts, it helps renters more than anything.</span>
+			</div>
+			<div class="akashField">
+				<label for="clusterNameConfigurator">Akash Cluster Name</label>
+				<input class="styledSelect" type="text" id="clusterNameConfigurator" value="" placeholder="Akash Cluster Name" size=32 />
+				<span class="configuratorNote">We generate a random name for your cluster, feel free to change it to anything you would like to be known as.</span>
+			</div>
+			<div class="akashField">
+				<label for="providerWalletNameConfigurator">Choose an Akash Wallet to receive payments and pay fees from.</label>
+				<input class="styledSelect" type="text" readonly id="providerWalletNameConfigurator" value="" placeholder="Akash Wallet Name" size=32 />
+				<input type="hidden" value="" id="providerWalletAddressConfigurator" />
+				<a class="getWalletConfigurator">Choose Akash Wallet</a>
+			</div>
+			<div class="akashField">
+				<div class="button cancel" id="saveNodeConfigsConfigurator">
+					<div class="foreground">
+						Save Config
+					</div>
+					<div class="background">
+						Save Config
+					</div>
+				</div>
+			</div>
+
+		</div>
+		<div class="infoPanel" id="configStep5">
+			<div class="akashField">
+				<div class="subtitle">Step 5: Register Akash Provider</div>
+				<div class="registration">
+					<small>Fetching Registration...</small>
+				</div>
+			</div>
+			<div class="akashField">
+				<div class="subtitle">Step 6: Open Provider Ports</div>
+				<div id="configuratorIngressPortsMessage" class="configPanel">
+					You must open ports <span class="standout">80</span> and <span class="standout">30000-32767</span> to your IP <span class="ip standout"></span> in your internet router Port Forwarding. The machine <span class="ip standout"></span> runs the Ingress Controller which is responsible to route all internet traffic to nodes in your Akash Kubernetes Cluster. 
+					<br />
+					You must also open the Akash Provider port <span class="standout">8443</span> for TCP traffic for IP: <span class="localIP standout"></span> in your network router port forwarding.
+					<br />
+					<a href="https://www.noip.com/support/knowledgebase/general-port-forwarding-guide/" target="_blank" class="akashLink">How to Setup Port Forwarding on Your Router</a>
+				</div>
+			</div>
+			<div class="akashField">
+				<div class="subtitle">Final Step: Build Kubernetes Cluster</div>
+				<div class="configPanel">
+					Akash uses a software called Kubernetes to manage your cluster of servers. This step will take roughly 15-20 minutes to complete. Once complete, you can start up your provider and start hosting!<br />
+					A few things to make sure of in the meantime:
+					<ol>
+						<li>Ensure your wildcard DNS entry is setup</li>
+						<li>Ensure that the ports listed above are open in your router. Also make sure that the IP addresses set by your router do not change on a router or system reboot.</li>
+						<li>If the Kubernetes cluster fails to build and there are errors about reaching your nodes thru ssh you need to ensure that your router resolves local DNS names.</li>
+						<li>You should have some $AKT in your wallet. You will need at least a 5AKT deposit per lease, and some AKT for fees when you bid.</li>
+					</ol>
+				</div>
+				<div class="button cancel" id="buildClusterConfigurator">
+					<div class="foreground">
+						Build Kubernetes Cluster
+					</div>
+					<div class="background">
+						Build Kubernetes Cluster
+					</div>
+				</div>
+			</div>
+		</div>
 	</div>
-	<div id="buildAX86Box" class="configPanel">
-		<a id="buildX86Link" class="buildLink">Build/Setup New x86 Nodes <span class="expand">+</span></a>
-	</div>
-	<div id="nodeConfiguration" class="configPanel">
-		<div class="configTitle">Kubernetes Cluster Configuration</div>
-		<ul class="topLevel" />
-	</div>
-	<div id="providerConfiguration" class="configPanel">
-		<div class="configTitle">Akash Provider Details</div>
-		<table class="providerList">
-			<tr class="provider_providerIP">
-				<td>
-					<div class="errorMessage">Required Value</div>
-					<label for="providerIP">Provider Domain Name: </label>
-				</td>
-				<td>
-					<input class="styledSelect" type="text" id="providerIP" value="" placeholder="example: akash.hopto.org" size=32 />
-					<!-- <a class="getGlobalIP">Get My Global IP Address</a> -->
-					<span class="domainNote">Note: You must provide a wildcard-enabled domain name via services like: Godaddy, AWS Route53, noip.com or others. The wildcard domain should be configured to resolve to your global IP address. <a class="getGlobalIP">Get My Global IP</a> <span class="myip"></span></span> 
-				</td>
-			</tr>
-			<!-- <tr class="provider_clusterIP">
-				<td>
-					<div class="errorMessage">Required Value</div>
-					<label for="clusterIP">Global Cluster IP: </label>
-				</td>
-				<td>
-					<input class="styledSelect" type="text" id="clusterIP" value="" placeholder="(probably same as global IP)" size=32 /> <a class="getGlobalIP">Get My Global IP Address</a>
-				</td>
-			</tr> -->
-			<tr class="provider_regionName">
-				<td>
-					<div class="errorMessage">Required Value</div>
-					<label for="regionName">Region Name: </label>
-				</td>
-				<td>
-					<input class="styledSelect" type="text" id="regionName" value="" placeholder="ie: us-west, or us-east" size=32 />
-				</td>
-			</tr>
-			<tr class="provider_clusterName">
-				<td>
-					<div class="errorMessage">Required Value</div>
-					<label for="clusterName">Cluster Name: </label>
-				</td>
-				<td>
-					<input class="styledSelect" type="text" id="clusterName" value="" placeholder="Akash Cluster Name" size=32 />
-				</td>
-			</tr>
-			<tr class="provider_walletName">
-				<td>
-					<div class="errorMessage">Required Value</div>
-					<label for="providerWalletName">Akash Wallet: </label>
-				</td>
-				<td>
-					<input class="styledSelect" type="text" readonly id="providerWalletName" value="" placeholder="Akash Wallet Name" size=32 />
-					<input type="hidden" value="" id="providerWalletAddress" />
-					<a class="getWallet">Choose Akash Wallet</a>
-				</td>
-			</tr>
-		</table>
+	<div id="normalForm">
+		<div id="buildABox" class="configPanel">
+			<a id="buildLink" class="buildLink">Setup a Raspberry Pi Cluster without the CLI <span class="expand">+</span></a>
+		</div>
+		<div id="buildAX86Box" class="configPanel">
+			<a id="buildX86Link" class="buildLink">Build/Setup New x86 Nodes <span class="expand">+</span></a>
+		</div>
 		
-	</div>
-	<div id="clusterInventory" class="configPanel">
-		<div class="configTitle">Advanced Kubernetes Configuration</div>
-		<div class="configData"></div>
+		<div id="nodeConfiguration" class="configPanel">
+			<div class="configTitle">Kubernetes Cluster Configuration</div>
+			<ul class="topLevel" />
+		</div>
+		<div id="providerConfiguration" class="configPanel">
+			<div class="configTitle">Akash Provider Details</div>
+			<table class="providerList">
+				<tr class="provider_providerIP">
+					<td>
+						<div class="errorMessage">Required Value</div>
+						<label for="providerIP">Provider Domain Name: </label>
+					</td>
+					<td>
+						<input class="styledSelect" type="text" id="providerIP" value="" placeholder="example: akash.hopto.org" size=32 />
+						<!-- <a class="getGlobalIP">Get My Global IP Address</a> -->
+						<span class="domainNote">Note: You must provide a wildcard-enabled domain name via services like: Godaddy, AWS Route53, noip.com or others. The wildcard domain should be configured to resolve to your global IP address. <a class="getGlobalIP">Get My Global IP</a> <span class="myip"></span></span> 
+					</td>
+				</tr>
+				<!-- <tr class="provider_clusterIP">
+					<td>
+						<div class="errorMessage">Required Value</div>
+						<label for="clusterIP">Global Cluster IP: </label>
+					</td>
+					<td>
+						<input class="styledSelect" type="text" id="clusterIP" value="" placeholder="(probably same as global IP)" size=32 /> <a class="getGlobalIP">Get My Global IP Address</a>
+					</td>
+				</tr> -->
+				<tr class="provider_regionName">
+					<td>
+						<div class="errorMessage">Required Value</div>
+						<label for="regionName">Region Name: </label>
+					</td>
+					<td>
+						<input class="styledSelect" type="text" id="regionName" value="" placeholder="ie: us-west, or us-east" size=32 />
+					</td>
+				</tr>
+				<tr class="provider_clusterName">
+					<td>
+						<div class="errorMessage">Required Value</div>
+						<label for="clusterName">Cluster Name: </label>
+					</td>
+					<td>
+						<input class="styledSelect" type="text" id="clusterName" value="" placeholder="Akash Cluster Name" size=32 />
+					</td>
+				</tr>
+				<tr class="provider_walletName">
+					<td>
+						<div class="errorMessage">Required Value</div>
+						<label for="providerWalletName">Akash Wallet: </label>
+					</td>
+					<td>
+						<input class="styledSelect" type="text" readonly id="providerWalletName" value="" placeholder="Akash Wallet Name" size=32 />
+						<input type="hidden" value="" id="providerWalletAddress" />
+						<a class="getWallet">Choose Akash Wallet</a>
+					</td>
+				</tr>
+			</table>
+			
+		</div>
+		<div id="clusterInventory" class="configPanel">
+			<div class="configTitle">Advanced Kubernetes Configuration</div>
+			<div class="configData"></div>
+			
+		</div>
+		<div id="ingressPortsMessage" class="configPanel">
+			Note: You must open ports <span class="standout">80</span> and <span class="standout">30000-32767</span> to your IP <span class="ip standout"></span> in your internet router Port Forwarding. The machine <span class="ip standout"></span> runs the Ingress Controller which is responsible to route all internet traffic to nodes in your Kubernetes Cluster. 
+			<br />
+			You must also open the Akash Provider port <span class="standout">8443</span> for TCP traffic for IP: <span class="localIP standout"></span> in your network router port forwarding.
+			<br />
+			<a href="https://www.noip.com/support/knowledgebase/general-port-forwarding-guide/" target="_blank" class="akashLink">How to Setup Port Forwarding on Your Router</a>
+		</div>
+		<div class="buttons">
+			<div class="button save" id="saveNodeConfigs">
+				<div class="foreground">
+					Save Config
+				</div>
+				<div class="background">
+					Save Config
+				</div>
+			</div>
+			<div class="button cancel" id="cancel">
+				<div class="foreground">Cancel</div>
+				<div class="background">Cancel</div>
+			</div>
+			<div class="button cancel" id="initCluster">
+				<div class="foreground">
+					Build Kubernetes Cluster
+				</div>
+				<div class="background">
+					Build Kubernetes Cluster
+				</div>
+			</div>
+			<div class="advancedOptions">
+				<a>View Advanced Cluster Options</a>
+			</div>
 		
-	</div>
-	<div id="ingressPortsMessage" class="configPanel">
-		Note: You must open ports <span class="standout">80</span> and <span class="standout">30000-32767</span> to your IP <span class="ip standout"></span> in your internet router Port Forwarding. The machine <span class="ip standout"></span> runs the Ingress Controller which is responsible to route all internet traffic to nodes in your Kubernetes Cluster. 
-		<br />
-		You must also open the Akash Provider port <span class="standout">8443</span> for TCP traffic for IP: <span class="localIP standout"></span> in your network router port forwarding.
-		<br />
-		<a href="https://www.noip.com/support/knowledgebase/general-port-forwarding-guide/" target="_blank" class="akashLink">How to Setup Port Forwarding on Your Router</a>
-	</div>
-	<div class="buttons">
-		<div class="button save" id="saveNodeConfigs">
-			<div class="foreground">
-				Save Config
-			</div>
-			<div class="background">
-				Save Config
-			</div>
 		</div>
-		<div class="button cancel" id="cancel">
-			<div class="foreground">Cancel</div>
-			<div class="background">Cancel</div>
-		</div>
-		<div class="button cancel" id="initCluster">
-			<div class="foreground">
-				Build Kubernetes Cluster
-			</div>
-			<div class="background">
-				Build Kubernetes Cluster
-			</div>
-		</div>
-		<div class="advancedOptions">
-			<a>View Advanced Cluster Options</a>
-		</div>
-	
 	</div>
 	<div id="logs">
 		<div class="logsMessage"></div>

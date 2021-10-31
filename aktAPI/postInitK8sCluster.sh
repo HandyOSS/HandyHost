@@ -19,7 +19,6 @@ if [[ -s "$HOME/.ssh/known_hosts" ]] ; then
 fi
 
 ssh -i "$HOME/.ssh/handyhost" -o StrictHostKeyChecking=accept-new $1@$4 'bash --login echo "" | sudo chown ansible:ansible /etc/kubernetes/admin.conf && exit' && \
-#ssh -oStrictHostKeyChecking=accept-new -i "$HOME/.ssh/handyhost" $1@$2 'bash --login echo "" | sudo chown ansible:ansible /etc/kubernetes/admin.conf && exit' && \
 scp -i "$HOME/.ssh/handyhost" $1@$4:/etc/kubernetes/admin.conf ./ && \
 if [[ "$OSTYPE" == "darwin"* ]]; then
 	#nice macOS sed slightly different vs linux
@@ -34,7 +33,7 @@ fi
 export KUBECONFIG=$PWD/admin.conf
 mkdir -p ./akash_cluster_resources
 cp "${HOME}/.HandyHost/aktData/akashRepo/pkg/apis/akash.network/v1/crd.yaml" ./akash_cluster_resources/crd.yaml && \
-kubectl apply -f ./akash_cluster_resources/crd.yaml --overwrite && \
+kubectl apply -f ./akash_cluster_resources/crd.yaml --overwrite
 
 ## new things: we aply the provider crd and new ingress
 cd "$HOME/.HandyHost/aktData/akashRepo/script"

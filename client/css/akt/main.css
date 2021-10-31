@@ -11,10 +11,6 @@
 	color:#111;
 }
 
-.darkTheme .serviceMain .options ul li:hover{
-	border-left-color: #12C9DB !important;
-}
-
 .aktPanel .title{
 	font-size: 36px;
 	font-weight:200;
@@ -32,7 +28,9 @@
 	display:none;
 }
 
-.options #providerRegistrationWarning, .options #providerCertificateWarning{
+.options #providerRegistrationWarning, 
+.options #providerCertificateWarning,
+.options #providerStatus{
 	display: none;
 }
 
