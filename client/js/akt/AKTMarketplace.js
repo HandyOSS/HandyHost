@@ -56,6 +56,9 @@ export class AKTMarketplace{
 			'Active': 'active',
 			'Closed': 'closed'
 		};
+		if(type == 'bids'){
+			opts['Lost'] = 'lost';
+		}
 		if(type == 'leases'){
 			delete opts.Open;
 		}
@@ -96,7 +99,9 @@ export class AKTMarketplace{
 		else{
 			this.lastBidsState = undefined;
 		}
-		this.lastEndpoint = 'bids';
+		const queryStr = JSON.stringify(queryParams);
+		const endpointID = 'bids.'+queryStr;
+		this.lastEndpoint = endpointID;
 
 		fetch("/api/akt/getMarketplaceBids",
 			{
@@ -105,12 +110,14 @@ export class AKTMarketplace{
 			      'Content-Type': 'application/json'
 			    },
 			    method: "POST",
-			    body: JSON.stringify(queryParams)
+			    body: queryStr
 		})
 		.then((res)=>{ console.log('success'); return res.json(); }).then(data=>{
 			console.log('res data',data);
-			this._lastBidsData = data;
-			this.renderBidsPanel(data);
+			if(this.lastEndpoint == endpointID){
+				this._lastBidsData = data;
+				this.renderBidsPanel(data);
+			}
 		})
 		.catch((res)=>{ console.log('error submitting',res) });
 	}
@@ -142,7 +149,9 @@ export class AKTMarketplace{
 		if(typeof leasesState != "undefined"){
 			queryParams.state = leasesState;
 		}
-		this.lastEndpoint = 'leases';
+		const queryStr = JSON.stringify(queryParams);
+		const endpointID = 'leases.'+queryStr;
+		this.lastEndpoint = endpointID
 		fetch("/api/akt/getMarketplaceLeases",
 			{
 			    headers: {
@@ -150,17 +159,21 @@ export class AKTMarketplace{
 			      'Content-Type': 'application/json'
 			    },
 			    method: "POST",
-			    body: JSON.stringify(queryParams)
+			    body: queryStr
 		})
 		.then((res)=>{ console.log('success'); return res.json(); }).then(data=>{
 			console.log('res data',data);
-			this._lastLeasesData = data;
-			this.renderLeasesPanel(data);
+			if(endpointID == this.lastEndpoint){
+				this._lastLeasesData = data;
+				this.renderLeasesPanel(data);
+			}
 		})
 		.catch((res)=>{ console.log('error submitting',res) });
 	}
 	fetchOrdersData(){
-		this.lastEndpoint = 'orders';
+		const queryStr = JSON.stringify({page:this.pageNow,limit:this.orderLimit});
+		const endpointID = 'orders.'+queryStr;
+		this.lastEndpoint = endpointID
 		fetch("/api/akt/getMarketplaceOrders",
 			{
 			    headers: {
@@ -168,12 +181,14 @@ export class AKTMarketplace{
 			      'Content-Type': 'application/json'
 			    },
 			    method: "POST",
-			    body: JSON.stringify({page:this.pageNow,limit:this.orderLimit})
+			    body: queryStr
 		})
 		.then((res)=>{ console.log('success'); return res.json(); }).then(data=>{
 			console.log('res data',data);
-			this._lastOrdersData = data;
-			this.renderOrdersPanel(data);
+			if(endpointID == this.lastEndpoint){
+				this._lastOrdersData = data;
+				this.renderOrdersPanel(data);
+			}
 		})
 		.catch((res)=>{ console.log('error submitting',res) });
 	}
@@ -248,6 +263,9 @@ export class AKTMarketplace{
 				label = 'Order ID: ';
 				let cancelBidLink = '| <a class="cancelBid akashLink">Cancel My Bid</a>';
 				if(bid.bid.state == 'closed'){
+					cancelBidLink = '';
+				}
+				if(bid.bid.state == 'lost'){
 					cancelBidLink = '';
 				}
 				$links = '<a class="seeAllBids akashLink">View All Bids</a> '+cancelBidLink;
@@ -345,8 +363,10 @@ export class AKTMarketplace{
 		const params = {
 			limit:50,//this.orderLimit,
 			page:1//this.pageNow
-		}
-		this.lastEndpoint = 'bids';
+		};
+		const queryStr = JSON.stringify({bid,params});
+		const endpointID = 'bids.'+queryStr;;
+		this.lastEndpoint = endpointID
 		fetch('/api/akt/fetchAllOrderBids',
 			{
 			    headers: {
@@ -354,16 +374,18 @@ export class AKTMarketplace{
 			      'Content-Type': 'application/json'
 			    },
 			    method: "POST",
-			    body: JSON.stringify({bid,params})
+			    body: queryStr
 			})
 			.then((res)=>{ console.log('success'); return res.json(); }).then(data=>{
 				console.log('res data',data);
-				if(data.error){
-					$('#marketplaceModal').show();
-					this.showErrorModal(data.message);
-				}
-				else{
-					this.renderBidsPanel(data,true,bid,backToDataset);
+				if(endpointID == this.lastEndpoint){
+					if(data.error){
+						$('#marketplaceModal').show();
+						this.showErrorModal(data.message);
+					}
+					else{
+						this.renderBidsPanel(data,true,bid,backToDataset);
+					}
 				}
 			
 			})

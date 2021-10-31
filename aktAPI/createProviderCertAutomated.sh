@@ -6,11 +6,12 @@ set server [lindex $argv 2];
 set fees [lindex $argv 3];
 set OPENSSL [lindex $argv 4];
 set walletKey [exec $OPENSSL rsautl -inkey "$env(HOME)/.HandyHost/keystore/handyhost.key" -decrypt -in $keyEncPath]
+set gas [lindex $argv 5];
 
 exec rm $keyEncPath
 
 set timeout -1
-spawn ./createProviderCert.sh $walletName $server $fees
+spawn ./createProviderCert.sh $walletName $server $fees $gas
 
 expect "Enter keyring passphrase:"
 send -- "$walletKey\r"

@@ -12,6 +12,11 @@
 		<div class="pwWrap">
 			<input type="number" id="regFees" class="styledInput" placeholder="Custom Tx Fees (uakt), default: 10000uakt" />
 		</div>
+		<div class="pwWrap">
+			<input type="number" id="gas" class="styledInput" placeholder="Custom Gas Amount, default: auto" />
+			<div id="estimateGas" class="akashLink">Estimate Gas and Fees</div>
+			<div id="estimateGasError"></div>
+		</div>
 		<div class="checkboxWrap" id="generateCertWrap">
 			<input type="checkbox" value="" id="generateCert" />
 			<label for="generateCert">Generate or Update Akash Server Certificate</label>

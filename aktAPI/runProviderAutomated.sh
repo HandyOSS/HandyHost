@@ -1,5 +1,5 @@
 #!/usr/bin/expect -f
-log_user 0
+#log_user 0
 set OPENSSL [lindex $argv 5];
 
 set keyEncPath [lindex $argv 0];
@@ -19,5 +19,5 @@ expect "Enter keyring passphrase:"
 send -- "$walletKey\r"
 expect "using kube config*"
 send_user "\nStarting Akash Provider...\n"
-log_user 1
+#log_user 1
 expect eof

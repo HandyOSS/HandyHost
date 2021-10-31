@@ -214,6 +214,13 @@ export class HandyAKT{
 					reject(error);
 				});
 			break;
+			case 'saveClusterConfigurator':
+				this.saveClusterFromConfigurator(requestBody).then(data=>{
+					resolve(data);
+				}).catch(error=>{
+					reject(error);
+				});
+			break;
 			case 'enableSSHForNode':
 				this.enableSSHForNode(requestBody).then(data=>{
 					resolve(data);
@@ -241,6 +248,13 @@ export class HandyAKT{
 				}).catch(error=>{
 					reject(error);
 				});
+			break;
+			case 'configuratorBuildKubernetes':
+				this.configuratorBuildKubernetes(requestBody).then(data=>{
+					resolve(data);
+				}).catch(error=>{
+					reject(error);
+				})
 			break;
 			case 'getUbuntuUSBDisks':
 				this.diskUtils.getUbuntuUSBNVMe().then(usbs=>{
@@ -304,7 +318,14 @@ export class HandyAKT{
 			case 'updateProviderRegistration':
 			case 'createProviderRegistration':
 				let mode = path[1] == 'updateProviderRegistration' ? 'update' : 'create';
-				this.registerProvider(requestBody,mode).then(data=>{
+				this.registerProvider(requestBody,mode,false).then(data=>{
+					resolve(data);
+				}).catch(error=>{
+					reject(error);
+				});
+			break;
+			case 'providerRegistrationGasEstimate':
+				this.registerProvider(requestBody,'create',true).then(data=>{
 					resolve(data);
 				}).catch(error=>{
 					reject(error);
@@ -380,6 +401,13 @@ export class HandyAKT{
 					reject(error);
 				})
 			break;
+			case 'getRandomProviderName':
+				this.getRandomProviderName().then(data=>{
+					resolve(data);
+				}).catch(error=>{
+					reject(error);
+				})
+			break;
 			case 'getMarketAggregates':
 				this.getMarketAggregates().then(data=>{
 					resolve(data);
@@ -434,10 +462,16 @@ export class HandyAKT{
 		return this.market.getMarketAggregates(myWallet);
 		
 	}
+	getRandomProviderName(){
+		return new Promise((resolve,reject)=>{
+			const moniker = generator({words: 3}).dashed;
+			resolve({moniker});
+		})
+	}
 	getRandomHostname(ipAddress){
 		return new Promise((resolve,reject)=>{
 			const moniker = 'akash-'+generator({words: 3}).dashed;
-			this.k8sUtils.addUbuntuAutoinstalledNode(ipAddress,moniker,this.ioNamespaces);
+			this.k8sUtils.addUbuntuAutoinstalledNode(decodeURIComponent(ipAddress).trim(),moniker,this.ioNamespaces);
 			resolve(moniker);
 		})
 	}
@@ -448,7 +482,7 @@ export class HandyAKT{
 				reject(err);
 			})
 		}
-		return this.k8sUtils.flashThumbDrive(parsed.path,parsed.pw,parsed.id);
+		return this.k8sUtils.flashThumbDrive(parsed.path,parsed.pw,parsed.id,this.ioNamespaces);
 	}
 	fetchAllOrderBids(requestBody){
 		const {parsed,err} = this.parseRequestBody(requestBody);
@@ -573,7 +607,7 @@ export class HandyAKT{
 		const walletAddress = this.getProviderWalletAddress();
 		return this.wallet.createOrUpdateServerCertificate(parsed,walletAddress,providerHost);
 	}
-	registerProvider(requestBody,mode){
+	registerProvider(requestBody,mode,isGasEstimate){
 		/*
 		{"height":"1840128","txhash":"DA91541C278ED8267241B8BEFD368EDD2728554D8551A78496853928E0138050","codespace":"provider","code":4,"data":"","raw_log":"failed to execute message; message index: 0: id: akash1mqnj2euks0aq82q0f2tknz6kua6zdfn97kmvhj: invalid provider: already exists","logs":[],"info":"","gas_wanted":"200000","gas_used":"52095","tx":null,"timestamp":""}
 
@@ -584,8 +618,11 @@ export class HandyAKT{
 				reject(err);
 			})
 		}
+		if(isGasEstimate){
+			mode = parsed.mode;
+		}
 		const providerHost = this.getProviderHost();
-		return this.wallet.registerProvider(parsed,mode,providerHost);
+		return this.wallet.registerProvider(parsed,mode,providerHost,isGasEstimate);
 	}
 	getProviderWalletAddress(){
 		const config = JSON.parse(fs.readFileSync(this.clusterConfigFilePath,'utf8'));
@@ -708,6 +745,22 @@ export class HandyAKT{
 			})
 		})
 	}
+	configuratorBuildKubernetes(requestBody){
+		const {parsed,err} = this.parseRequestBody(requestBody);
+		if(typeof parsed == "undefined"){
+			return new Promise((resolve,reject)=>{
+				reject(err);
+			})
+		}
+		return new Promise((resolve,reject)=>{
+			this.k8sUtils.createKubernetesInventory(this.clusterConfigFilePath,this.ioNamespaces).then((data)=>{
+				resolve(data);
+			}).catch(error=>{
+				reject(error);
+			})
+		
+		})
+	}
 	generateKubernetesInventory(requestBody){
 		const {parsed,err} = this.parseRequestBody(requestBody);
 		if(typeof parsed == "undefined"){
@@ -812,6 +865,15 @@ export class HandyAKT{
 		}
 		return this.utils.saveClusterConfig(parsed,this.clusterConfigFilePath,this.ioNamespaces);
 		
+	}
+	saveClusterFromConfigurator(requestBody){
+		const {parsed,err} = this.parseRequestBody(requestBody);
+		if(typeof parsed == "undefined"){
+			return new Promise((resolve,reject)=>{
+				reject(err);
+			})
+		}
+		return this.utils.saveClusterFromConfigurator(parsed,this.clusterConfigFilePath,this.ioNamespaces);
 	}
 	getWallets(requestBody){
 		const {parsed,err} = this.parseRequestBody(requestBody);

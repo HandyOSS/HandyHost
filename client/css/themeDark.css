@@ -1,5 +1,5 @@
 html{
-	background:#fff;
+	background:#000;
 }
 /*
 note: messes up layer ordering in firefox and old chromes
@@ -9,18 +9,257 @@ html.darkTheme{
 instead: do top level elements not parents to fixed positioned;
 */
 html.darkTheme #nodeConfigInfo, 
-html.darkTheme .options, 
 html.darkTheme .dashboard, 
 html.darkTheme #serviceBackground,
 html.darkTheme .mainPanel,
+html.darkTheme #siaMain .dashboard,
+html.darkTheme #siaWalletInfo,
+html.darkTheme #siaStorageInfo, 
+html.darkTheme #siaHostInfo
+{
+	background:#111;
+	color:#eee;
+}
+html.darkTheme #qrModal .qrBody, 
+html.darkTheme #sendModal .sendBody, 
+html.darkTheme #sendModal .sendConfirm,
+html.darkTheme .walletUtil, 
+html.darkTheme .newWalletInfo, 
+html.darkTheme .seedImportMessage, 
+html.darkTheme .walletModalContent, 
+html.darkTheme .modalContent,
+html.darkTheme .pathSelectUtil,
+html.darkTheme #hostInfoModal .hostModalMessage
+{
+	background:#111;
+	color:#eee;
+}
 html.darkTheme #walletInitModal,
 html.darkTheme .pathSelectModal,
 html.darkTheme .modalWrap,
 html.darkTheme #hostInfoModal,
 html.darkTheme #sendModal,
-html.darkTheme #qrModal
+html.darkTheme #qrModal,
+
 {
+	background:rgba(0,0,0,0.9);
+	color:#eee;
+}
+
+.darkTheme #siaMain .syncedStatus{
+	color:#ccc;
+}
+.darkTheme #siaMain .options,
+.darkTheme .options{
+	/* Permalink - use to edit and share this gradient: https://colorzilla.com/gradient-editor/#fcfcfc+0,dddddd+99,dddddd+99,7c7c7c+100 */
+	background: #030303; /* Old browsers */
+	background: -moz-linear-gradient(left,  #030303 0%, #222222 99%, #222222 99%, #838383 100%); /* FF3.6-15 */
+	background: -webkit-linear-gradient(left,  #030303 0%,#222222 99%,#222222 99%,#838383 100%); /* Chrome10-25,Safari5.1-6 */
+	background: linear-gradient(to right,  #030303 0%,#222222 99%,#222222 99%,#838383 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#030303', endColorstr='#838383',GradientType=1 ); /* IE6-9 */
+	color:#eee;
+}
+.darkTheme .options ul li,
+.darkTheme #siaMain .options ul li{
+	border-bottom: 1px solid #222;
+}
+.darkTheme #siaMain .options ul li:hover,
+.darkTheme .options ul li:hover{
+	background: #1D1D1D; /* Old browsers */
+	background: -moz-linear-gradient(left,  #1D1D1D 0%, #525252 99%, #525252 99%, #838383 100%); /* FF3.6-15 */
+	background: -webkit-linear-gradient(left,  #1D1D1D 0%,#525252 99%,#525252 99%,#838383 100%); /* Chrome10-25,Safari5.1-6 */
+	background: linear-gradient(to right,  #1D1D1D 0%,#525252 99%,#525252 99%,#838383 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#1D1D1D', endColorstr='#838383',GradientType=1 ); /* IE6-9 */
+	width: calc(100% - 15px);
+	color:#eee;
+}
+.darkTheme .walletModalContent{
+	background:#111;
+}
+.darkTheme .ordersPanel table{
+	background:#222222;
+	color:#eee;
+}
+.darkTheme .ordersPanel .orderID{
+	background: #333;
+}
+.darkTheme .ordersPanel .loadingMessage{
+	color:#ddd;
+}
+.darkTheme .ordersPanel .orderID:hover .bidOpts a, .darkTheme .ordersPanel .highlighted .bidOpts a {
+	color:#eee;
+}
+
+.darkTheme .dashboard #nodeMeta span, 
+.darkTheme .dashboard #nodeAnalytics span, 
+.darkTheme .dashboard #sessionMeta span, 
+.darkTheme .dashboard #subscriptionAnalytics span{
+	color:#bbb;
+}
+.darkTheme .dashboard .analyticsPanel{
+	border-bottom: 1px solid #333;
+}
+.darkTheme .autostartLabel{
+	color:#bbb;
+}
+.darkTheme li.hasInput{
+	background:#222;
+}
+.darkTheme .hasInput .notes, 
+.darkTheme .hasInput a{
+	color:#aaa;
+}
+.darkTheme .showAllKeys,
+.darkTheme .hasInput a,
+.darkTheme .myIPValue,
+.darkTheme #showAdvancedSettings{
+	color:#13a2eb;
+}
+.darkTheme .walletData{
+	background: #222;
+}
+.darkTheme .walletDataPanel li {
+	border-bottom: 1px solid #222;
+	background: #111;
+	color:#eee;
+}
+.darkTheme .walletDataPanel li span.txElem{
+	color:#ccc;
+}
+.darkTheme li.send span.icon img.sendIcon{
 	filter:invert(1);
+}
+.darkTheme .walletNote{
+	color:#ccc;
+}
+.darkTheme .hostTitle{
+	color:#ccc;
+}
+.darkTheme .pathSelectUtil ul{
+	height: calc(100% - 95px);
+    overflow-y: scroll;
+    list-style-type: none;
+    width: 100%;
+    padding: 0;
+    margin: 0;
+    margin-bottom: 7px;
+    background: rgba(0,0,0,0.1);
+    margin-top: 8px;
+    box-shadow: inset 1px 1px 5px #333;
+    border-top: #555;
+    border-left: #555;
+    border-right: #111;
+    border-bottom: #111;
+    border-width: 1px;
+    border-style: solid;
+    color: #ccc;
+    font-weight: 100;
+    background: #222;
+    border-radius: 5px;
+}
+.darkTheme .pathSelectUtil li{
+	border-bottom: 1px solid #444;
+}
+.darkTheme .pathSelectUtil{
+	border:none;
+}
+.darkTheme .newButton{
+	color:#ccc;
+	border: 1px solid #aaa;
+}
+.darkTheme #siaHostInfo li, 
+.darkTheme #siaStorageInfo li {
+	background: #222
+}
+.darkTheme .contractsChart, 
+.darkTheme .dashboardPanel{
+	border-top: 1px solid #333;
+}
+.darkTheme .storageUsed.donutChart{
+	border-right: 1px solid #333;
+}
+.darkTheme .range{
+	border: 1px solid #333;
+    float: left;
+    width: auto;
+    padding: 0px 10 px;
+    background: #111;
+    box-shadow: inset 1px 1px 5px #333;
+    border-top: #444;
+    border-left: #444;
+    border-right: #111;
+    border-bottom: #111;
+    border-width: 1px;
+    border-style: solid;
+    color: #ccc;
+    font-weight: 100;
+    border-radius: 5px;
+}
+.darkTheme .editButton, 
+.darkTheme .deleteButton{
+	filter: invert(0.65);
+}
+.darkTheme .editButton:hover, 
+.darkTheme .deleteButton:hover{
+	filter: invert(1);
+}
+.darkTheme #clusterStatus .subtitle{
+	background: #222;
+}
+.darkTheme #nodeConfiguration table, .darkTheme #clusterInventory table{
+	color:#eee;
+}
+.darkTheme #providerConfiguration label{
+	color:#eee;
+}
+.darkTheme #providerConfiguration .domainNote{
+	color:#aaa;
+}
+.darkTheme #ingressPortsMessage{
+	color:#aaa;
+}
+.darkTheme #ingressPortsMessage .standout{
+	color:#fff;
+}
+.darkTheme .quadTitle, .darkTheme .donutTitle{
+	color: #ccc;
+	font-weight: 200;
+}
+.darkTheme .donutChart text{
+	fill:#ddd;
+}
+.darkTheme .fetchingMessage{
+	color:#aaa;
+}
+.darkTheme .donuts .donutChart, .darkTheme .quadrant{
+	border-right: 1px solid #333;
+}
+.darkTheme .topLevel td, 
+.darkTheme #clusterInventory td{
+	border-bottom: 1px solid #333;
+}
+.darkTheme #answerPopup{
+	background: rgba(0,0,0,0.9);
+	color:#ddd;
+}
+.darkTheme .balanceMeta input.walletAddress{
+	color:#fff;
+	background: rgba(200,200,200,0.1)
+}
+.darkTheme .lowFundsNote{
+	color:#aaa;
+}
+.darkTheme #configuratorIngressPortsMessage{
+	color: #ccc;
+}
+.darkTheme #configuratorIngressPortsMessage .standout{
+	color:#fff;
+}
+.darkTheme .nodesResourceUsage .nodeLabel{
+	color:#bbb;
+}
+.darkTheme .nodesResourceUsage .nodeDetail{
+	border-left: 5px solid #444;
 }
 /*body{
 	transition: filter 0.2s linear;
@@ -35,7 +274,7 @@ html.darkTheme #qrModal
 	transition: filter 0.2s linear;
 }*/
 .darkTheme .logo img{
-	filter:invert(1.0);
+	/*filter:invert(1.0);*/
 }
 /*.contractsBeeswarm circle.node{
 	transition: filter 0.2s linear;
@@ -48,7 +287,8 @@ html.darkTheme #qrModal
 /*circle.node{
 	transition: fill 0.2s linear;
 }*/
-.darkTheme circle.node{
+
+/*.darkTheme circle.node{
 	fill: rgba(220,36,138,0.6);
 }
 .darkTheme circle.node.proofType{
@@ -59,41 +299,41 @@ html.darkTheme #qrModal
 }
 .darkTheme circle.node.highlighted{
 	fill: rgba(220,36,138,1.0);
-}
+}*/
 
 /*#siaMain .options li{
 	transition: border-left 0.2s linear;
 }*/
-.darkTheme #siaMain .options li:hover{
+/*.darkTheme #siaMain .options li:hover{
 	border-left: 5px solid #DC248A;
 	border-left-color:#DC248A;
-}
-.darkTheme .donutChart:not(.aktDonut):not(.dvpnDonut) g.pie path.on {
-    fill:rgba(220,36,138,1.0) !important;
-}
-.darkTheme .aktPanel .donutChart.aktDonut g.pie path.on{
-	fill: #50E2DD !important;
-}
-.darkTheme .donutChart.dvpnDonut g.pie path.on{
-	fill: #E26113 !important;
-	/*filter:invert(1);*/
+}*/
 
+/*.darkTheme .donutChart:not(.aktDonut):not(.dvpnDonut) g.pie path.on {
+    fill:rgba(220,36,138,1.0) !important;
+}*/
+/*.darkTheme .aktPanel .donutChart.aktDonut g.pie path.on{
+	fill: #50E2DD !important;
+}*/
+/*.darkTheme .donutChart.dvpnDonut g.pie path.on{
+	fill: #E26113 !important;
+	
 }
 .darkTheme .donutChart g.pie path:not(.on) {
     fill:rgba(161,161,161,0.4) !important;
-}
-.darkTheme .donutChart .label .swatch{
+}*/
+/*.darkTheme .donutChart .label .swatch{
 	filter:invert(1);
-}
+}*/
 .darkTheme .qrImg{
 	filter:invert(1);
 }
-.darkTheme .txElem a{
+/*.darkTheme .txElem a{
 	filter:invert(1);
 }
 .darkTheme .sendMax{
 	filter:invert(1);
-}
+}*/
 .darkTheme #siaHostInfo li input, 
 .darkTheme #siaHostInfo li select, 
 .darkTheme #pathShortcut, 
@@ -113,14 +353,14 @@ html.darkTheme #qrModal
 .darkTheme .registerProviderModal input[type="checkbox"], 
 .darkTheme .setPortsModal input[type="checkbox"],
 .darkTheme #siaStorageInfo .range input{
-	filter:invert(1);
+	/*filter:invert(1);*/
 }
-.darkTheme .button{
+/*.darkTheme .button{
 	filter:invert(1);
 }
 .darkTheme .hostTitle img{
 	filter:invert(1);
-}
+}*/
 
 .darkTheme #walletInitModal, 
 .darkTheme #sendModal, 
@@ -128,12 +368,25 @@ html.darkTheme #qrModal
 .darkTheme .pathSelectModal, 
 .darkTheme #hostInfoModal, 
 .darkTheme .modalWrap{
-	background:rgba(255,255,255,0.8);
+	background:rgba(0,0,0,0.8);
 }
 .darkTheme #walletInitModal #closeModal, .modalWrap #closeModal, .modalWrap .closeModal{
-	color:#111;
+	color:#eee;
 }
-.darkTheme .messageIcon{
+.darkTheme #configurator{
+	background:#111;
+	color:#eee;
+}
+.darkTheme #configurator .configuratorNote{
+	color:#bbb;
+}
+.darkTheme .badgeLabel{
+	color: #ccc;
+}
+.darkTheme #ipDisplay span{
+	color:#bbb;
+}
+/*.darkTheme .messageIcon{
 	filter:invert(1);
 }
 .darkTheme .range .bar{
@@ -141,10 +394,10 @@ html.darkTheme #qrModal
 }
 .darkTheme .value.hasUpDownColor{
 	filter:invert(1);
-}
+}*/
 
 /*DVPN*/
-.darkTheme .logs{
+/*.darkTheme .logs{
 	filter:invert(1);
 }
 .darkTheme .statusBubble .bubble{
@@ -183,13 +436,15 @@ html.darkTheme #qrModal
 }
 .darkTheme .emoji{
 	filter:invert(1);
-}
+}*/
 
-.darkTheme .buildABoxModal a, 
+/*.darkTheme .buildABoxModal a, 
 .darkTheme #nodeConfigInfo .buildLink, 
 .darkTheme .advancedOptions a, 
 .darkTheme a.getGlobalIP, 
-.darkTheme a.getWallet{
+.darkTheme a.getWallet,
+.darkTheme a.getWalletConfigurator
+{
 	filter:invert(1);
 }
 .darkTheme .buildABoxModal .step{
@@ -225,11 +480,12 @@ html.darkTheme #qrModal
 }
 .darkTheme a.akashLink{
 	filter:invert(1);
-}
+}*/
 
 /*.darkTheme #streamgraph path.stream{
 	fill: attr(data-inverse);
 }*/
+/*
 .darkTheme #streamgraph path.stream.color8{fill: #f7cf94 !important;}
 .darkTheme #streamgraph path.stream.color7{fill: #f7ae63 !important;}
 .darkTheme #streamgraph path.stream.color6{fill: #de8e4a !important;}
@@ -239,7 +495,8 @@ html.darkTheme #qrModal
 .darkTheme #streamgraph path.stream.color2{fill: #392410 !important;}
 .darkTheme #streamgraph path.stream.color1{fill: #211408 !important;}
 .darkTheme #streamgraph path.stream.color0{fill: #080400 !important;}
-
+*/
+/*
 .darkTheme .createNewData .error{
 	filter:invert(1);
 }
@@ -272,3 +529,6 @@ html.darkTheme #qrModal
 .darkTheme .bootableWarning{
 	filter: invert(1);
 }
+.darkTheme .configuratorTitle img{
+	filter:invert(1);
+}*/

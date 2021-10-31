@@ -4,6 +4,7 @@ import https from 'https';
 import {DiskUtils} from './DiskUtils.js';
 import yaml from 'js-yaml';
 import {CommonUtils} from '../CommonUtils.js';
+import {createHash} from 'crypto';
 
 export class K8sUtils{
 	constructor(configPath,walletUtils){
@@ -708,7 +709,7 @@ export class K8sUtils{
 			});
 		})
 	}
-	flashThumbDrive(path,pw,diskID){
+	flashThumbDrive(path,pw,diskID,ioNamespaces){
 		//path = device path. first verify it's detachable media just to be paranoid..
 		return new Promise((resolve,reject)=>{
 			let shouldProceed = false;
@@ -746,7 +747,7 @@ export class K8sUtils{
 							//ok lets flash the drive then
 							if(typeof devicePath != "undefined"){
 								console.log("WILL MAKE ISO NOW",devicePath);
-								_this.createUbuntuISO(devicePath,pw).then(data=>{
+								_this.createUbuntuISO(devicePath,pw,ioNamespaces).then(data=>{
 									resolve(data)
 								}).catch(error=>{
 									console.log('error creating usb',error);
@@ -768,17 +769,21 @@ export class K8sUtils{
 			
 		});
 	}
-	createUbuntuISO(devicePath,pw){
+	createUbuntuISO(devicePath,pw,socketIONamespaces){
 		return new Promise((resolve,reject)=>{
 			this.generateSSHKey().then(()=>{
 				//done
 				this.getLocalIP().then((ip)=>{
 					this.getRandomPW().then((randomPW)=>{
+						const authToken = createHash('sha256').update( (Math.random() * ( new Date().getTime() )).toString() ).digest('hex');
+						console.log('created auth token',authToken);
+						fs.writeFileSync(process.env.HOME+'/.HandyHost/aktData/usbAuthToken',authToken.trim(),'utf8');
 						const ssh_pub_key = fs.readFileSync(process.env.HOME+'/.ssh/handyhost.pub','utf8');
 						const cloudInitTemplate = fs.readFileSync('./aktAPI/ubuntu-cloud-config-x86','utf8');
 						
 						let cloudInitOutput = cloudInitTemplate.replace(/__SSH_PUB_KEY__/g,ssh_pub_key.trim());
 						cloudInitOutput = cloudInitOutput.replace(/__HOST_IP__/g,ip.trim());
+						cloudInitOutput = cloudInitOutput.replace(/__USB_AUTH_TOKEN__/g,authToken.trim());
 						cloudInitOutput = cloudInitOutput.replace(/__PASSWORD__/g,randomPW.trim());
 						//cloudInitOutput = cloudInitOutput.replace(/__SSH_PUB_KEY__/g,ssh_pub_key);
 						//3. write the config
@@ -796,11 +801,17 @@ export class K8sUtils{
 						const autogen = spawn(command,[],{env:process.env,cwd:process.env.PWD});
 						autogen.stdout.on('data',d=>{
 							console.log('autogen stdout output: ',d.toString());
+							Object.keys(socketIONamespaces).map(serverName=>{
+								socketIONamespaces[serverName].namespace.to('akt').emit('flashUSBStatus',d.toString());
+							})
 							output += d.toString();
 						})
 						autogen.stderr.on('data',d=>{
 							//ofc it dumps everything to stderr...
 							console.log('autogen stderr output: ',d.toString());
+							Object.keys(socketIONamespaces).map(serverName=>{
+								socketIONamespaces[serverName].namespace.to('akt').emit('flashUSBStatus',d.toString());
+							})
 							errs += d.toString();
 						})
 						autogen.on('close',()=>{
@@ -818,10 +829,10 @@ export class K8sUtils{
 									return;
 								}*/
 								if(process.platform == 'darwin'){
-									this.spawnCreateUbuntuISOMAC(devicePath,pw,chunkSize,resolve,reject);
+									this.spawnCreateUbuntuISOMAC(devicePath,pw,chunkSize,resolve,reject,socketIONamespaces);
 								}
 								else{
-									this.spawnCreateUbuntuISO(devicePath,pw,chunkSize,resolve,reject);
+									this.spawnCreateUbuntuISO(devicePath,pw,chunkSize,resolve,reject,socketIONamespaces);
 								}
 								
 								return;
@@ -834,15 +845,21 @@ export class K8sUtils{
 							}
 							
 						})
-						
+					
+					}).catch(error=>{
+						resolve({error:error})
 					})
 					
+				}).catch(error=>{
+					resolve({error:error})
 				})
 				
+			}).catch(error=>{
+				resolve({error:error})
 			})
 		})
 	}
-	spawnCreateUbuntuISO(devicePath,pw,chunkSize,resolve,reject){
+	spawnCreateUbuntuISO(devicePath,pw,chunkSize,resolve,reject,socketIONamespaces){
 		const args = [
 			'-S',
 			'dd',
@@ -852,7 +869,9 @@ export class K8sUtils{
 			'conv=fdatasync',
 			'status=progress'
 		]
-		
+		Object.keys(socketIONamespaces).map(serverName=>{
+			socketIONamespaces[serverName].namespace.to('akt').emit('flashUSBStatus','HandyHost ISO creation done. Flashing ISO to USB.');
+		})
 		const dd = spawn('sudo',args);
 		let ddOut = '';
 		let ddErr = '';
@@ -861,10 +880,16 @@ export class K8sUtils{
 		dd.stdin.write(`${pw}\n`);
 		dd.stdout.on('data',d=>{
 			console.log('dd stdout output: ',d.toString());
+			Object.keys(socketIONamespaces).map(serverName=>{
+				socketIONamespaces[serverName].namespace.to('akt').emit('flashUSBStatus',d.toString());
+			})
 			ddOut += d.toString();
 		})
 		dd.stderr.on('data',d=>{
 			console.log('dd stderr output: ',d.toString());
+			Object.keys(socketIONamespaces).map(serverName=>{
+				socketIONamespaces[serverName].namespace.to('akt').emit('flashUSBStatus',d.toString());
+			})
 			ddErr += d.toString();
 			if(ddErr.indexOf('incorrect password attempt') >= 0){
 				dd.kill();
@@ -890,12 +915,15 @@ export class K8sUtils{
 			reject({error:message});
 		})
 	}
-	spawnCreateUbuntuISOMAC(devicePath,pw,chunkSize,resolve,reject){
+	spawnCreateUbuntuISOMAC(devicePath,pw,chunkSize,resolve,reject,socketIONamespaces){
 		//big difference here is that mac needs to unmount the disk first...
 		console.log('start mac flashing');
+		Object.keys(socketIONamespaces).map(serverName=>{
+			socketIONamespaces[serverName].namespace.to('akt').emit('flashUSBStatus','HandyHost ISO creation done. Flashing ISO to USB (this will take ~5 minutes)...');
+		})
 		const unmount = spawn('diskutil',['unmountDisk',devicePath]);
 		unmount.on('close',()=>{
-			console.log('unmounted disk, now flashing USB ISO...');
+			console.log('unmounted disk, now flashing USB ISO (this will take ~5 minutes)...');
 			const args = [
 				'-S',
 				'dd',
@@ -912,10 +940,20 @@ export class K8sUtils{
 			dd.stdin.write(`${pw}\n`);
 			dd.stdout.on('data',d=>{
 				console.log('dd stdout output: ',d.toString());
+				if(d.toString().toLowerCase().indexOf('password') == -1){
+					Object.keys(socketIONamespaces).map(serverName=>{
+						socketIONamespaces[serverName].namespace.to('akt').emit('flashUSBStatus',d.toString());
+					})
+				}
 				ddOut += d.toString();
 			})
 			dd.stderr.on('data',d=>{
 				console.log('dd stderr output: ',d.toString());
+				if(d.toString().toLowerCase().indexOf('password') == -1){
+					Object.keys(socketIONamespaces).map(serverName=>{
+						socketIONamespaces[serverName].namespace.to('akt').emit('flashUSBStatus',d.toString());
+					})
+				}
 				ddErr += d.toString();
 				if(ddErr.indexOf('incorrect password attempt') >= 0){
 					dd.kill();

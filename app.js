@@ -169,7 +169,7 @@ function handleServerRequest(request,response){
     if( (now - lastBadAttempt > 60) || badAttempts >= 6){
       badAttempts = 0;
     }
-    console.log('bad login attempts',badAttempts, 'seconds since last attempt', now - lastBadAttempt);
+    console.log('bad login attempts',badAttempts, 'seconds since last attempt', now - lastBadAttempt,safe);
     
     if(badAttempts >= 5){
       if(typeof lastBadAttemptTimeout != "undefined"){
@@ -238,6 +238,41 @@ function handleServerRequest(request,response){
             }
           });
           
+        }
+        else if(safe.indexOf('/api/akt/getRandomHostname') == 0){
+          const token = safe.split('/')[5];
+          if(typeof token == "undefined"){
+            console.log('token is undefined')
+            response.writeHead(401, {"Content-Type": "text/plain"});
+            response.write("unauthorized\n");
+            response.end();
+            return;
+          }
+          else{
+            const localAuthToken = fs.readFileSync(process.env.HOME+'/.HandyHost/aktData/usbAuthToken','utf8').trim();
+            if(localAuthToken == token.trim()){
+              //ok the usb for ubuntu auto installer is valid, pass them thru
+              api.get(safe,'').then(data=>{
+                if(typeof data == 'string'){
+                  response.end(data);
+                }
+                else{
+                  response.end(JSON.stringify(data));
+                }
+              }).catch(err=>{
+                response.writeHead(404, {"Content-Type": "text/plain"});
+                let out = '{}';
+                try{
+                  out = JSON.stringify(err);
+                }
+                catch(e){
+                  out = JSON.stringify({error:err});
+                }
+                response.write(out);
+                response.end();
+              });
+            }
+          }
         }
         else{
           response.writeHead(401, {"Content-Type": "text/plain"});
