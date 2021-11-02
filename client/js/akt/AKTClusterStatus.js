@@ -21,7 +21,7 @@ export class AKTClusterStatus{
 	}
 	fetchStats(){
 		fetch('/api/akt/getClusterStats').then(d=>d.json()).then(data=>{
-			if(!data.providerIsRunning && data.providerIsRegistered && data.providerHasGeneratedCert){
+			if(!data.providerIsRunning && data.providerIsRegistered && data.providerHasGeneratedCert && data.k8s.length > 0 && data.nodeCount > 0){
 				$('#aktMain .options li#providerStatus').show();
 			}
 			if(data.providerIsRunning){
@@ -33,7 +33,7 @@ export class AKTClusterStatus{
 			
 			this.renderStats(data);
 			console.log('stats d',data)
-			if(data.k8s.length == 0 && data.nodeCount == 0){
+			if(data.k8s.length == 0 && data.nodeCount == 0 && (Object.keys(data.providerData).length == 0)){
 				//auto show configurator
 				this.dashboard.nodeConfig.show();
 				this.dashboard.marketplace.hide();
@@ -77,7 +77,7 @@ export class AKTClusterStatus{
 			}
 		})
 		const shouldShowProviderStatusIndicator = statsData.providerIsRegistered && statsData.providerHasGeneratedCert;
-		if(statsData.providerIsRegistered && statsData.providerHasGeneratedCert && !statsData.providerIsRunning){
+		if(statsData.providerIsRegistered && statsData.providerHasGeneratedCert && !statsData.providerIsRunning && statsData.k8s.length > 0 && statsData.nodeCount > 0){
 			$('#providerStatus').show();
 		}
 		this.renderBalance(statsData.balance,address,statsData.k8s);

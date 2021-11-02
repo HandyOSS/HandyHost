@@ -185,7 +185,7 @@ export class AKTDashboard {
 			$('.options li#providerStatus').hide();
 		}
 		else{
-			if(data.providerHasGeneratedCert && data.providerIsRegistered){
+			if(data.providerHasGeneratedCert && data.providerIsRegistered && data.k8s.length > 0 && data.nodeCount > 0){
 				$('.options li#providerStatus').show();
 			}
 		}
