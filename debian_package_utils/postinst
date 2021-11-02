@@ -312,4 +312,5 @@ node rainbow.js && \
 echo -e "\x1b[92mHandyHost is  now running on: http://localhost:8008\x1b[0m" && \
 echo -e "\x1b[92mHandyHost is also running on: https://localhost:58008\x1b[0m (self-signed certificate)" && \
 echo "HandyHost is configured to start on machine restart" && \
-echo "Manually start|stop|restart like: sudo systemctl restart handyhost"
+echo "Manually start|stop|restart like: sudo systemctl restart handyhost" && \
+su $(stat -c "%U" /run/user/1000) -c "xdg-open http://localhost:8008 2>/dev/null &" || true 
