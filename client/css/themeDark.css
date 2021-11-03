@@ -269,16 +269,21 @@ html.darkTheme #qrModal,
 .darkTheme .logo img{
 	/*filter:invert(1.0);*/
 }
-.contractsBeeswarm circle.node{
+/*.contractsBeeswarm circle.node{
 	transition: filter 0.2s linear;
 }
 .darkTheme .contractsBeeswarm circle.node{
 	filter:invert(1.0);
-}
+}*/
+
 
 /*beeswarm*/
-circle.node{
+/*circle.node{
 	transition: fill 0.2s linear;
+}*/
+
+.darkTheme .contractsBeeswarm svg{
+	filter:invert(1.0);
 }
 
 .darkTheme circle.node{
@@ -358,3 +363,6 @@ circle.node{
 	filter: invert(1);
 }
 
+.darkTheme .chooseDeviceResult label{
+	color:#aaa;
+}
