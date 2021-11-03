@@ -187,7 +187,7 @@ export class ContractsChart{
 			//console.log('contracts ending??',ending);
 			
 			this.renderEnding(ending);
-			this.data = filtered;
+			this.data = filtered.concat(ending);
 			this.height = height;
 			$('#beeswarmLoading').remove();
 			this.chart.render(filtered.concat(ending),height);
