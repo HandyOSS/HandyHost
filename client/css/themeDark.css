@@ -1,13 +1,7 @@
 html{
 	background:#000;
 }
-/*
-note: messes up layer ordering in firefox and old chromes
-html.darkTheme{
-	filter:invert(1.0);
-}
-instead: do top level elements not parents to fixed positioned;
-*/
+
 html.darkTheme #nodeConfigInfo, 
 html.darkTheme .dashboard, 
 html.darkTheme #serviceBackground,
@@ -261,18 +255,17 @@ html.darkTheme #qrModal,
 .darkTheme .nodesResourceUsage .nodeDetail{
 	border-left: 5px solid #444;
 }
-/*body{
-	transition: filter 0.2s linear;
-	margin:0;
-}*/
-/*html.darkTheme body{
-	filter:invert(1.0);
-}*/
+.darkTheme .qrImg{
+	filter:invert(1);
+}
+.darkTheme .hostRadars, .darkTheme .scoreInfo .scoreParam{
+	filter:invert(1);
+	color:#111;
+}
 
-/*logos*/
-/*.darkTheme .logo img{
-	transition: filter 0.2s linear;
-}*/
+.darkTheme #siaWalletInfo .logo{
+	color:#eee;
+}
 .darkTheme .logo img{
 	/*filter:invert(1.0);*/
 }
@@ -283,12 +276,17 @@ html.darkTheme #qrModal,
 	filter:invert(1.0);
 }*/
 
+
 /*beeswarm*/
 /*circle.node{
 	transition: fill 0.2s linear;
 }*/
 
-/*.darkTheme circle.node{
+.darkTheme .contractsBeeswarm svg{
+	filter:invert(1.0);
+}
+
+.darkTheme circle.node{
 	fill: rgba(220,36,138,0.6);
 }
 .darkTheme circle.node.proofType{
@@ -299,41 +297,17 @@ html.darkTheme #qrModal,
 }
 .darkTheme circle.node.highlighted{
 	fill: rgba(220,36,138,1.0);
-}*/
-
-/*#siaMain .options li{
-	transition: border-left 0.2s linear;
-}*/
-/*.darkTheme #siaMain .options li:hover{
-	border-left: 5px solid #DC248A;
-	border-left-color:#DC248A;
-}*/
-
-/*.darkTheme .donutChart:not(.aktDonut):not(.dvpnDonut) g.pie path.on {
-    fill:rgba(220,36,138,1.0) !important;
-}*/
-/*.darkTheme .aktPanel .donutChart.aktDonut g.pie path.on{
-	fill: #50E2DD !important;
-}*/
-/*.darkTheme .donutChart.dvpnDonut g.pie path.on{
-	fill: #E26113 !important;
-	
 }
-.darkTheme .donutChart g.pie path:not(.on) {
-    fill:rgba(161,161,161,0.4) !important;
-}*/
-/*.darkTheme .donutChart .label .swatch{
-	filter:invert(1);
-}*/
+
+.darkTheme #beeswarmTooltip{
+	background: rgba(31,31,31,0.8);
+	border: 1px solid #555;
+}
+
 .darkTheme .qrImg{
 	filter:invert(1);
 }
-/*.darkTheme .txElem a{
-	filter:invert(1);
-}
-.darkTheme .sendMax{
-	filter:invert(1);
-}*/
+
 .darkTheme #siaHostInfo li input, 
 .darkTheme #siaHostInfo li select, 
 .darkTheme #pathShortcut, 
@@ -355,12 +329,7 @@ html.darkTheme #qrModal,
 .darkTheme #siaStorageInfo .range input{
 	/*filter:invert(1);*/
 }
-/*.darkTheme .button{
-	filter:invert(1);
-}
-.darkTheme .hostTitle img{
-	filter:invert(1);
-}*/
+
 
 .darkTheme #walletInitModal, 
 .darkTheme #sendModal, 
@@ -386,149 +355,14 @@ html.darkTheme #qrModal,
 .darkTheme #ipDisplay span{
 	color:#bbb;
 }
-/*.darkTheme .messageIcon{
-	filter:invert(1);
-}
-.darkTheme .range .bar{
-	filter:invert(1);
-}
-.darkTheme .value.hasUpDownColor{
-	filter:invert(1);
-}*/
 
-/*DVPN*/
-/*.darkTheme .logs{
+.darkTheme .walletDataPanel .value:not(.hasUpDownColor){
 	filter:invert(1);
 }
-.darkTheme .statusBubble .bubble{
-	filter:invert(1);
-}
-.darkTheme .warningEmoji{
-	filter:invert(1);
-}
-.darkTheme .showAllKeys,
-.darkTheme .getMyIP,
-.darkTheme .myIPValue,
-.darkTheme #showAdvancedSettings
-{
-	filter:invert(1);
-	color:#1c9fea;
-}
-.darkTheme .pwErrorMessage{
-	filter:invert(1);
-}
-.darkTheme .noConfirmBadge, 
-.darkTheme .confirmBadge{
-	filter:invert(1);
-}
-.darkTheme .syncedStatus .emoji, 
-.darkTheme .sentInfo .error{
-	filter:invert(1);
-}
-.darkTheme .balanceValue.hasColor{
-	filter:invert(1);
-}
-.darkTheme .aktPanel .topLevel li a, 
-.darkTheme .aktPanel .topLevel td a, 
-.darkTheme a.aktStatusPageLink, 
-.darkTheme a.placeBid{
-	filter:invert(1);
-}
-.darkTheme .emoji{
-	filter:invert(1);
-}*/
-
-/*.darkTheme .buildABoxModal a, 
-.darkTheme #nodeConfigInfo .buildLink, 
-.darkTheme .advancedOptions a, 
-.darkTheme a.getGlobalIP, 
-.darkTheme a.getWallet,
-.darkTheme a.getWalletConfigurator
-{
-	filter:invert(1);
-}
-.darkTheme .buildABoxModal .step{
-	filter:invert(1);
-}
-
-.darkTheme .buildABoxModal .chooseDevice, 
-.darkTheme .buildABoxModal .finishHost{
-	filter:invert(1);
-}
-.darkTheme .providerList .errorMessage{
-	filter:invert(1);
-}
-.darkTheme #clusterStatus .qrWrap{
-	filter:invert(1);
-}
-.darkTheme #clusterStatus .indicator{
-	filter:invert(1);
-}
-
-.darkTheme .ordersPanel .prevNextTri{
-	filter:invert(1);
-}
-.darkTheme .lds-roller{
-	filter:invert(1);
-}
-.darkTheme .ordersPanel tr.highlighted{
-	filter:invert(1);
-}
-.darkTheme .ordersPanel .mainOption.selected, 
-.darkTheme .ordersPanel .subOption.selected{
-	filter:invert(1);
-}
-.darkTheme a.akashLink{
-	filter:invert(1);
-}*/
-
-/*.darkTheme #streamgraph path.stream{
-	fill: attr(data-inverse);
-}*/
-/*
-.darkTheme #streamgraph path.stream.color8{fill: #f7cf94 !important;}
-.darkTheme #streamgraph path.stream.color7{fill: #f7ae63 !important;}
-.darkTheme #streamgraph path.stream.color6{fill: #de8e4a !important;}
-.darkTheme #streamgraph path.stream.color5{fill: #bd6d39 !important;}
-.darkTheme #streamgraph path.stream.color4{fill: #945129 !important;}
-.darkTheme #streamgraph path.stream.color3{fill: #61351e !important;}
-.darkTheme #streamgraph path.stream.color2{fill: #392410 !important;}
-.darkTheme #streamgraph path.stream.color1{fill: #211408 !important;}
-.darkTheme #streamgraph path.stream.color0{fill: #080400 !important;}
-*/
-/*
-.darkTheme .createNewData .error{
-	filter:invert(1);
-}
-.darkTheme .validation.error{
-	filter:invert(1);
-}
-
-.darkTheme #siaMain .syncedStatus, 
-.darkTheme #siaStatsSourceLink{
+.darkTheme .unconfirmed.balanceElement .balanceValue:not(.hasColor){
 	filter: invert(1);
 }
-.darkTheme input#autostart{
-	filter:invert(1);
+
+.darkTheme .chooseDeviceResult label{
+	color:#aaa;
 }
-.darkTheme .isActiveBadge .badgeWrap{
-	filter:invert(1);
-}
-.darkTheme .advancedToggle{
-	filter: invert(1);
-}
-.darkTheme #updateKubesprayModal .logsShowing pre{
-	filter: invert(1);
-}
-.darkTheme .disclaimer{
-	filter: invert(1);
-}
-.darkTheme .importNote{
-	filter: invert(1);
-}
-.darkTheme .bootableWarning{
-	filter: invert(1);
-}
-.darkTheme .configuratorTitle img{
-	filter:invert(1);
-}*/
