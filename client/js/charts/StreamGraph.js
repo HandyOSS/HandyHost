@@ -200,7 +200,7 @@ export class StreamGraph{
 			Object.keys(data[subID]).map(timestamp=>{
 				let roundMins = Object.keys(data[subID]).length <= 120 ? 2 : 15;
 				const time = parseInt(this.startOf(moment(timestamp,'X'),roundMins,'minute').format('X'));
-				console.log('time',time,timestamp,roundMins);
+				//console.log('time',time,timestamp,roundMins);
 				if(time < minTime){
 					minTime = time;
 				}
@@ -224,8 +224,8 @@ export class StreamGraph{
 		if(moment(maxTime,'X').diff(moment(minTime,'X'),'minutes')/2 <= 120){
 			minsPerBin = 2;
 		} 
-		console.log('minmax',minTime,maxTime);
-		console.log('new diff hours',moment(maxTime,'X').diff(moment(minTime,'X'),'hours'))
+		//console.log('minmax',minTime,maxTime);
+		//console.log('new diff hours',moment(maxTime,'X').diff(moment(minTime,'X'),'hours'))
 		
 		for(let v=minTime;v<=maxTime;v+=(minsPerBin*60)){
 			let i = this.startOf(moment(v,'X'),minsPerBin,'minute').format('X')
@@ -269,7 +269,7 @@ export class StreamGraph{
 				}
 			}
 		};
-		console.log('bins',data,bins,minTime,maxTime);
+		//console.log('bins',data,bins,minTime,maxTime);
 		return {rows:bins,roundMins:minsPerBin};
 	}
 	modelData(data){

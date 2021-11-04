@@ -33,7 +33,7 @@ export class DVPNDashboardAnalytics{
 		this.parentComponent.nodeStatus.setStatus(isConnected);
 		$('.analyticsPanel').removeClass('loading');
 		this.renderNodeAnalytics(node.result,balance,analytics,addressMeta,data.activeSessions,data.sessions);
-		this.renderSessionsRealtime(data.activeSessions);
+		this.renderSessionsRealtime(data.activeSessions,data.sessions);
 		this.streamGraph = new StreamGraph($('#streamgraph'));
 		this.streamGraph.render(data.timeseries);
 
@@ -123,29 +123,37 @@ export class DVPNDashboardAnalytics{
 		else{
 			$('#nodeStatusInfo .balanceNote').hide()
 		}
-		this.renderAnalyticsPanel(analytics,sessionMeta,allSessionsMeta);
+		this.renderAnalyticsPanel(analytics,sessionMeta,allSessionsMeta,sessionMeta);
 	}
-	renderAnalyticsPanel(analytics,sessionMeta,allSessionsMeta){
+	renderAnalyticsPanel(analytics,sessionMeta,allSessionsMeta,subscriberData){
 		//console.log('analytics',analytics);
+		let updatedAt = {};
+		subscriberData.map(subscriber=>{
+			
+			const updatedMins = moment().diff(moment(subscriber.latestUpdated),'minutes');
+			const humanizedUpdated = moment.duration(updatedMins,'minutes').humanize();
+			const subID = subscriber.subscription;
+			updatedAt[subID] = humanizedUpdated;
+		})
 		if(typeof analytics == "undefined"){
 			analytics = {
 				avgDuration:0,
 				durationSum:0
 			}
 		}
-		const avgDuration = Math.floor(analytics.avgDuration*100)/100;
-		const sumDuration = Math.floor(analytics.durationSum*100)/100;
+		/*const avgDuration = Math.floor(analytics.avgDuration*100)/100;
+		const sumDuration = Math.floor(analytics.durationSum*100)/100;*/
 		let sessionCount = 0;//analytics.sessionCount;
 		
 
 		let totalBandwidthDown = 0;//analytics.totalBandwidthDOWN;
 		let totalBandwidthUp = 0;//analytics.totalBandwidthUP;
 		let totalRemaining = 0;
-		sessionMeta.map(subscriber=>{
+		/*sessionMeta.map(subscriber=>{
 			//direction is from the subscriber perspective
 			totalBandwidthDown += subscriber.nodeUP;
 			totalBandwidthUp += subscriber.nodeDOWN;
-		});
+		});*/
 		let subscriptionCount = 0;//Object.keys(analytics.uniqueSubscriptions).length;
 		const uniqueSubs = allSessionsMeta; //analytics.uniqueSubscriptions;
 
@@ -161,12 +169,12 @@ export class DVPNDashboardAnalytics{
 		const $nodeAnalytics = $('#nodeAnalytics');
 		$nodeAnalytics.html('<div class="sectionTitle">Session Analytics</div>')
 		const $subscriptionAnalytics = $('#subscriptionAnalytics');
-		const $durations = $(`
+		/*const $durations = $(`
 			<div class="durations">
 				<div class="avg"><span>Average Session Duration:</span> ~${moment.duration(avgDuration,'minutes').humanize()}</div>
 				<div class="total"><span>Sum Session Durations:</span> ~${moment.duration(sumDuration,'minutes').humanize()}</div>
 			</div>
-		`);
+		`);*/
 		const $sessions = $(`
 			<div class="sessions">
 				<div class="title">
@@ -188,6 +196,15 @@ export class DVPNDashboardAnalytics{
 		let donuts = [];
 		Object.keys(uniqueSubs).map(subKey=>{
 			const sub = uniqueSubs[subKey];
+			
+			let seenAt = moment.duration(moment().diff(moment(sub.lastSeen,'X'),'minutes'),'minutes').humanize()
+			if(typeof updatedAt[subKey] != "undefined"){
+				seenAt = updatedAt[subKey];
+			}
+			let remaining = numeral(sub.remaining).format('0.00b').toUpperCase();
+			if(sub.remaining < 0){
+				remaining = '0.00B';
+			}
 			const $li = $(`
 				<li>
 					<div class="subscriberMetrics">
@@ -195,8 +212,8 @@ export class DVPNDashboardAnalytics{
 						<div class="sessions"><span>Sessions:</span> ${sub.sessions}</div>
 						<div class="down"><span>Total Download:</span> ${numeral(sub.totalDown).format('0.00b').toUpperCase()}</div>
 						<div class="down"><span>Total Upload:</span> ${numeral(sub.totalUp).format('0.00b').toUpperCase()}</div>
-						<div class="down"><span>Total Remaining:</span> ${numeral(sub.remaining).format('0.00b').toUpperCase()}</div>
-						<div class="down"><span>Last Seen:</span> ${moment.duration(moment().diff(moment(sub.lastSeen,'X'),'minutes'),'minutes').humanize()} ago</div>
+						<div class="down"><span>Total Remaining:</span> ${remaining}</div>
+						<div class="down"><span>Last Seen:</span> ${seenAt} ago</div>
 					</div>
 					<div class="donut donutChart dvpnDonut">
 						<div class="donutTitle">Contract</div>
@@ -208,23 +225,27 @@ export class DVPNDashboardAnalytics{
 			const $donutEl = $('.donut',$li);
 			
 			const donut = new DonutChart($donutEl);
-			const totalUsed = (sub.totalDown+sub.totalUp);
+			let totalUsed = (sub.totalDown+sub.totalUp);
+			if(totalUsed > sub.totalContract){
+				totalUsed = sub.totalContract
+			}
 			const donutData = [
 				{name:'Bandwidth Used',value: totalUsed, formatted: numeral(totalUsed).format('0.00b').toUpperCase()},
-				{name:'Remaining',value:sub.remaining, formatted: numeral(sub.remaining).format('0.00b').toUpperCase()}
+				{name:'Remaining',value:sub.totalContract, formatted: numeral(sub.remaining).format('0.00b').toUpperCase()}
 			];
 
 			donuts.push({
 				$el:$li,
 				donut,
 				subscriberID:subKey,
-				data:donutData
+				data:donutData,
+				ogData: JSON.parse(JSON.stringify(donutData))
 			})
 		})
 		
 		
 
-		$nodeAnalytics.html($durations)
+		//$nodeAnalytics.html($durations)
 		$nodeAnalytics.html($sessions);
 		$subscriptionAnalytics.html($subs);
 		donuts.map(donutWidget=>{
@@ -244,20 +265,22 @@ export class DVPNDashboardAnalytics{
 		donuts.map(donutWidget=>{
 			const $li = donutWidget.$el;
 			const donut = donutWidget.donut;
-			const donutData = JSON.parse(JSON.stringify(donutWidget.data));
+			//const donutData = JSON.parse(JSON.stringify(donutWidget.data));
+			const donutData = JSON.parse(JSON.stringify(donutWidget.ogData));
 			const w = $('.donut',$li).width();
 			console.log('donut w',w);
 			$('.donut',$li).css('height',w); //sqaure it up
 			donut.render(donutData);
 		})
 	}
-	renderSessionsRealtime(data){
+	renderSessionsRealtime(data,sessions){
 		const $el = $('#sessionMeta');
 		$el.html('<div class="sectionTitle">Active Sessions</div>')
 		if(data.length == 0){
 			$el.append('<div class="nosessions">(no active sessions)</div>')
 		}
 		else{
+			this.renderAnalyticsPanel(undefined,undefined,sessions,data);
 			const $ul = $('<ul />');
 
 			data.map(subscriber=>{
@@ -271,13 +294,25 @@ export class DVPNDashboardAnalytics{
 				if(subscriber.sessionIDs.length > 1){
 					labelExtra = 's';
 				}
+				let uploadVol = subscriber.nodeUP;
+				let downloadVol = subscriber.nodeDOWN;
+				let avail = subscriber.subscriptionAvail;
+				let sessionID = subscriber.sessionIDs.slice(-1);
+				if(typeof sessions[subscriber.subscription] != "undefined"){
+					uploadVol = sessions[subscriber.subscription].totalUp;
+					downloadVol = sessions[subscriber.subscription].totalDown;
+					avail = sessions[subscriber.subscription].totalContract - (uploadVol + downloadVol);
+					if(avail < 0){
+						avail = 0;
+					}
+				}
 				const $li = $(`
 					<li>
 						<div class="id"><span>Subscription ID:</span> ${subscriber.subscription}</div>
-						<div class="remaining"><span>Remaining Quota:</span> ${numeral(subscriber.subscriptionAvail).format('0.00b').toUpperCase()}</span></div>
-						<div class="sessions"><span>Session ID${labelExtra}:</span> ${sessionIDs}</div>
-						<div class="down"><span>Client Download Volume:</span> ${numeral(subscriber.nodeUP).format('0.00b').toUpperCase()}</div>
-						<div class="down"><span>Client Upload Volume:</span> ${numeral(subscriber.nodeDOWN).format('0.00b').toUpperCase()}</div>
+						<div class="remaining"><span>Remaining Quota:</span> ${numeral(avail).format('0.00b').toUpperCase()}</span></div>
+						<div class="sessions"><span>Session ID:</span> ${sessionID}</div>
+						<div class="down"><span>Client Download Volume:</span> ${numeral(uploadVol).format('0.00b').toUpperCase()}</div>
+						<div class="down"><span>Client Upload Volume:</span> ${numeral(downloadVol).format('0.00b').toUpperCase()}</div>
 						<div class="created"><span>Created: ${humanizedCreated} ago</span></div>
 						<div class="created"><span>Updated: ${humanizedUpdated} ago</span></div>
 					</li>
