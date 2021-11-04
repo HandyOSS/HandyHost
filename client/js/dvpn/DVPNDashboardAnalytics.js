@@ -165,6 +165,9 @@ export class DVPNDashboardAnalytics{
 			totalBandwidthUp += data.totalUp;
 			totalRemaining += data.remaining;
 		});
+		if(totalRemaining < 0){
+			totalRemaining = 0;
+		}
 		
 		const $nodeAnalytics = $('#nodeAnalytics');
 		$nodeAnalytics.html('<div class="sectionTitle">Session Analytics</div>')
