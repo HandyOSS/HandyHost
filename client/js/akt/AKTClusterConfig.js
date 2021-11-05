@@ -436,6 +436,12 @@ export class AKTClusterConfig{
 		if(message.indexOf('ssh: Could not resolve hostname') >= 0){
 			this.kubernetesHasError = true;
 		}
+		if(message.indexOf('Unable to connect to the server: dial tcp') >= 0 && message.indexOf('connect: network is unreachable') >= 0){
+			this.kubernetesHasError = true;
+		}
+		if(message.indexOf('port 22: Network is unreachable') >= 0){
+			this.kubernetesHasError = true;
+		}
 
 	}
 	validateConfig(configData){
