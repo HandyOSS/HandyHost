@@ -21,7 +21,13 @@ export class AKTClusterStatus{
 	}
 	fetchStats(){
 		fetch('/api/akt/getClusterStats').then(d=>d.json()).then(data=>{
-			if(!data.providerIsRunning && data.providerIsRegistered && data.providerHasGeneratedCert && data.k8s.length > 0 && data.nodeCount > 0){
+			let onlineCount = 0;
+			data.k8s.map(machine=>{
+				if(Object.keys(machine.sections).length > 0){
+					onlineCount++;
+				}
+			})
+			if(!data.providerIsRunning && data.providerIsRegistered && data.providerHasGeneratedCert && data.k8s.length > 0 && (data.nodeCount > 0 && data.nodeCount == onlineCount)){
 				$('#aktMain .options li#providerStatus').show();
 			}
 			if(data.providerIsRunning){
@@ -77,7 +83,7 @@ export class AKTClusterStatus{
 			}
 		})
 		const shouldShowProviderStatusIndicator = statsData.providerIsRegistered && statsData.providerHasGeneratedCert;
-		if(statsData.providerIsRegistered && statsData.providerHasGeneratedCert && !statsData.providerIsRunning && statsData.k8s.length > 0 && statsData.nodeCount > 0){
+		if(statsData.providerIsRegistered && statsData.providerHasGeneratedCert && !statsData.providerIsRunning && statsData.k8s.length > 0 && (statsData.nodeCount > 0 && onlineCount == statsData.nodeCount)){
 			$('#providerStatus').show();
 		}
 		this.renderBalance(statsData.balance,address,statsData.k8s);
@@ -163,15 +169,15 @@ export class AKTClusterStatus{
 			$el.append('<div class="hasGeneratedCert"><span class="emoji">⚠️</span> No Akash Server Certificate Found for Your Address</div>');
 			$el.append('<div class="regenCertificate"><a class="aktStatusPageLink">Generate Certificate</a></div>')
 		}
-		$('.updateRegistration a').off('click').on('click',()=>{
+		$('.updateRegistration a',$el).off('click').on('click',()=>{
 			//show pw modal and fetch updateRegistration
 			this.showRegistrationModal(true,statsData.providerData.providerWalletName);
 		})
-		$('.createRegistration a').off('click').on('click',()=>{
+		$('.createRegistration a',$el).off('click').on('click',()=>{
 			//show pw modal and fetch createRegistration
 			this.showRegistrationModal(false,statsData.providerData.providerWalletName);
 		});
-		$('.regenCertificate a').off('click').on('click',()=>{
+		$('.regenCertificate a',$el).off('click').on('click',()=>{
 			this.showRegistrationModal(false,statsData.providerData.providerWalletName,true,statsData.providerIsRegistered);
 		})
 	}
@@ -513,6 +519,7 @@ export class AKTClusterStatus{
 			$('#registrationModal').show();
 			$('.walletModalContent').removeClass('showing');
 			$('.registerProviderModal').addClass('showing');
+			$('#unlockRegPW').focus();
 			if(isGenerateCertOnly){
 				$('#generateCert').prop('checked',true);
 				$('.registerProviderModal .checkboxWrap').hide()

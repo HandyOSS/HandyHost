@@ -930,37 +930,43 @@ export class AKTClusterConfig{
 			$('#buildClusterConfigurator').removeClass('cancel').addClass('save');
 		}
 
-		$('.updateRegistration a').off('click').on('click',()=>{
+		$('.updateRegistration a',$el).off('click').on('click',()=>{
 			//show pw modal and fetch updateRegistration
-			this.parentComponent.dashboard.clusterStatus.showRegistrationModal(true,statsData.wallet).then(didRegister=>{
+			this.parentComponent.dashboard.clusterStatus.showRegistrationModal(true,statsData.wallet).then(didSuccessfullyRegister=>{
 				console.log('resolved after registration click')
-				didRegister = true;
-				finish(didRegister,didCertify);
-				$('.options #providerRegistrationWarning').hide();
-				$('.updateRegistration',$el).replaceWith('<div class="isregistered"><span class="emoji">✅</span> Provider is Registered </div>')
+				if(didSuccessfullyRegister){
+					didRegister = true;
+					finish(didRegister,didCertify);
+					$('.options #providerRegistrationWarning').hide();
+					$('.updateRegistration',$el).replaceWith('<div class="isregistered"><span class="emoji">✅</span> Provider is Registered </div>')
+				}
 			}).catch(e=>{
 				console.log('error registering',e);
 			})
 		})
-		$('.createRegistration a').off('click').on('click',()=>{
+		$('.createRegistration a',$el).off('click').on('click',()=>{
 			//show pw modal and fetch createRegistration
-			this.parentComponent.dashboard.clusterStatus.showRegistrationModal(false,statsData.wallet).then(didRegister=>{
+			this.parentComponent.dashboard.clusterStatus.showRegistrationModal(false,statsData.wallet).then(didSuccessfullyRegister=>{
 				console.log('resolved after registration click')
-				didRegister = true;
-				finish(didRegister,didCertify);
-				$('.options #providerRegistrationWarning').hide();
-				$('.updateRegistration',$el).replaceWith('<div class="isregistered"><span class="emoji">✅</span> Provider is Registered </div>')
+				if(didSuccessfullyRegister){
+					didRegister = true;
+					finish(didRegister,didCertify);
+					$('.options #providerRegistrationWarning').hide();
+					$('.updateRegistration',$el).replaceWith('<div class="isregistered"><span class="emoji">✅</span> Provider is Registered </div>')
+				}
 			}).catch(e=>{
 				console.log('error registering',e);
 			})
 		});
-		$('.regenCertificate a').off('click').on('click',()=>{
-			this.parentComponent.dashboard.clusterStatus.showRegistrationModal(false,statsData.wallet,true,statsData.providerIsRegistered).then(didRegister=>{
+		$('.regenCertificate a',$el).off('click').on('click',()=>{
+			this.parentComponent.dashboard.clusterStatus.showRegistrationModal(false,statsData.wallet,true,statsData.providerIsRegistered).then(didSuccessfullyRegister=>{
 				console.log('resolved after registration click')
-				didCertify = true;
-				$('.options #providerCertificateWarning').hide();
-				finish(didRegister,didCertify);
-				$('.hasGeneratedCert',$el).html('<span class="emoji">✅</span> Provider has Generated Akash Certificate')
+				if(didSuccessfullyRegister){
+					didCertify = true;
+					$('.options #providerCertificateWarning').hide();
+					finish(didRegister,didCertify);
+					$('.hasGeneratedCert',$el).html('<span class="emoji">✅</span> Provider has Generated Akash Certificate')
+				}
 			}).catch(e=>{
 				console.log('error registering',e);
 			})

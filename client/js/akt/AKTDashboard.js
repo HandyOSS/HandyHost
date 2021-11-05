@@ -185,7 +185,13 @@ export class AKTDashboard {
 			$('.options li#providerStatus').hide();
 		}
 		else{
-			if(data.providerHasGeneratedCert && data.providerIsRegistered && data.k8s.length > 0 && data.nodeCount > 0){
+			let onlineCount = 0;
+			data.k8s.map(machine=>{
+				if(Object.keys(machine.sections).length > 0){
+					onlineCount++;
+				}
+			})
+			if(data.providerHasGeneratedCert && data.providerIsRegistered && data.k8s.length > 0 && (data.nodeCount > 0 && data.nodeCount == onlineCount)){
 				$('.options li#providerStatus').show();
 			}
 		}
