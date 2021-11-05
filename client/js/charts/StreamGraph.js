@@ -14,14 +14,14 @@ export class StreamGraph{
 	}
 	render(dataIN){
 		$('.sectionTitle',this.$el).show();
-		console.log('dataIN',dataIN);
+		//console.log('dataIN',dataIN);
 		let timestamps = 0;
 		if(Object.keys(dataIN).length > 0){
 			Object.keys(dataIN).map(subID=>{
 				timestamps += Object.keys(dataIN[subID]).length;
 			})
 		}
-		console.log('timestamps???',timestamps)
+		//console.log('timestamps???',timestamps)
 		if(timestamps == 0 && typeof this.getQueryString()['testStreamgraph'] == "undefined"){
 			//no data
 			$('.sectionErrorMessage',this.$el).show();
@@ -195,11 +195,21 @@ export class StreamGraph{
 	}
 	getMinTime(data){
 		let minTime = Infinity;
-		Object.keys(data).map(subID=>{
-			console.log('data subid',subID,data[subID])
-			Object.keys(data[subID]).map(timestamp=>{
+		this.timeBinIndex = {2:{},15:{}};
+		//data across subs is normalized
+		Object.keys(data).slice(0,1).map(subID=>{
+			//console.log('data subid',subID,data[subID])
+			Object.keys(data[subID]).slice(0,1).map(timestamp=>{
+				let time;
 				let roundMins = Object.keys(data[subID]).length <= 120 ? 2 : 15;
-				const time = parseInt(this.startOf(moment(timestamp,'X'),roundMins,'minute').format('X'));
+					
+				if(typeof this.timeBinIndex[roundMins][timestamp] == "undefined"){
+					time = parseInt(this.startOf(moment(timestamp,'X'),roundMins,'minute').format('X'));
+					this.timeBinIndex[roundMins][timestamp] = time;
+				}
+				else{
+					time = this.timeBinIndex[roundMins][timestamp]
+				}
 				//console.log('time',time,timestamp,roundMins);
 				if(time < minTime){
 					minTime = time;
@@ -274,12 +284,21 @@ export class StreamGraph{
 	}
 	modelData(data){
 		const {rows,roundMins} = this.prefillBins(data);
-		
+		if(typeof this.roundedTimeIndex == "undefined"){
+			this.roundedTimeIndex = {}
+		}
 		Object.keys(data).map(subscriberID=>{
 			Object.keys(data[subscriberID]).map(timestamp=>{
 				//let roundMins = Object.keys(data[subscriberID]).length <= 120 ? 2 : 15;
-				console.log('roundMins in data',roundMins)
-				let rounded = this.startOf(moment(timestamp,'X'),roundMins,'minute').format('X');//moment(timestamp,'X').startOf('hour').format('X');
+				//console.log('roundMins in data',roundMins)
+				let rounded;
+				if(typeof this.roundedTimeIndex[timestamp] == "undefined"){
+					rounded = this.startOf(moment(timestamp,'X'),roundMins,'minute').format('X');//moment(timestamp,'X').startOf('hour').format('X');
+					this.roundedTimeIndex[timestamp] = rounded;
+				}
+				else{
+					rounded = this.roundedTimeIndex[timestamp];
+				}
 				if(typeof rows[rounded] == "undefined"){
 					rows[rounded] = {
 						time:rounded
