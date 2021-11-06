@@ -563,10 +563,13 @@ export class AKTUtils{
 					if(process.platform == 'darwin'){
 						this.commonUtils.encrypt(nodePW).then(encPath=>{
 							//cpid = spawn('./sshCopyIdAutomated.sh',[nodeUser,node.ip,nodePW,process.env.HOME+'/.ssh/handyhost'],{env:process.env,cwd:process.env.PWD+'/aktAPI'})
-							const homebrewPrefixMAC = process.arch == 'arm64' ? '/opt/homebrew' : '/usr/local';
-							command = './sshCopyIdAutomated.sh';
-							args = [nodeUser,node.ip,encPath,process.env.HOME+'/.ssh/handyhost',homebrewPrefixMAC+'/opt/openssl@1.1/bin/openssl'];
-							finish();
+							this.commonUtils.checkForM1RosettaFun().then(isRosetta=>{
+			  					const homebrewPrefixMAC = isRosetta ? '/opt/homebrew' : '/usr/local';
+								//const homebrewPrefixMAC = process.arch == 'arm64' ? '/opt/homebrew' : '/usr/local';
+								command = './sshCopyIdAutomated.sh';
+								args = [nodeUser,node.ip,encPath,process.env.HOME+'/.ssh/handyhost',homebrewPrefixMAC+'/opt/openssl@1.1/bin/openssl'];
+								finish();
+							});
 						})
 						
 					}
@@ -640,6 +643,33 @@ export class AKTUtils{
 			
 		})
 	}
+	saveClusterFromConfigurator(configJSON,configPath,socketIONamespaces){
+		return new Promise((resolve,reject)=>{
+			this.saveClusterConfig(configJSON,configPath,socketIONamespaces).then((data)=>{
+				resolve(data);
+			}).catch(err=>{
+				reject(err);
+			})
+			//then async we can set our mac addresses
+			this.getHosts({nodes:[]}).then(scannedMacAddrs=>{
+				let byIP = {};
+				scannedMacAddrs.map(record=>{
+					byIP[record.ip] = record;
+				});
+				configJSON.nodes.map(node=>{
+					if(typeof byIP[node.ip] != "undefined"){
+						node.mac = byIP[node.ip].mac;
+						node.manufacturer = byIP[node.ip].manufacturer;
+					}
+				})
+				fs.writeFileSync(configPath,JSON.stringify(configJSON,null,2),'utf8');
+				console.log('updated configurator nodes with manufacturer and mac addresses')
+			}).catch(error=>{
+				console.log('error updating mac addresses',error);
+			})
+		})
+		
+	}
 	saveClusterConfig(configJSON,configPath,socketIONamespaces){
 		return new Promise((resolve,reject)=>{
 			if(typeof configJSON.provider != "undefined"){
@@ -674,7 +704,7 @@ export class AKTUtils{
 				
 							if(regErr.indexOf('invalid provider') >= 0){
 								Object.keys(socketIONamespaces).map(serverName=>{
-									socketIONamespaces[serverName].namespace.to('akt').emit('providerRegistrationEvent',{dasValidRegistration:false, exists:false, hasValidCertificate: providerHasGeneratedCert,wallet:configJSON.provider.providerWalletAddress});
+									socketIONamespaces[serverName].namespace.to('akt').emit('providerRegistrationEvent',{hasValidRegistration:false, exists:false, hasValidCertificate: providerHasGeneratedCert,wallet:configJSON.provider.providerWalletAddress});
 								})
 								//socketIONamespace.to('akt').emit('providerRegistrationEvent',{dasValidRegistration:false, exists:false, hasValidCertificate: providerHasGeneratedCert,wallet:configJSON.provider.providerWalletAddress});
 							}

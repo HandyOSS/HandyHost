@@ -15,7 +15,10 @@ export class AKTClusterConfig{
 		})
 	}
 	renderClusterConfig(configData){
-		
+		if(typeof configData.nodes == "undefined"){
+			//config is not build yet, goto configurator view
+			this.showConfigurator(configData);
+		}
 		//render nodes
 		this.renderNodes(configData);
 		this.initProviderDetails(configData);
@@ -387,6 +390,7 @@ export class AKTClusterConfig{
 	}
 	initLogs(){
 		$('#logs').addClass('showing');
+		this.kubernetesHasError = false;
 		$('#logs .logsMessage').html(`
 			Kubernetes cluster build is running, it will take at least 5-20 minutes.
 			<br />
@@ -423,7 +427,21 @@ export class AKTClusterConfig{
 			const diff = $('#logs .logs pre').height() - $('#logs .logs').height();
 			$('#logs .logs').scrollTop(diff);
 		}
-
+		if(message.indexOf("cannot access '/etc/kubernetes/admin.conf'") >= 0){
+			this.kubernetesHasError = true;
+		}
+		if(message.indexOf("Failed to connect to the host via ssh") >= 0){
+			this.kubernetesHasError = true;
+		}
+		if(message.indexOf('ssh: Could not resolve hostname') >= 0){
+			this.kubernetesHasError = true;
+		}
+		if(message.indexOf('Unable to connect to the server: dial tcp') >= 0 && message.indexOf('connect: network is unreachable') >= 0){
+			this.kubernetesHasError = true;
+		}
+		if(message.indexOf('port 22: Network is unreachable') >= 0){
+			this.kubernetesHasError = true;
+		}
 
 	}
 	validateConfig(configData){
@@ -691,11 +709,13 @@ export class AKTClusterConfig{
 					$('#finishHostx86').removeClass('nonActive');
 					console.log('result',data);
 					if(typeof data.error == "undefined"){
+						$('#buildAX86BoxModal .autoConfig .statusLogs').hide();
 						$('#buildAX86BoxModal .autoConfig .confirmation').show();
 						$('#buildAX86BoxModal .autoConfig .error').hide();
 
 					}
 					else{
+						$('#buildAX86BoxModal .autoConfig .statusLogs').hide();
 						$('#buildAX86BoxModal .autoConfig .confirmation').hide();
 						$('#buildAX86BoxModal .autoConfig .error').html('ERROR: '+data.error).show();
 					}
@@ -728,6 +748,263 @@ export class AKTClusterConfig{
 		});
 		$('a.getWallet').off('click').on('click',()=>{
 			this.parentComponent.showAllKeysModal();
+		})
+	}
+	validateConfigurator(){
+		//validate form and enable save button
+		let canShow = true;
+		if($('#providerIPConfigurator').val() == ''){
+			canShow = false;
+		}
+		if($('#regionNameConfigurator').val() == ''){
+			canShow = false;
+		}
+		if($('#clusterNameConfigurator').val() == ''){
+			canShow = false;
+		}
+		if($('#providerWalletAddressConfigurator').val() == ''){
+			canShow = false;
+		}
+		if(canShow){
+			$('#saveNodeConfigsConfigurator').removeClass('cancel').addClass('save');
+		}
+		else{
+			$('#saveNodeConfigsConfigurator').addClass('cancel').removeClass('save');
+		}
+	}
+	updateConfiguratorNodes(clusterConfig){
+		const $el = $('#configStep3 .akashNodes');
+		$el.html('<ul />')
+		if(typeof clusterConfig.preConfiguredNVMe != "undefined"){
+			Object.keys(clusterConfig.preConfiguredNVMe).map(nodeName=>{
+				const node = clusterConfig.preConfiguredNVMe[nodeName];
+				$('ul',$el).append(`<li class="node">
+					<span class="emoji">🖥️</span> ${nodeName} <small>(${node.ip})</small>
+				</li>`)
+				//{"nodes":[{"hostname":"akash-smart-vivid-cabbage.local","ip":"192.168.0.216","manufacturer":"Seco Srl","mac":"00:c0:08:9d:64:48","sshConfigured":true,"user":"ansible","selected":true,"kubernetes":{"role":"master","isCompute":true,"ingress":true,"name":"akash-smart-vivid-cabbage"}},{"hostname":"akash-automatic-groovy-slip.local","ip":"192.168.0.5","manufacturer":"Seco Srl","mac":"00:c0:08:9d:ba:7b","sshConfigured":true,"user":"ansible","selected":true,"kubernetes":{"role":"etcd","isCompute":true,"ingress":false,"name":"akash-automatic-groovy-slip"}},{"hostname":"akash-helpful-painstaking-step.local","ip":"192.168.0.218","manufacturer":"Seco Srl","mac":"00:c0:08:9d:64:4b","sshConfigured":true,"user":"ansible","selected":true,"kubernetes":{"role":"none","isCompute":true,"ingress":false,"name":"akash-helpful-painstaking-step"}}],"provider":{"providerIP":"earthlab.handyhost.computer","clusterIP":"earthlab.handyhost.computer","regionName":"westcoast","clusterName":"lucky3","providerWalletName":"$HOME $derp tastic","providerWalletAddress":"akash1c3sycef9tly37tdgq55l6u647d3kst794x2r6g"}}
+			})
+			$('#nextSteps').removeClass('cancel').addClass('save');
+		}
+		else{
+			$('#nextSteps').addClass('cancel').removeClass('save');
+		}
+	}
+	showConfigurator(configData){
+		console.log('show configurator');
+		if(typeof configData.preConfiguredNVMe != "undefined"){
+			this.updateConfiguratorNodes(configData);
+			//todo start at step 3
+		}
+		$('#configurator').show();
+		$('#normalForm').hide();
+		fetch('/api/akt/getRandomProviderName').then(d=>d.json()).then(data=>{
+			$('#clusterNameConfigurator').val(data.moniker);
+		})
+		$('#recHW').off('click').on('click',()=>{
+			this.parentComponent.showBuildAX86BoxModal();
+			$('#autoConfigx86').hide();
+			$('.step[data-id="step1x86"]').show();
+			$('.step[data-id="step2x86"]').show();
+			$('.step[data-id="step3x86"]').hide();
+			$('#buildAX86BoxModal .instructions .subtitle').show();
+		})
+		$('#buildDrive').off('click').on('click',()=>{
+			this.parentComponent.showBuildAX86BoxModal();
+			$('#autoConfigx86').show();
+			$('.step[data-id="step1x86"]').hide();
+			$('.step[data-id="step2x86"]').hide();
+			$('.step[data-id="step3x86"] .stepLabel').html($('.step[data-id="step3x86"] .stepLabel').attr('data-alt'));
+			$('.step[data-id="step3x86"]').show();
+			$('#buildAX86BoxModal .instructions .subtitle').hide();
+		});
+		$('a.getWalletConfigurator').off('click').on('click',()=>{
+			this.parentComponent.showAllKeysModal();
+		});
+		$('#providerWalletNameConfigurator').off('click').on('click',()=>{
+			if($('#providerWalletNameConfigurator').val() == ''){
+				this.parentComponent.showAllKeysModal();
+			}
+		})
+		$('#configStep4 input').off('change').on('change',()=>{
+			this.validateConfigurator();
+		})
+		$('#nextSteps').off('click').on('click',()=>{
+			if($('#nextSteps').hasClass('save')){
+				$('#configurator .infoPanel').hide();
+				$('#configurator #configStep4').show();
+			}
+		})
+		$('#saveNodeConfigsConfigurator').off('click').on('click',()=>{
+			if($('#saveNodeConfigsConfigurator').hasClass('save')){
+				this.configuratorSave(configData);
+				$('#saveNodeConfigsConfigurator').removeClass('save').addClass('cancel');
+				$('#saveNodeConfigsConfigurator .foreground, #saveNodeConfigsConfigurator .background').html('Saving...');
+				
+			}
+		})
+	}
+	configuratorSave(configData){
+		let output = {nodes:[]};
+		const domainName = $('#providerIPConfigurator').val();
+		const regionName = $('#regionNameConfigurator').val();
+		const clusterName = $('#clusterNameConfigurator').val();
+		const providerWalletName = $('#providerWalletNameConfigurator').val();
+		const providerWalletAddress = $('#providerWalletAddressConfigurator').val();
+		output.provider = {
+			providerIP:domainName,
+			clusterIP:domainName,
+			regionName,
+			clusterName,
+			providerWalletName,
+			providerWalletAddress
+		}
+		Object.keys(configData.preConfiguredNVMe).map(nodeName=>{
+			const nodeData = configData.preConfiguredNVMe[nodeName];
+			output.nodes.push({
+				hostname:nodeData.reservedNetworkHost,
+				ip:nodeData.ip,
+				sshConfigured:true,
+				user:'ansible',
+				selected:true,
+				manufacturer:'',
+				mac:''
+			})
+			
+		})
+		output.nodes = this.autoConfigureK8sData(output);
+		console.log('to save',output);
+		fetch('/api/akt/saveClusterConfigurator',{
+		    headers: {
+		      'Accept': 'application/json',
+		      'Content-Type': 'application/json'
+		    },
+		    method: "POST",
+		    body: JSON.stringify(output)
+		}).then(data=>{
+			this.configuratorData = output;
+			console.log('saved config data',data);
+			$('#saveNodeConfigsConfigurator').addClass('save').removeClass('cancel');
+			$('#saveNodeConfigsConfigurator .foreground, #saveNodeConfigsConfigurator .background').html('Save Config');
+			$('#configurator .infoPanel').hide();
+			$('#configurator #configStep5').show();
+			let ingressIP = '';
+			output.nodes.map(node=>{
+				if(node.kubernetes.ingress){
+					ingressIP = node.ip;
+				}
+			})
+			$('#configurator #configuratorIngressPortsMessage .ip').html(ingressIP);
+			//TODO: udpate notes with IP addresses and such.
+		})
+	}
+	updateConfiguratorRegistrationStatus(statsData){
+		console.log('conf stats',statsData);
+		const $el = $('#configurator #configStep5 .registration');
+		$el.html('');
+		let didRegister = false;
+		let didCertify = false;
+		if(statsData.hasValidRegistration){
+			//heyo we registered
+			didRegister = true;
+			$el.append('<div class="isregistered"><span class="emoji">✅</span> Provider is Registered </div>')
+			
+			$('.options #providerRegistrationWarning').hide();
+		}
+		else{
+			//not yet registered..
+			if(!statsData.exists){
+				$el.append('<div class="noregistered"><span class="emoji">⚠️</span> No Registration Found for Your Address</div>')
+				$el.append('<div class="createRegistration"><a class="aktStatusPageLink">Create Registration</a></div>')
+			}
+			else{
+				$el.append('<div class="updateRegistration"><a class="aktStatusPageLink"><span class="emoji">⚠️</span> Registration Update Required</a></div>')
+			
+			}
+			
+		}
+		if(statsData.hasValidCertificate){
+			didCertify = true;
+			$el.append('<div class="hasGeneratedCert"><span class="emoji">✅</span> Provider has Generated Akash Certificate</div>');
+			$el.append('<div class="regenCertificate"><a class="aktStatusPageLink">Re-Generate Certificate?</a></div>')
+			$('.options #providerCertificateWarning').hide();
+		}
+		else{
+			$el.append('<div class="hasGeneratedCert"><span class="emoji">⚠️</span> No Akash Server Certificate Found for Your Address</div>');
+			$el.append('<div class="regenCertificate"><a class="aktStatusPageLink">Generate Certificate</a></div>')
+		}
+		if(statsData.providerIsRegistered && statsData.providerHasGeneratedCert){
+			$('#buildClusterConfigurator').removeClass('cancel').addClass('save');
+		}
+
+		$('.updateRegistration a',$el).off('click').on('click',()=>{
+			//show pw modal and fetch updateRegistration
+			this.parentComponent.dashboard.clusterStatus.showRegistrationModal(true,statsData.wallet).then(didSuccessfullyRegister=>{
+				console.log('resolved after registration click')
+				if(didSuccessfullyRegister){
+					didRegister = true;
+					finish(didRegister,didCertify);
+					$('.options #providerRegistrationWarning').hide();
+					$('.updateRegistration',$el).replaceWith('<div class="isregistered"><span class="emoji">✅</span> Provider is Registered </div>')
+				}
+			}).catch(e=>{
+				console.log('error registering',e);
+			})
+		})
+		$('.createRegistration a',$el).off('click').on('click',()=>{
+			//show pw modal and fetch createRegistration
+			this.parentComponent.dashboard.clusterStatus.showRegistrationModal(false,statsData.wallet).then(didSuccessfullyRegister=>{
+				console.log('resolved after registration click')
+				if(didSuccessfullyRegister){
+					didRegister = true;
+					finish(didRegister,didCertify);
+					$('.options #providerRegistrationWarning').hide();
+					$('.updateRegistration',$el).replaceWith('<div class="isregistered"><span class="emoji">✅</span> Provider is Registered </div>')
+				}
+			}).catch(e=>{
+				console.log('error registering',e);
+			})
+		});
+		$('.regenCertificate a',$el).off('click').on('click',()=>{
+			this.parentComponent.dashboard.clusterStatus.showRegistrationModal(false,statsData.wallet,true,statsData.providerIsRegistered).then(didSuccessfullyRegister=>{
+				console.log('resolved after registration click')
+				if(didSuccessfullyRegister){
+					didCertify = true;
+					$('.options #providerCertificateWarning').hide();
+					finish(didRegister,didCertify);
+					$('.hasGeneratedCert',$el).html('<span class="emoji">✅</span> Provider has Generated Akash Certificate')
+				}
+			}).catch(e=>{
+				console.log('error registering',e);
+			})
+		})
+		function finish(didRegister,didCertify){
+			console.log('registration finished',didRegister,didCertify)
+			if(didRegister && didCertify){
+				$('#buildClusterConfigurator').removeClass('cancel').addClass('save');
+			}
+		}
+		$('#buildClusterConfigurator').off('click').on('click',()=>{
+			if($('#buildClusterConfigurator').hasClass('cancel')){
+				return;
+			}
+			fetch("/api/akt/configuratorBuildKubernetes",
+			{
+			    headers: {
+			      'Accept': 'application/json',
+			      'Content-Type': 'application/json'
+			    },
+			    method: "POST",
+			    body: JSON.stringify(this.configuratorData)
+			})
+			.then((res)=>{ return res.json(); }).then(data=>{
+				
+				console.log('result',data);
+				this.initLogs();
+			})
+			.catch((res)=>{ 
+				console.log("error",res);
+
+			});
 		})
 	}
 }

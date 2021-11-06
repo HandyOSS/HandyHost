@@ -13,10 +13,30 @@ fi
 if [[ -s "$HOME/.bashrc" ]] ; then
 	source "$HOME/.bashrc"
 fi
+if [[ -s "$HOME/.zprofile" ]] ; then
+	source "$HOME/.zprofile"
+fi
+export NVM_DIR=$HOME/.nvm
 
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 
+
+if [[ "$OSTYPE" == "darwin"* ]]; then
+	arch_name="$(uname -m)"
+	 
+	if [ "${arch_name}" = "x86_64" ]; then
+	    if [ "$(sysctl -in sysctl.proc_translated)" = "1" ]; then
+	        homebrew_prefix_default=/opt/homebrew
+	    else
+	        homebrew_prefix_default=/usr/local
+	    fi 
+	fi
+	[ -s "$homebrew_prefix_default/opt/nvm/nvm.sh" ] && \. "$homebrew_prefix_default/opt/nvm/nvm.sh" > /dev/null && \
+	[ -s "$homebrew_prefix_default/opt/nvm/etc/bash_completion.d/nvm" ] && \. "$homebrew_prefix_default/opt/nvm/etc/bash_completion.d/nvm" > /dev/null
+else
+	#linux
+	[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+	[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+fi
 
 if [[ -s /var/log/handyhost.pid ]]; then
 	HANDYHOST_PID=$(cat /var/log/handyhost.pid)
@@ -44,9 +64,26 @@ if [[ -s "$UPDATED_DIR/update_dependencies.sh" ]] ; then
 fi
 
 if [[ -d "$USERHOME/.nvm" ]] ; then
-	#has nvm
-	nvm install $(cat $UPDATED_DIR/.nvmrc) && \
-	nvm use
+	if [[ "$OSTYPE" == "darwin"* ]]; then
+		if [[ "$(uname -m)" == "arm64" ]]
+		then
+			export PATH="/usr/local/bin":$PATH
+			arch -x86_64 zsh
+			#fn m1 only likes > v14...
+			#and we have to do npm update before installing sqlite3 for example
+			NPMVERSION="16.13.0"
+			echo "$NPMVERSION" > "$UPDATED_DIR/.nvmrc"
+			nvm install $NPMVERSION && \
+			nvm use && npm update
+		else
+			nvm install $(cat $UPDATED_DIR/.nvmrc) && \
+			nvm use
+		fi
+	else
+		#has nvm
+		nvm install $(cat $UPDATED_DIR/.nvmrc) && \
+		nvm use
+	fi
 fi
 npm install --build-from-source --python=/usr/bin/python3 && \
 cd client && bower install && cd $UPDATED_DIR

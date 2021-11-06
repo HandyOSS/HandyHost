@@ -1,7 +1,8 @@
 import {AKTClusterConfig} from './AKTClusterConfig.js';
 
 export class AKTNodeConfig{
-	constructor(){
+	constructor(dashboardComponent){
+		this.dashboard = dashboardComponent;
 		fetch('./uiFragments/akt/nodeConfig.html').then(res=>res.text()).then(fragment=>{
 			$('body').append(fragment);
 			//this.initWallet();
@@ -458,6 +459,14 @@ export class AKTNodeConfig{
 		$('#walletInitModal').show();
 		$('.walletModalContent').removeClass('showing');
 		$('.getKeysModal').addClass('showing');
+		$('#unlockPW').focus();
+		$('#unlockPW').off('keyup').on('keyup',(e)=>{
+			if(e.keyCode == 13){
+				//hit enter
+				$('#unlockPW').blur();
+				$('#getKeys').trigger('click');
+			}
+		})
 		$('#getKeys').off('click').on('click',()=>{
 			if($('#getKeys').hasClass('selectWallet')){
 				const walletName = $('.getKeysModal .allKeys select option:selected').val();
@@ -467,6 +476,13 @@ export class AKTNodeConfig{
 				$('.providerList #providerWalletName').val(walletName);
 				$('.providerList #providerWalletName').prop('readonly',true);
 				$('.providerList #providerWalletAddress').val(address);
+
+				$('#providerWalletNameConfigurator').prop('readonly',false);
+				$('#providerWalletNameConfigurator').val(walletName);
+				$('#providerWalletNameConfigurator').prop('readonly',true);
+				$('#providerWalletAddressConfigurator').val(address);
+				this.clusterConfig.validateConfigurator();
+
 				$('.getKeysModal .allKeys').hide();
 				$('.getKeysModal .allKeys select').html('');
 				$('#unlockPW').val('');

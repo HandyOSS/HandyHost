@@ -161,17 +161,31 @@ export class Marketplace{
 	}
 	getMarketAggregates(wallet){
 		return new Promise((resolve,reject)=>{
+			const now = Math.floor(new Date().getTime()/1000);
+			if(typeof this.lastAggs != "undefined"){
+				//check age of last aggregate
+				//we cache for the last minute because these take forrreeevvverrrr to load from rpc..
+				let lastAggTime = this.lastAggs.time;
+				if((now - lastAggTime) < 90){
+					resolve(this.lastAggs.data);
+					return;
+				}
+			}
 			const argsLeasesActive = ['query', 'market', 'lease', 'list', '--limit', 1, '--output', 'json', '--provider', wallet, '--count-total','--state','active'];
 			const argsLeasesClosed = ['query', 'market', 'lease', 'list', '--limit', 1, '--output', 'json', '--provider', wallet, '--count-total','--state','closed'];
 			const argsBidsOpen = ['query', 'market', 'bid', 'list', '--limit', 1, '--output', 'json', '--provider', wallet, '--count-total','--state','open'];
 			const argsBidsClosed = ['query', 'market', 'bid', 'list', '--limit', 1, '--output', 'json', '--provider', wallet, '--count-total','--state','closed'];
+			const argsBidsLost = ['query', 'market', 'bid', 'list', '--limit', 1, '--output', 'json', '--provider', wallet, '--count-total','--state','lost'];
+			let total = 5;
+
 			let leasesActive = 0;
 			let leasesClosed = 0;
 			let bidsOpen = 0;
 			let bidsClosed = 0;
+			let bidsLost = 0;
 			let finished = 0;
 			if(typeof wallet == "undefined"){
-				finish(4);
+				finish(total);
 			}
 			else{
 				this.getAggregatesQuery(argsLeasesActive).then(data=>{
@@ -194,17 +208,28 @@ export class Marketplace{
 					finished+=1;
 					finish(finished);
 				})
+				this.getAggregatesQuery(argsBidsLost).then(data=>{
+					bidsLost = data;
+					finished+=1;
+					finish(finished);
+				})
 			}
 			
-
+			const _this = this;
 			function finish(finished){
-				if(finished == 4){
-					resolve({
+				if(finished == total){
+					const dataOut = {
 						leasesActive,
 						leasesClosed,
 						bidsOpen,
-						bidsClosed
-					})
+						bidsClosed,
+						bidsLost
+					};
+					_this.lastAggs = {
+						time: Math.floor(new Date().getTime()/1000),
+						data: dataOut
+					};
+					resolve(dataOut)
 				}
 			}
 

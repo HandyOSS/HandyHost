@@ -9,7 +9,7 @@ export class AKTDashboard {
 		this.ansi_up = new AnsiUp();
 		this.theme = new Theme();
 		this.utils = new CommonUtils();
-		this.nodeConfig = new AKTNodeConfig();
+		this.nodeConfig = new AKTNodeConfig(this);
 		this.clusterStatus = new AKTClusterStatus(this);
 		this.marketplace = new AKTMarketplace(this);
 		fetch('./uiFragments/akt/dashboard.html').then(res=>res.text()).then(fragment=>{
@@ -49,7 +49,14 @@ export class AKTDashboard {
 			console.log('k8sBuildLogStatus',data.part,data.status);
 			this.nodeConfig.clusterConfig.updateLogs('========= '+data.part+' is '+data.status+' ==========');
 			if(data.part == 'init'){
-				$('#logs .logsMessage').html('Kubernetes Cluster Installation is Finished!<br />Check your certificates and registration in the Dashboard and then start making $AKT<br /><small>Note: Dashboard stats will take a few minutes to connect.</small>')
+				if(this.nodeConfig.clusterConfig.kubernetesHasError){
+					//cannot access '/etc/kubernetes/admin.conf': No such file or directory
+					$('#logs .logsMessage').html('There were errors installing Kubernetes. Please check the logs below and try again. <small>Common issues include setting up your internet router local DNS settings, your Akash nodes being offline or IP changes.</small>')
+				}
+				else{
+					$('#logs .logsMessage').html('Kubernetes Cluster Installation is Finished!<br />Check your certificates and registration in the Dashboard and then start making $AKT<br /><small>Note: Dashboard stats will take a few minutes to connect.</small>')
+				}
+				
 				setTimeout(()=>{
 					this.clusterStatus.fetchStats();
 				},5000)
@@ -57,6 +64,7 @@ export class AKTDashboard {
 		})
 		this.socket.on('newNodeRegistered',(nodeData,clusterConfig)=>{
 			console.log('new node data',nodeData,clusterConfig);
+			this.nodeConfig.clusterConfig.updateConfiguratorNodes(clusterConfig);
 			this.nodeConfig.clusterConfig.renderClusterConfig(clusterConfig);
 			this.showNewNodeAddedModal(nodeData);
 		})
@@ -71,6 +79,7 @@ export class AKTDashboard {
 			$('.options li#handyhostUpdatesWarning').hide();
 		})
 		this.socket.on('providerRegistrationEvent',data=>{
+			this.nodeConfig.clusterConfig.updateConfiguratorRegistrationStatus(data)
 			console.log('is provider up to date?',data);
 			if(!data.hasValidRegistration){
 				//show .option for registration
@@ -112,6 +121,10 @@ export class AKTDashboard {
 		})
 		this.socket.on('kubesprayUpdateLogs',(data,isDone)=>{
 			this.showKubesprayUpdateLogs(data,isDone);
+		})
+		this.socket.on('flashUSBStatus',logInfo=>{
+			$('#autoConfigx86 .statusLogs').html('Status: '+logInfo);
+			$('#autoConfigx86 .statusLogs').show();
 		})
 		
 	}
@@ -172,7 +185,15 @@ export class AKTDashboard {
 			$('.options li#providerStatus').hide();
 		}
 		else{
-			$('.options li#providerStatus').show();
+			let onlineCount = 0;
+			data.k8s.map(machine=>{
+				if(Object.keys(machine.sections).length > 0){
+					onlineCount++;
+				}
+			})
+			if(data.providerHasGeneratedCert && data.providerIsRegistered && data.k8s.length > 0 && (data.nodeCount > 0 && data.nodeCount == onlineCount)){
+				$('.options li#providerStatus').show();
+			}
 		}
 		//need to update?
 		this.showUpdateOpts(data.akashVersion);
@@ -363,6 +384,7 @@ export class AKTDashboard {
 			}
 			if(!json.exists){
 				this.nodeConfig.showWalletInit();
+				this.nodeConfig.show();
 			}
 			else{
 				this.show();
@@ -441,6 +463,7 @@ export class AKTDashboard {
 				</div>`
 			);
 			$('#ingressPortsMessage .localIP').html(data.ip);
+			$('#configurator #configuratorIngressPortsMessage .localIP').html(data.ip);
 		})
 	}
 	
@@ -454,6 +477,7 @@ export class AKTDashboard {
 		$('.walletUtil').addClass('showing');
 	}
 	showNewNodeAddedModal(data){
+		this.hideModal();
 		$('#closeNewNodeAddedModal').off('click').on('click',()=>{
 			this.hideModal();
 		});
@@ -461,7 +485,7 @@ export class AKTDashboard {
 		$('.addNodeMessage').addClass('showing');
 		$('#newNodeAddedModal').show();
 		$('.addNodeMessage .messageText').html('<div class="message0">Added an Akash Node named: '+data.hostname+', on IP '+data.ip+' successfully!</div>')
-		$('.addNodeMessage .messageText').append('<div class="message1">It is now safe to remove the USB ThumbDrive from the new node and setup other nodes.</div>')
+		$('.addNodeMessage .messageText').append('<div class="message1">It is now safe to remove the USB ThumbDrive from the new node, power the node back on and move on to setup other nodes.</div>')
 		$('.addNodeMessage .messageText').append('<div class="message1">Your new node is now available to add to your Akash cluster in the Configuration Interface.</div>')
 		$('#addedNodeMessageConf').off('click').on('click',()=>{
 			this.hideModal();

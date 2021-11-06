@@ -441,86 +441,100 @@ export class Wallet{
 	}
 	getProviderRegistrationStatus(){
 		return new Promise((resolve,reject)=>{
-			const configPath = process.env.HOME+'/.HandyHost/aktData/clusterConfig.json';
-			if(!fs.existsSync(configPath)){
-				resolve(false);
-				return;
-			}
-			const configJSON = JSON.parse(fs.readFileSync(configPath,'utf8'))
-			if(typeof configJSON.provider == "undefined"){
-				resolve(false);
-				return;
-			}
-			const address = configJSON.provider.providerWalletAddress;
-			const args = ['query', 'provider', 'get', address, '--output', 'json'];
-			let regOut = '';
-			let regErr = '';
-			const getRegs = spawn('./bin/akash',args,{shell:true,env:process.env,cwd:process.env.HOME+'/.HandyHost/aktData'})
-			getRegs.stdout.on('data',d=>{
-				regOut += d.toString();
-			})
-			getRegs.stderr.on('data',d=>{
-				regErr += d.toString();
-				console.log('get registration stderr',d.toString());
-			})
-			getRegs.on('close',()=>{
-				if(regErr.indexOf('invalid provider') >= 0){
-					reject(false);
-					//socketIONamespace.to('akt').emit('providerRegistrationEvent',{dasValidRegistration:false, exists:false, hasValidCertificate: providerHasGeneratedCert,wallet:configJSON.provider.providerWalletAddress});
-				}
-				else{
-					let json = {};
-					try{
-						json = JSON.parse(regOut);
-					}
-					catch(e){
-						console.log('couldnt parse stdout',regOut);
-						reject(false);
-						return;
-					}
-					if(Object.keys(json).length > 0){
-						//ok compare and notify if needed
-						const config = json;
-						
-						let isMatch = true;
-						if(config.host_uri != `https://${configJSON.provider.providerIP}:8443`){
-							isMatch = false;
-						}
-						const region = config.attributes.find(d=>{return d.key == 'region';})
-						const host = config.attributes.find(d=>{return d.key == 'host';});
-						if(typeof region == "undefined"){
-							isMatch = false;
-						}
-						else{
-							if(region.value != configJSON.provider.regionName){
-								isMatch = false;
-							}
-						}
-						if(typeof host == "undefined"){
-							isMatch = false;
-						}else{
-							if(host.value != configJSON.provider.clusterName){
-								isMatch = false;
-							}
-						}
-						if(!isMatch){
-							
-							resolve(false);
-						}
-						else{
-							fs.writeFileSync(process.env.HOME+'/.HandyHost/aktData/providerReceipt.'+configJSON.provider.providerWalletAddress+'.json',JSON.stringify(config),'utf8');
-							resolve(true);
-						}
-					}
-				}
-			});
+			this.tryGettingProviderRegistrationStatus(resolve,reject,0)
 		})
 	}
-	registerProvider(params,mode,providerHost){
+	tryGettingProviderRegistrationStatus(resolve,reject,attempts){
+		const configPath = process.env.HOME+'/.HandyHost/aktData/clusterConfig.json';
+		if(!fs.existsSync(configPath)){
+			resolve(false);
+			return;
+		}
+		const configJSON = JSON.parse(fs.readFileSync(configPath,'utf8'))
+		if(typeof configJSON.provider == "undefined"){
+			resolve(false);
+			return;
+		}
+		const address = configJSON.provider.providerWalletAddress;
+		const args = ['query', 'provider', 'get', address, '--output', 'json'];
+		let regOut = '';
+		let regErr = '';
+		const getRegs = spawn('./bin/akash',args,{shell:true,env:process.env,cwd:process.env.HOME+'/.HandyHost/aktData'})
+		getRegs.stdout.on('data',d=>{
+			regOut += d.toString();
+		})
+		getRegs.stderr.on('data',d=>{
+			regErr += d.toString();
+			console.log('get registration stderr',d.toString());
+		})
+		getRegs.on('close',()=>{
+			if(regErr.indexOf('invalid provider') >= 0){
+				reject(false);
+				//socketIONamespace.to('akt').emit('providerRegistrationEvent',{dasValidRegistration:false, exists:false, hasValidCertificate: providerHasGeneratedCert,wallet:configJSON.provider.providerWalletAddress});
+			}
+			else{
+				let json = {};
+				try{
+					json = JSON.parse(regOut);
+				}
+				catch(e){
+					console.log('couldnt parse stdout',regOut);
+					if(attempts >= 10){
+						reject(false);
+					}
+					else{
+						attempts += 1;
+						setTimeout(()=>{
+							console.log('attempting again,',attempts);
+							this.tryGettingProviderRegistrationStatus(resolve,reject,attempts);
+						},1000)
+					}
+					//reject(false);
+					return;
+				}
+				if(Object.keys(json).length > 0){
+					//ok compare and notify if needed
+					const config = json;
+					
+					let isMatch = true;
+					if(config.host_uri != `https://${configJSON.provider.providerIP}:8443`){
+						isMatch = false;
+					}
+					const region = config.attributes.find(d=>{return d.key == 'region';})
+					const host = config.attributes.find(d=>{return d.key == 'host';});
+					if(typeof region == "undefined"){
+						isMatch = false;
+					}
+					else{
+						if(region.value != configJSON.provider.regionName){
+							isMatch = false;
+						}
+					}
+					if(typeof host == "undefined"){
+						isMatch = false;
+					}else{
+						if(host.value != configJSON.provider.clusterName){
+							isMatch = false;
+						}
+					}
+					if(!isMatch){
+						
+						resolve(false);
+					}
+					else{
+						fs.writeFileSync(process.env.HOME+'/.HandyHost/aktData/providerReceipt.'+configJSON.provider.providerWalletAddress+'.json',JSON.stringify(config),'utf8');
+						resolve(true);
+					}
+				}
+			}
+		});
+	}
+	registerProvider(params,mode,providerHost,isGasEstimate){
 		return new Promise((resolve,reject)=>{
 			//console.log('register called',params,mode);
 			const fees = typeof params.fees != "undefined" ? (params.fees == "" ? '10000' : params.fees) : '10000';
 			//const args = ['./registerProvider.sh',this.commonUtils.escapeBashString(params.pw),this.commonUtils.escapeBashString(params.walletName),mode,fees];
+			let gas = isGasEstimate ? 'auto' : ( typeof params.gas != "undefined" ? params.gas : 'auto' )
 			const args = [
 				'tx', 'provider', mode,
 				`${process.env.HOME}/.HandyHost/aktData/provider.yaml`,
@@ -530,9 +544,12 @@ export class Wallet{
 				`--node=${process.env.AKASH_NODE}`,
 				`--chain-id=${process.env.AKASH_CHAIN_ID}`,
 				'--fees', `${fees}uakt`,
-				'--gas', 'auto',
+				'--gas', gas,
 				'-y'
-			]
+			];
+			if(isGasEstimate){
+				args.push('--dry-run');
+			}
 			const s = spawn(`${process.env.HOME}/.HandyHost/aktData/bin/akash`,args,{shell:true,env:process.env,cwd:process.env.PWD+'/aktAPI'});
 			let output = '';
 			let errOutput = '';
@@ -547,7 +564,7 @@ export class Wallet{
 			s.on('close',d=>{
 				//console.log('output',output);
 				if(output == '' && errOutput.length >= 0){
-					if(errOutput.indexOf('invalid provider: already exists') && mode == 'create'){
+					if(errOutput.indexOf('invalid provider: already exists') >= 0 && mode == 'create'){
 						//try update, provider must have switched computers/cleaned disk...
 						console.log('recurse, already exists',errOutput);
 						this.registerProvider(params,'update',providerHost).then(d=>{
@@ -583,6 +600,10 @@ export class Wallet{
 									console.log('error fetching provider registration',e);
 								})
 							},8000)
+						}
+						else if(isGasEstimate){
+							resolve({data:errOutput});
+							return;
 						}
 						else{
 							reject({error:true,message:errOutput});
@@ -789,82 +810,113 @@ export class Wallet{
 			//unfortunately this command doesnt accept a pw as stdin
 			//so we encrypt to a readonly file and pass to the expect script
 			//the expect script deletes the encrypted file after reading it.
-			let opensslLoc;
-			const homebrewPrefixMAC = process.arch == 'arm64' ? '/opt/homebrew' : '/usr/local';
-		  	if(process.platform == 'darwin'){
-				opensslLoc = homebrewPrefixMAC+'/opt/openssl@1.1/bin/openssl'
-			}
-			else{
-				opensslLoc = 'openssl'
-			}
-			this.commonUtils.encrypt(params.pw).then(pwLoc=>{
-				const args = [pwLoc,params.walletName,params.serverHost,params.cpuPrice,params.fees,opensslLoc];
-				const s = spawn('./runProviderAutomated.sh',args,{env:process.env,cwd:process.env.PWD+'/aktAPI',detached:true});
-				fs.writeFileSync(process.env.HOME+'/.HandyHost/aktData/provider.pid',s.pid.toString());
-				let logsPath = process.env.HOME+'/.HandyHost/aktData/providerRun.log';
-				if(fs.existsSync(logsPath)){
-					//unlink if exists
-					fs.unlinkSync(logsPath);
+			this.commonUtils.checkForM1RosettaFun().then(isRosetta=>{
+		  		const homebrewPrefixMAC = isRosetta ? '/opt/homebrew' : '/usr/local';
+				let opensslLoc;
+				//const homebrewPrefixMAC = process.arch == 'arm64' ? '/opt/homebrew' : '/usr/local';
+			  	if(process.platform == 'darwin'){
+					opensslLoc = homebrewPrefixMAC+'/opt/openssl@1.1/bin/openssl'
 				}
-				let intervalsPassed = 0;
-				
-				logInterval = setInterval(()=>{
-					intervalsPassed += 1;
-					if(intervalsPassed >= 180){
-						intervalsPassed = 0;
-						fs.truncateSync(logsPath); //clear logs
+				else{
+					opensslLoc = 'openssl'
+				}
+				this.commonUtils.encrypt(params.pw).then(pwLoc=>{
+					const args = [pwLoc,params.walletName,params.serverHost,params.cpuPrice,params.fees,opensslLoc];
+					const s = spawn('./runProviderAutomated.sh',args,{env:process.env,cwd:process.env.PWD+'/aktAPI',detached:true});
+					fs.writeFileSync(process.env.HOME+'/.HandyHost/aktData/provider.pid',s.pid.toString());
+					let logsPath = process.env.HOME+'/.HandyHost/aktData/providerRun.log';
+					if(fs.existsSync(logsPath)){
+						//unlink if exists
+						fs.unlinkSync(logsPath);
 					}
-					fs.appendFileSync(logsPath,output,'utf8');
-					output = '';
-
-				},10*1000);
-				let hasReturned = false;
-				let returnTimeout = setTimeout(()=>{
-					if(!hasReturned){
-						resolve({success:true});
-					}
-				},2000);
-				
-				let output = '';
-				s.stdout.on('data',d=>{
-					//console.log('stdout',d.toString());
-					output += d.toString();
-				})
-				s.stderr.on('data',d=>{
-					console.log('provider stderr:',d.toString());
-					output += d.toString();
-				})
-				s.on('close',()=>{
-					console.log('provider is closed');
-					fs.appendFileSync(logsPath,"\n###########  PROVIDER WAS CLOSED ###########\n",'utf8');
-					hasReturned = true;
-					clearTimeout(returnTimeout);
-					clearInterval(logInterval);
-					resolve({success:false,error:output});
-					
-					if(this.providerWasHalted){
-						//let it die
-						this.providerWasHalted = false;
-						if(fs.existsSync(process.env.HOME+'/.HandyHost/aktData/provider.pid')){
-							fs.unlinkSync(process.env.HOME+'/.HandyHost/aktData/provider.pid');
+					let intervalsPassed = 0;
+					logInterval = setInterval(()=>{
+						intervalsPassed += 1;
+						if(intervalsPassed >= 180){
+							intervalsPassed = 0;
+							fs.truncateSync(logsPath); //clear logs
 						}
-					}
-					else{
-						fs.appendFileSync(logsPath,"\n###########  RESTARTING PROVIDER ###########\n",'utf8');
-					
-						//accidental death, likely due to RPC errors
-						//keep things alive
-						this.envUtils.setEnv().then(()=>{
-							//ok we set the env
-							this.startProvider(params);
-						}).catch(e=>{
-							console.log('error setting new envs',e);
-							//try spawning again anyway
-							this.startProvider(params);
-						})
+						fs.appendFileSync(logsPath,output,'utf8');
+						output = '';
 
-					}
-				})
+					},10*1000);
+					let hasReturned = false;
+					let returnTimeout = setTimeout(()=>{
+						if(!hasReturned){
+							resolve({success:true});
+						}
+					},2000);
+					
+					let output = '';
+					s.stdout.on('data',d=>{
+						//console.log('stdout',d.toString());
+						let shouldLog = true;
+						const logVal = d.toString();
+						if(logVal.indexOf('Enter keyring passphrase') >= 0){
+							shouldLog = false;
+						}
+						if(logVal.indexOf(params.pw) >= 0){
+							shouldLog = false;
+						}
+						if(logVal.indexOf('spawn ./runProvider.sh') >= 0){
+							shouldLog = false;
+						}
+						if(shouldLog){
+							output += logVal;
+						}
+
+						
+					})
+					s.stderr.on('data',d=>{
+						//console.log('provider stderr:',d.toString());
+						//output += d.toString();
+						let shouldLog = true;
+						const logVal = d.toString();
+						if(logVal.indexOf('Enter keyring passphrase') >= 0){
+							shouldLog = false;
+						}
+						if(logVal.indexOf(params.pw) >= 0){
+							shouldLog = false;
+						}
+						if(logVal.indexOf('spawn ./runProvider.sh') >= 0){
+							shouldLog = false;
+						}
+						if(shouldLog){
+							output += logVal;
+						}
+					})
+					s.on('close',()=>{
+						console.log('provider is closed');
+						fs.appendFileSync(logsPath,"\n###########  PROVIDER WAS CLOSED ###########\n",'utf8');
+						hasReturned = true;
+						clearTimeout(returnTimeout);
+						clearInterval(logInterval);
+						resolve({success:false,error:output});
+						
+						if(this.providerWasHalted){
+							//let it die
+							this.providerWasHalted = false;
+							if(fs.existsSync(process.env.HOME+'/.HandyHost/aktData/provider.pid')){
+								fs.unlinkSync(process.env.HOME+'/.HandyHost/aktData/provider.pid');
+							}
+						}
+						else{
+							fs.appendFileSync(logsPath,"\n###########  RESTARTING PROVIDER ###########\n",'utf8');
+						
+							//accidental death, likely due to RPC errors
+							//keep things alive
+							this.envUtils.setEnv().then(()=>{
+								//ok we set the env
+								this.startProvider(params);
+							}).catch(e=>{
+								console.log('error setting new envs',e);
+								//try spawning again anyway
+								this.startProvider(params);
+							})
+
+						}
+					})
+				});
 			});
 				
 		});
@@ -878,7 +930,12 @@ export class Wallet{
 			if(fs.existsSync(pidPath)){
 				const pid = parseInt(fs.readFileSync(pidPath,'utf8').trim());
 				console.log('killing provider at',pid);
-				process.kill(pid);
+				try{
+					process.kill(pid);
+				}
+				catch(e){
+					console.log('couldnt kill provider process',e);
+				}
 				fs.unlinkSync(pidPath);
 				resolve(true)
 			}
@@ -907,12 +964,12 @@ export class Wallet{
 			}
 		})
 	}
-	createOrUpdateServerCertificate(params,wallet,providerHost){
+	createOrUpdateServerCertificate(params,wallet,providerHost,isGasEstimate){
 		//params = {pw,walletName}
 		//if the provider registration was updated lets refresh/revoke the certificate in case they changed the server hostname/IP
 		return new Promise((resolve,reject)=>{
 			const certPath = process.env.HOME+'/.akash/'+wallet+'.pem';
-			if(fs.existsSync(certPath)){
+			if(fs.existsSync(certPath) && !isGasEstimate){
 				//remove the cert
 				fs.unlinkSync(certPath);
 			}
@@ -920,61 +977,67 @@ export class Wallet{
 			let createOut = '';
 			let errorOut = '';
 			this.commonUtils.encrypt(params.pw).then(encPath=>{
-				const homebrewPrefixMAC = process.arch == 'arm64' ? '/opt/homebrew' : '/usr/local';
-		  		const openssl = process.platform == 'darwin' ? homebrewPrefixMAC+'/opt/openssl@1.1/bin/openssl' : 'openssl';
-		  		const fees = typeof params.fees != "undefined" ? (params.fees == "" ? '10000' : params.fees) : '10000';
-				const args = [encPath,this.commonUtils.escapeBashString(params.walletName),providerHost,fees,openssl];
-				let output = '';
-				let errOutput = '';
-				const s = spawn('./createProviderCertAutomated.sh',args,{shell:true,env:process.env,cwd:process.env.PWD+'/aktAPI'});
-				s.stdout.on('data',d=>{
-					output += d.toString();
-				})
-				s.stderr.on('data',d=>{
-					errOutput += d.toString();
-				})
-				s.on('close',()=>{
-					console.log('cert output',output)
-					console.log('cert err? ',errOutput);
-					//all done, check if we did it..
-					let successful = false;
-					let message = '';
-					const testStr = 'transaction successful:y';
-					if(output.indexOf(testStr) >= 0){
-						let json = {};
-						const msgParts = output.split(testStr);
-						try{
-							json = JSON.parse(msgParts[1].trim());
-						}
-						catch(e){
-							console.log("no json here");
-							if(errOutput == ''){
-								if(msgParts.length > 1){
-									message = msgParts[1]
+				this.commonUtils.checkForM1RosettaFun().then(isRosetta=>{
+		  			const homebrewPrefixMAC = isRosetta ? '/opt/homebrew' : '/usr/local';
+		  			//const homebrewPrefixMAC = process.arch == 'arm64' ? '/opt/homebrew' : '/usr/local';
+			  		const openssl = process.platform == 'darwin' ? homebrewPrefixMAC+'/opt/openssl@1.1/bin/openssl' : 'openssl';
+			  		const fees = typeof params.fees != "undefined" ? (params.fees == "" ? '10000' : params.fees) : '10000';
+			  		const gas = typeof params.gas != "undefined" ? (params.gas) : 'auto';
+					let args = [encPath,this.commonUtils.escapeBashString(params.walletName),providerHost,fees,openssl,gas];
+					
+					let output = '';
+					let errOutput = '';
+					
+					const s = spawn('./createProviderCertAutomated.sh',args,{shell:true,env:process.env,cwd:process.env.PWD+'/aktAPI'});
+					s.stdout.on('data',d=>{
+						output += d.toString();
+					})
+					s.stderr.on('data',d=>{
+						errOutput += d.toString();
+					})
+					s.on('close',()=>{
+						console.log('cert output',output)
+						console.log('cert err? ',errOutput);
+						//all done, check if we did it..
+						let successful = false;
+						let message = '';
+						const testStr = 'transaction successful:y';
+						if(output.indexOf(testStr) >= 0){
+							let json = {};
+							const msgParts = output.split(testStr);
+							try{
+								json = JSON.parse(msgParts[1].trim());
+							}
+							catch(e){
+								console.log("no json here");
+								if(errOutput == ''){
+									if(msgParts.length > 1){
+										message = msgParts[1]
+									}
+									
+								}
+								else{
+									message = errOutput;
 								}
 								
 							}
-							else{
-								message = errOutput;
+							if(typeof json.code != "undefined"){
+								if(json.code == 0){
+									//success
+									successful = true;
+									message = 'Akash Server Certificate Generated Successfully';
+								}
+								else{
+									message = json.raw_log;
+								}
 							}
-							
+							resolve({success:successful,message})
 						}
-						if(typeof json.code != "undefined"){
-							if(json.code == 0){
-								//success
-								successful = true;
-								message = 'Akash Server Certificate Generated Successfully';
-							}
-							else{
-								message = json.raw_log;
-							}
+						if(output == '' && errOutput != ''){
+							resolve({success:successful,message:errOutput})
 						}
-						resolve({success:successful,message})
-					}
-					if(output == '' && errOutput != ''){
-						resolve({success:successful,message:errOutput})
-					}
-				})
+					})
+				});//rosetta fun
 			})
 			
 		})

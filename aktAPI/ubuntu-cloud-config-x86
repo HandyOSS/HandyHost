@@ -36,9 +36,9 @@ autoinstall:
     disable_root: false
   late-commands:
     - echo 'ansible ALL=(ALL) NOPASSWD:ALL' > /target/etc/sudoers.d/ansible
-    - echo $(curl "http://__HOST_IP__:8008/api/akt/getRandomHostname/$(echo $(hostname -I) | sed s/\ /%20/g)") > /target/etc/hostname
+    - echo $(curl "http://__HOST_IP__:8008/api/akt/getRandomHostname/$(echo $(hostname -I)/__USB_AUTH_TOKEN__ | sed s/\ /%20/g)") > /target/etc/hostname
     - sed -i -e "s/handyhost/$(cat /target/etc/hostname)/g" /target/etc/hosts
     - curtin in-target --target=/target -- echo "Please wait...will reboot automatically"
-    - curtin in-target --target=/target -- umount cdrom/
-    - reboot
+    - curtin in-target --target=/target -- umount /cdrom
+    - poweroff
   updates: security

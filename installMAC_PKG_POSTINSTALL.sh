@@ -1,4 +1,7 @@
 #!/bin/bash
+
+
+
 #mac installer
 USERNAME="$(stat -f '%Su' $HOME)"
 USERGROUP="$(id -gn $USERNAME)"
@@ -14,6 +17,9 @@ else
 fi
 if [[ -s "$HOME/.zshrc" ]] ; then
 	profile_file="$HOME/.zshrc"
+fi
+if [[ -s "$HOME/.zprofile" ]] ; then
+	profile_file="$HOME/.zprofile"
 fi
 
 source $profile_file
@@ -34,12 +40,43 @@ if [[ -s "$USERHOME/.HandyHost/handyhost.pid" ]] ; then
 	fi
 fi
 
+###
+if [ "${arch_name}" = "x86_64" ]; then
+    if [ "$(sysctl -in sysctl.proc_translated)" = "1" ]; then
+    		##its still arm64, emulated to x86_64......
+        homebrew_prefix_default=/opt/homebrew
+			  if ! grep -q 'eval "$(/opt/homebrew/bin/brew shellenv)"' "${profile_file}" ; then
+				  echo "###Editing ${profile_file} to add $homebrew_prefix_default/bin variables###"
+				  echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> "${profile_file}"
+				  source $profile_file
+				fi
+    else
+        homebrew_prefix_default=/usr/local
+    fi 
+fi
+
+if [ "${arch_name}" = "arm64" ]; then
+	homebrew_prefix_default=/opt/homebrew
+  if ! grep -q 'eval "$(/opt/homebrew/bin/brew shellenv)"' "${profile_file}" ; then
+	  echo "###Editing ${profile_file} to add $homebrew_prefix_default/bin variables###"
+	  echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> "${profile_file}"
+	  source $profile_file
+	fi
+fi
+###
+
 if [[ "$(uname -m)" == "arm64" ]]
 then
   homebrew_prefix_default=/opt/homebrew
+  if ! grep -q 'eval "$(/opt/homebrew/bin/brew shellenv)"' "${profile_file}" ; then
+	  echo "###Editing ${profile_file} to add $homebrew_prefix_default/bin variables###"
+	  echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> "${profile_file}"
+	  source $profile_file
+	fi
 else
   homebrew_prefix_default=/usr/local
 fi
+
 
 echo "########## Installing HandyHost Dependencies... ##########"
 
@@ -62,8 +99,10 @@ echo "########## Installing HandyHost Dependencies... ##########"
 which -s brew
 if [[ $? != 0 ]] ; then
     # Install Homebrew
-    echo "******* HOMEBREW IS REQUIRED, EXITING ***********"
-    exit 1;
+    
+  	echo "******* HOMEBREW IS REQUIRED, EXITING ***********"
+  	exit 1;
+    
     # BREWGROUP=$(ls -ld "/usr/local/bin" | awk '{print $4}')
     # git clone https://github.com/Homebrew/brew "$homebrew_prefix_default/Homebrew" && \
     # chown -R $USERNAME:$BREWGROUP "$homebrew_prefix_default/Homebrew" && \
@@ -72,7 +111,7 @@ if [[ $? != 0 ]] ; then
     
 else
 	echo "Homebrew Already Installed. Skipping Install."
-	if ! grep -q "$homebrew_prefix_default/bin" "${profile_file}" ; then
+	if ! grep -q ":$homebrew_prefix_default/bin" "${profile_file}" ; then
 	  echo "###Editing ${profile_file} to add $homebrew_prefix_default/bin variables###"
 	  echo "export PATH=$PATH:$homebrew_prefix_default/bin" >> "${profile_file}"
 	  source $profile_file
@@ -102,11 +141,22 @@ echo "Configuring HandyHost in $pwd" && \
 NPMVERSION="$(cat $pwd/.nvmrc)"
 echo "NPM VERSION TO INSTALL ${NPMVERSION}" && \
 echo "PYTHON VERSION IS ${PYTHON}" && \
-cd $pwd && \
-nvm install $NPMVERSION && \
+cd $pwd
+if [[ "$(uname -m)" == "arm64" ]]
+then
+	export PATH="/usr/local/bin":$PATH
+	arch -x86_64 zsh
+	#fn m1 only likes > v14...
+	NPMVERSION="16.13.0"
+	echo "$NPMVERSION" > "$pwd/.nvmrc"
+	nvm install $NPMVERSION
+else
+	nvm install $NPMVERSION
+fi
+chmod -R "$USERNAME:$USERGROUP" "$USERHOME/.nvm"
 nvm use && \
 sudo chown -R "$USERNAME:$USERGROUP" $pwd && \
-su - $USERNAME -c "[ -s \"$homebrew_prefix_default/opt/nvm/nvm.sh\" ] && \. \"$homebrew_prefix_default/opt/nvm/nvm.sh\" && cd $pwd && nvm install $NPMVERSION && nvm use && npm config set python $PYTHON && cd $pwd && npm install --build-from-source --python=$PYTHON" && \
+su - $USERNAME -c "[ -s \"$homebrew_prefix_default/opt/nvm/nvm.sh\" ] && \. \"$homebrew_prefix_default/opt/nvm/nvm.sh\" && cd $pwd && nvm install $NPMVERSION && nvm use && npm config set python $PYTHON && cd $pwd && npm update && npm install --build-from-source --python=$PYTHON" && \
 sudo chown -R "$USERNAME:$USERGROUP" ./node_modules && \
 sudo npm install -g bower && \
 sudo npm install -g forever && \
@@ -152,7 +202,7 @@ else
 fi
 
 cd $USERHOME/.HandyHost/siaRepo && make dependencies && make && \
-if ! grep -q '${USERHOME}/go/bin' "${profile_file}" ; then
+if ! grep -q "${USERHOME}/go/bin" "${profile_file}" ; then
   echo "###Editing ${profile_file} to add go env variables###"
   echo "export PATH=$PATH:${USERHOME}/go/bin" >> "${profile_file}"
   source $profile_file
@@ -161,6 +211,7 @@ fi
 #################################
 ########### DVPN ################
 #################################
+echo "PATH::: $PATH"
 
 which -s docker
 if [[ $? != 0 ]] ; then
@@ -228,7 +279,7 @@ if [[ ! -d "${HOME}/.HandyHost/aktData/kubespray" ]] ; then
   cd "${HOME}/.HandyHost/aktData/kubespray" && \
   git clone https://github.com/kubernetes-sigs/kubespray.git . && \
   git checkout "$LATEST_KUBESPRAY"
-  virtualenv --python=python3 venv
+  virtualenv --python="$homebrew_prefix_default/opt/python@3.9/bin/python3.9" venv
   . venv/bin/activate
   pip3 install -r requirements.txt
 else
@@ -244,7 +295,7 @@ else
     echo "kubespray is out of date, updating" && \
     git fetch --all
     git checkout "$LATEST_KUBESPRAY"
-    virtualenv --python=python3 venv
+    virtualenv --python="$homebrew_prefix_default/opt/python@3.9/bin/python3.9" venv
     . venv/bin/activate
     pip3 uninstall -y ansible
     pip3 install -r requirements.txt
@@ -328,7 +379,27 @@ if [ ! $1 = "local" ] ; then
 		rm -rf "/Applications/HandyHost/HandyHost.app"
 	fi
 
-	platypus -P /Applications/HandyHost/HandyHost/MacOS_Resources/HandyHost.platypus HandyHost.app && \
+	#m1 mac fun
+	if [[ "$(uname -m)" == "arm64" ]]
+	then
+		#platypus still looks in /usr/local/share so we'll just link it there for a hot minute..
+		if [[ ! -d "/usr/local/share" ]] ; then
+			LOCALSHARELOC="/usr/local/share"
+			
+		else
+			LOCALSHARELOC="/usr/local/share/platypus"
+		fi
+		ln -s "$homebrew_prefix_default/share" $LOCALSHARELOC
+	fi
+
+	platypus -P /Applications/HandyHost/HandyHost/MacOS_Resources/HandyHost.platypus HandyHost.app
+
+		#m1 mac fun
+	if [[ "$(uname -m)" == "arm64" ]]
+	then
+		unlink $LOCALSHARELOC
+	fi
+
 	cp "$pwd/MacOS_Resources/handyhost.startup.plist" "$USERHOME/Library/LaunchAgents/handyhost.startup.plist" && \
 	chown "$USERNAME:$USERGROUP" "$USERHOME/Library/LaunchAgents/handyhost.startup.plist" && \
 	su - $USERNAME -c "launchctl unload -w \"$USERHOME/Library/LaunchAgents/handyhost.startup.plist\""; \

@@ -3,7 +3,7 @@
 	position:absolute;
 	top:10px;
 	left:calc(20% + 10px);
-	width:calc(80% - 20px);
+	width:calc(80% - 40px);
 	height:calc(100% - 20px);
 	display:none;
 	z-index:1;

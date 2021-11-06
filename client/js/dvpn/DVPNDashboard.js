@@ -52,9 +52,10 @@ export class DVPNDashboard {
 			console.log('socket node is updated')
 			$('#dvpnMain .options li#dvpnUpdatesWarning').hide();
 		});
-		this.socket.on('sessionAnalytics',(data,timeseries)=>{
-			console.log('session analytics realtime update',data);
-			this.dashboardAnalytics.renderSessionsRealtime(data);
+		this.socket.on('sessionAnalytics',(data,timeseries,sessions)=>{
+			console.log('session analytics realtime update',data,sessions);
+			this.dashboardAnalytics.renderSessionsRealtime(data,sessions);
+			this.dashboardAnalytics.streamGraph.render(timeseries)
 		})
 		this.socket.on('HandyHostUpdatesAvailable',data=>{
 			console.log('handyhost updates are available',data);

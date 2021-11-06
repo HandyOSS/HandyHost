@@ -454,12 +454,13 @@ export class DVPNStats{
 						lastSeen:0
 					}
 				});
-				this.timeseriesDB.all(`SELECT MAX(totalDown) as down, MAX(totalUp) as up, MIN(remaining) as remains, MAX(created_at) as lastSeen, subscriber FROM subscribers GROUP BY subscriber`).then(meta=>{
+				this.timeseriesDB.all(`SELECT MAX(totalDown) as down, MAX(totalUp) as up, MAX(remaining) as remains, MAX(created_at) as lastSeen, subscriber FROM subscribers GROUP BY subscriber`).then(meta=>{
 					meta.map(row=>{
 						subscribers[row.subscriber].totalDown = row.down;
 						subscribers[row.subscriber].totalUp = row.up;
-						subscribers[row.subscriber].remaining = row.remains;
+						subscribers[row.subscriber].remaining = row.remains - (row.down+row.up); //remain lags so lets keep it near realtime
 						subscribers[row.subscriber].lastSeen = row.lastSeen;
+						subscribers[row.subscriber].totalContract = row.remains; //remain lags so lets keep it near realtime
 					})
 					resolve(subscribers);
 				})
@@ -492,7 +493,7 @@ export class DVPNStats{
 				const maxDateMins = this.getXTimestampMinute(timeMax*1000);
 				//console.log('mindate mins maxdate mins',minDateMins,maxDateMins);
 				let bins = {};
-				for(let i=minDateMins;i<maxDateMins;i += 120){
+				for(let i=minDateMins;i<maxDateMins;i += 60){
 					bins[i] = {up:0,down:0,sum:0};
 				}
 				Object.keys(subs).map(id=>{
@@ -507,6 +508,9 @@ export class DVPNStats{
 						subs[record.subscriber][timestampRounded].down = record.deltaDown;
 						subs[record.subscriber][timestampRounded].sum = record.deltaUp + record.deltaDown;
 					}
+					/*else{
+						console.log('timebin undef',timestampRounded,minDateMins,maxDateMins);
+					}*/
 				})
 				//console.log('timeseries data???',subs);
 				resolve(subs);

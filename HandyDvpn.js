@@ -146,9 +146,9 @@ export class HandyDVPN{
 	}
 	retrieveAnalytics(serverName){
 		this.dvpnStats.getActiveSessionAnalytics().then(data=>{
-			this.ioNamespaces[serverName].namespace.to('dvpn').emit('sessionAnalytics',data.json,data.timeseries);
+			this.ioNamespaces[serverName].namespace.to('dvpn').emit('sessionAnalytics',data.json,data.timeseries,data.sessions);
 		}).catch(error=>{
-			this.ioNamespaces[serverName].namespace.to('dvpn').emit('sessionAnalytics',{},{});
+			this.ioNamespaces[serverName].namespace.to('dvpn').emit('sessionAnalytics',{},{},{});
 		})
 	}
 	initSocketListener(room,serverName){

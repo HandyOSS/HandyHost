@@ -19,4 +19,6 @@ $HOME/.HandyHost/aktData/bin/akash provider run \
 --deployment-runtime-class none \
 --cluster-node-port-quantity 1000 \
 --bid-timeout 8h0m0s \
---minimum-balance 100000
+--minimum-balance 100000 \
+--balance-check-period 8h0m0s \
+--withdrawal-period 8h0m0s

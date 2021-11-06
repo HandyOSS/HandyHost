@@ -158,10 +158,18 @@ export class DVPNSetup{
 			s.stderr.on('data',d=>{
 				//test this on ubuntu 18.04 because stderr might be getting output for stdout/etc warning.
 			    console.log('stderr',d.toString());
-			    reject({'error':d.toString()})
+			    this.utils.checkForM1RosettaFun().then(isRosetta=>{
+			    	if(!isRosetta){
+			    		//its actually an error......
+			    		reject({'error':d.toString()})
+			    	}
+			    	else{
+			    		//awesome apples librassl adds more fragmentation on the M1...
+			    	}
+			    })
 			})
 			s.on('close',d=>{
-			    //console.log('spawn closed',d);
+			    console.log('spawn closed',d);
 			    //1.1.0rc0 dvpn-node requires from and price to be set in order to init wallets now.
 			    const port = this.utils.getSafePort();
 			    const port2 = this.utils.getSafePort([port]);

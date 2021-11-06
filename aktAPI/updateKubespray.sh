@@ -20,12 +20,34 @@ fi
 
 LATEST_KUBESPRAY="$VERSION"
 
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  arch_name="$(uname -m)"
+   
+  if [ "${arch_name}" = "x86_64" ]; then
+      if [ "$(sysctl -in sysctl.proc_translated)" = "1" ]; then
+          homebrew_prefix_default=/opt/homebrew
+      else
+          homebrew_prefix_default=/usr/local
+      fi 
+  fi
+  if [ "${arch_name}" = "arm64" ]; then
+    homebrew_prefix_default=/opt/homebrew
+  fi
+fi
+
+##for whatever reason, on macOS, kubespray fails with python3.10, force it to use 3.9...
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  LOCALPYTHON="$homebrew_prefix_default/opt/python@3.9/bin/python3.9"
+else
+  LOCALPYTHON=python3
+fi
+
 if [[ ! -d "${USERHOME}/.HandyHost/aktData/kubespray" ]] ; then
   mkdir -p "${USERHOME}/.HandyHost/aktData/kubespray" && \
   cd "${USERHOME}/.HandyHost/aktData/kubespray" && \
   git clone https://github.com/kubernetes-sigs/kubespray.git . && \
-  git checkout "$LATEST_KUBESPRAY" && \
-  virtualenv --python=python3 venv
+  git checkout "$LATEST_KUBESPRAY"
+  virtualenv --python="$LOCALPYTHON" venv
   . venv/bin/activate
   pip3 install -r requirements.txt
 else
@@ -33,14 +55,13 @@ else
   cd "${USERHOME}/.HandyHost/aktData/kubespray" && \
   git fetch --all
   LOCAL_KUBESPRAY=$(git describe --tags )
-
   if [[ "$LOCAL_KUBESPRAY" == "$LATEST_KUBESPRAY" ]]; then
     echo "Kubespray is up to date"
   else
     echo "kubespray is out of date, updating" && \
     git fetch --all
     git checkout "$LATEST_KUBESPRAY"
-    virtualenv --python=python3 venv
+    virtualenv --python="$LOCALPYTHON" venv
     . venv/bin/activate
     pip3 uninstall -y ansible
     pip3 install -r requirements.txt

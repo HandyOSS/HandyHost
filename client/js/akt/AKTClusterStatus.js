@@ -21,7 +21,13 @@ export class AKTClusterStatus{
 	}
 	fetchStats(){
 		fetch('/api/akt/getClusterStats').then(d=>d.json()).then(data=>{
-			if(!data.providerIsRunning && data.providerIsRegistered && data.providerHasGeneratedCert){
+			let onlineCount = 0;
+			data.k8s.map(machine=>{
+				if(Object.keys(machine.sections).length > 0){
+					onlineCount++;
+				}
+			})
+			if(!data.providerIsRunning && data.providerIsRegistered && data.providerHasGeneratedCert && data.k8s.length > 0 && (data.nodeCount > 0 && data.nodeCount == onlineCount)){
 				$('#aktMain .options li#providerStatus').show();
 			}
 			if(data.providerIsRunning){
@@ -30,7 +36,18 @@ export class AKTClusterStatus{
 			}
 			this.dashboard.aktStatus = data;
 			this.dashboard.showUpdateOpts(data.akashVersion);
+			
 			this.renderStats(data);
+			console.log('stats d',data)
+			if(data.k8s.length == 0 && data.nodeCount == 0 && (Object.keys(data.providerData).length == 0)){
+				//auto show configurator
+				this.dashboard.nodeConfig.show();
+				this.dashboard.marketplace.hide();
+				this.hide();
+			}
+			else{
+				//$('#clusterStatus').show();
+			}
 		});
 		fetch('/api/akt/getMarketAggregates').then(d=>d.json()).then(data=>{
 			this.marketAggs = data;
@@ -66,7 +83,9 @@ export class AKTClusterStatus{
 			}
 		})
 		const shouldShowProviderStatusIndicator = statsData.providerIsRegistered && statsData.providerHasGeneratedCert;
-		
+		if(statsData.providerIsRegistered && statsData.providerHasGeneratedCert && !statsData.providerIsRunning && statsData.k8s.length > 0 && (statsData.nodeCount > 0 && onlineCount == statsData.nodeCount)){
+			$('#providerStatus').show();
+		}
 		this.renderBalance(statsData.balance,address,statsData.k8s);
 		this.renderTitle(clusterName,onlineCount,nodeCount,statsData.providerIsRunning,shouldShowProviderStatusIndicator);
 		this.renderResourceUsage(statsData.k8s);
@@ -79,13 +98,15 @@ export class AKTClusterStatus{
 		/*if(typeof leasesClosed == "undefined"){
 			leasesClosed = 0;
 		}*/
-		leasesClosed = parseInt(leasesClosed) >= 1000 ? numeral(leasesClosed).format('0.0a') : leasesClosed;
+		leasesClosed = parseInt(leasesClosed) >= 1000 ? numeral(leasesClosed).format('0a') : leasesClosed;
 		let leasesActive = data.leasesActive || 0;
-		leasesActive = parseInt(leasesActive) >= 1000 ? numeral(leasesActive).format('0.0a') : leasesActive;
+		leasesActive = parseInt(leasesActive) >= 1000 ? numeral(leasesActive).format('0a') : leasesActive;
 		let bidsOpen = data.bidsOpen || 0;
-		bidsOpen = parseInt(bidsOpen) >= 1000 ? numeral(bidsOpen).format('0.0a') : bidsOpen;
+		bidsOpen = parseInt(bidsOpen) >= 1000 ? numeral(bidsOpen).format('0a') : bidsOpen;
 		let bidsClosed = data.bidsClosed || 0;
-		bidsClosed = parseInt(bidsClosed) >= 1000 ? numeral(bidsClosed).format('0.0a') : bidsClosed;
+		bidsClosed = parseInt(bidsClosed) >= 1000 ? numeral(bidsClosed).format('0a') : bidsClosed;
+		let bidsLost = data.bidsLost || 0;
+		bidsLost = parseInt(bidsLost) >= 1000 ? numeral(bidsLost).format('0a') : bidsLost; 
 		const $q0 = $(`
 		<div class="quadrant">
 			<div class="quadTitle">Leases Active</div>
@@ -106,11 +127,17 @@ export class AKTClusterStatus{
 			<div class="quadTitle">Bids Closed</div>
 			<div class="value">${bidsClosed}</div>
 		</div>`)
+		const $q4 = $(`
+		<div class="quadrant">
+			<div class="quadTitle">Bids Lost</div>
+			<div class="value">${bidsLost}</div>
+		</div>`)
 		$el.html('<div class="subtitle">Marketplace Stats</div>');
 		$el.append($q0);
 		$el.append($q1);
 		$el.append($q2);
 		$el.append($q3);
+		$el.append($q4);
 		//we device locked AKT from open bids/leases
 		const lockedBalance = (parseInt(data.leasesActive) + parseInt(data.bidsOpen)) * this.collateralAmount;
 		
@@ -142,16 +169,16 @@ export class AKTClusterStatus{
 			$el.append('<div class="hasGeneratedCert"><span class="emoji">⚠️</span> No Akash Server Certificate Found for Your Address</div>');
 			$el.append('<div class="regenCertificate"><a class="aktStatusPageLink">Generate Certificate</a></div>')
 		}
-		$('.updateRegistration a').off('click').on('click',()=>{
+		$('.updateRegistration a',$el).off('click').on('click',()=>{
 			//show pw modal and fetch updateRegistration
 			this.showRegistrationModal(true,statsData.providerData.providerWalletName);
 		})
-		$('.createRegistration a').off('click').on('click',()=>{
+		$('.createRegistration a',$el).off('click').on('click',()=>{
 			//show pw modal and fetch createRegistration
 			this.showRegistrationModal(false,statsData.providerData.providerWalletName);
 		});
-		$('.regenCertificate a').off('click').on('click',()=>{
-			this.showRegistrationModal(false,statsData.providerData.providerWalletName,true);
+		$('.regenCertificate a',$el).off('click').on('click',()=>{
+			this.showRegistrationModal(false,statsData.providerData.providerWalletName,true,statsData.providerIsRegistered);
 		})
 	}
 	renderResourceUsage(k8sData){
@@ -440,7 +467,7 @@ export class AKTClusterStatus{
 				${img}
 			</div>
 			<div class="balanceMeta">
-				<div class="address">Address: <input type="text" readonly class="walletAddress" value="${address}" size="46" /></div>
+				<div class="address">Address: <input type="text" readonly class="walletAddress" value="${address}" size="47" /></div>
 				<div class="balance">${balance}</div>
 
 			</div>
@@ -478,74 +505,159 @@ export class AKTClusterStatus{
 		$('#runFees').val('');
 		$('#cpuPrive').val('');
 		$( "#generateCert" ).prop('checked', false );
-		$('.registerProviderModal .checkboxWrap').show();
+		//$('.registerProviderModal .checkboxWrap').show();
 		$('.walletUtil').addClass('showing');
 	}
-	showRegistrationModal(isUpdateMode,walletName,isGenerateCertOnly){
-		$('#registrationModal .closeModal').off('click').on('click',()=>{
-			this.hideModal();
-		})
-		const label = isGenerateCertOnly ? 'Generate Certificate' : 'Register';
-		$('#registerSave .foreground').html(label);
-		$('#registerSave .background').html(label);
-		$('#registrationModal').show();
-		$('.walletModalContent').removeClass('showing');
-		$('.registerProviderModal').addClass('showing');
-		if(isGenerateCertOnly){
-			$('#generateCert').prop('checked',true);
-			$('.registerProviderModal .checkboxWrap').hide()
-		}
-		$('#registerSave').off('click').on('click',()=>{
-			$('#registerSave .foreground').html('Submitting Tx...');
-			$('#registerSave .background').html('Submitting Tx...');
-			let endpoint = isUpdateMode ? 'updateProviderRegistration' : 'createProviderRegistration'
-			if(isGenerateCertOnly){
-				endpoint = 'generateServerCert';
-			}
-			const generateCert = $('#generateCert').is(':checked');
-			let fees = $('#regFees').val();
-			if(fees == ''){
-				fees = '10000';
-			}
-			const registrationData = {
-				pw:$('#unlockRegPW').val(),
-				walletName,
-				generateCert,
-				fees
-			};
-			fetch("/api/akt/"+endpoint,
-			{
-			    headers: {
-			      'Accept': 'application/json',
-			      'Content-Type': 'application/json'
-			    },
-			    method: "POST",
-			    body: JSON.stringify(registrationData)
+	showRegistrationModal(isUpdateMode,walletName,isGenerateCertOnly,isGasEstimateProviderIsRegistered){
+		return new Promise((resolve,reject)=>{
+			$('#registrationModal .closeModal').off('click').on('click',()=>{
+				this.hideModal();
 			})
-			.then((res)=>{ console.log('success'); return res.json(); }).then(data=>{
-				console.log('res data',data);
-				if(data.error){
-					this.showErrorModal(data.message);
+			const label = isGenerateCertOnly ? 'Generate Certificate' : 'Register';
+			$('#registerSave .foreground').html(label);
+			$('#registerSave .background').html(label);
+			$('#registrationModal').show();
+			$('.walletModalContent').removeClass('showing');
+			$('.registerProviderModal').addClass('showing');
+			$('#unlockRegPW').focus();
+			if(isGenerateCertOnly){
+				$('#generateCert').prop('checked',true);
+				$('.registerProviderModal .checkboxWrap').hide()
+			}
+			$('#estimateGas').off('click').on('click',()=>{
+				$('#estimateGas').html('Fetching Estimate...');
+				$('#estimateGasError').html('');
+				$('#estimateGasError').hide();
+				//fetch a gas estimate
+				//providerRegistrationGasEstimate
+				let fees = $('#regFees').val();
+				if(fees == ''){
+					fees = '10000';
 				}
-				else{
-					this.verifyRegistration(data.message);
-					if(!isGenerateCertOnly){
-						$('.options #providerRegistrationWarning').hide();
+				let gas = $('#gas').val();
+				
+				let registrationData = {
+					pw:$('#unlockRegPW').val(),
+					walletName,
+					generateCert,
+					fees
+				};
+				if(gas != ''){
+					registrationData.gas = gas;
+				}
+				let mode = 'create';
+				if(isUpdateMode){
+					mode = 'update';
+				}
+				if(isGenerateCertOnly){
+					mode = isGasEstimateProviderIsRegistered ? 'update' : 'create';
+				}
+				registrationData.mode = mode;
+				fetch("/api/akt/providerRegistrationGasEstimate",
+				{
+				    headers: {
+				      'Accept': 'application/json',
+				      'Content-Type': 'application/json'
+				    },
+				    method: "POST",
+				    body: JSON.stringify(registrationData)
+				})
+				.then((res)=>{ return res.json();}).then(res=>{
+					$('#estimateGas').html('Estimate Gas and Fees');
+					console.log('res',res);
+					let message = res.data;
+					if(typeof res.data == "undefined" && typeof res.message != "undefined"){
+						message = res.message;
+					}
+					if(message.indexOf('gas estimate') == -1){
+						if(message.indexOf('Error: post failed') >= 0){
+							$('#estimateGasError').html('Error: RPC Request Failed, please try again.');
+						}
+						else{
+							$('#estimateGasError').html(message);
+							
+						}
+						$('#estimateGasError').show();
+						return;
+					}
+					let result = message.split(':')
+					if(result.length > 1){
+						result = result[1].replace('\n','');
+						let gasVal = parseInt(result.trim());
+						$('#regFees').val(Math.ceil(gasVal/1000))
+						$('#gas').val(gasVal);
+					}
+				})
+				.catch((res)=>{
+					$('#estimateGas').html('Estimate Gas and Fees');
+					$('#estimateGasError').html(res);
+					$('#estimateGasError').show();
+					//maybe rpc timeout, alert them
+				});
+			});
+			$('#registerSave').off('click').on('click',()=>{
+				$('#registerSave .foreground').html('Submitting Tx...');
+				$('#registerSave .background').html('Submitting Tx...');
+				let endpoint = isUpdateMode ? 'updateProviderRegistration' : 'createProviderRegistration'
+				if(isGenerateCertOnly){
+					endpoint = 'generateServerCert';
+				}
+				const generateCert = $('#generateCert').is(':checked');
+				let fees = $('#regFees').val();
+				if(fees == ''){
+					fees = '10000';
+				}
+				let gas = $('#gas').val();
+				
+				let registrationData = {
+					pw:$('#unlockRegPW').val(),
+					walletName,
+					generateCert,
+					fees
+				};
+				if(gas != ''){
+					registrationData.gas = gas;
+				}
+				fetch("/api/akt/"+endpoint,
+				{
+				    headers: {
+				      'Accept': 'application/json',
+				      'Content-Type': 'application/json'
+				    },
+				    method: "POST",
+				    body: JSON.stringify(registrationData)
+				})
+				.then((res)=>{ console.log('success'); return res.json(); }).then(data=>{
+					console.log('res data',data);
+					if(data.error){
+						resolve(false);
+						this.showErrorModal(data.message);
 					}
 					else{
-						$('.options #providerCertificateWarning').hide();
+						resolve(true);
+						this.verifyRegistration(data.message);
+						if(!isGenerateCertOnly){
+							$('.options #providerRegistrationWarning').hide();
+
+						}
+						else{
+							$('.options #providerCertificateWarning').hide();
+						}
 					}
-				}
-				$('#registerSave .foreground').html(label);
-				$('#registerSave .background').html(label);
-			
+					$('#registerSave .foreground').html(label);
+					$('#registerSave .background').html(label);
+				
+				})
+				.catch((res)=>{
+					console.log('error submitting',res);
+					resolve(false); 
+				});
 			})
-			.catch((res)=>{ console.log('error submitting',res) });
-		})
-		$('#cancelRegister').off('click').on('click',()=>{
-			this.hideModal();
-		})
-		
+			$('#cancelRegister').off('click').on('click',()=>{
+				resolve(false);
+				this.hideModal();
+			})
+		});
 	}
 	showErrorModal(message){
 		$('.registrationMessage .error').html('ERROR: '+message);

@@ -10,10 +10,28 @@ fi
 if [[ -s "$HOME/.zshrc" ]] ; then
 	profile_file="$HOME/.zshrc"
 fi
+if [[ -s "$HOME/.zprofile" ]] ; then
+	profile_file="$HOME/.zprofile"
+fi
+
+arch_name="$(uname -m)"
+ 
+if [ "${arch_name}" = "x86_64" ]; then
+    if [ "$(sysctl -in sysctl.proc_translated)" = "1" ]; then
+        homebrew_prefix_default=/opt/homebrew
+    else
+        homebrew_prefix_default=/usr/local
+    fi 
+fi
+
+if [ "${arch_name}" = "arm64" ]; then
+	homebrew_prefix_default=/opt/homebrew
+fi
+
 source $profile_file
 export NVM_DIR=$HOME/.nvm && \
-[ -s "/usr/local/opt/nvm/nvm.sh" ] && \. "/usr/local/opt/nvm/nvm.sh" > /dev/null && \
-[ -s "/usr/local/opt/nvm/etc/bash_completion.d/nvm" ] && \. "/usr/local/opt/nvm/etc/bash_completion.d/nvm" > /dev/null && \
+[ -s "$homebrew_prefix_default/opt/nvm/nvm.sh" ] && \. "$homebrew_prefix_default/opt/nvm/nvm.sh" > /dev/null && \
+[ -s "$homebrew_prefix_default/opt/nvm/etc/bash_completion.d/nvm" ] && \. "$homebrew_prefix_default/opt/nvm/etc/bash_completion.d/nvm" > /dev/null && \
 echo -n > "$HOME/.HandyHost/handyhost.log"
 
 if [[ ! -d "$SCRIPT_DIR/HandyHost" ]] ; then
@@ -64,21 +82,5 @@ else
 	
 	exit 0
 fi
-
-
-
-# if [[ -s $HOME/.HandyHost/handyhostDaemon.pid ]] ; then
-# 	# NODE_NO_WARNINGS=1 forever stop $(cat $HOME/.HandyHost/handyhostDaemon.pid) > /dev/null; \
-# 	# NODE_NO_WARNINGS=1 forever start --pidFile $HOME/.HandyHost/handyhostDaemon.pid -l $HOME/.HandyHost/handyhost.log -a app.js > /dev/null
-# 	##echo standard menu
-# 	echo "$(cat $HOME/.HandyHost/startup.log)"
-# else
-# 	NODE_NO_WARNINGS=1 forever start --pidFile $HOME/.HandyHost/handyhostDaemon.pid -l $HOME/.HandyHost/handyhost.log -a app.js > /dev/null && \
-# 	sleep 5 && \
-# 	echo "$(cat $HOME/.HandyHost/startup.log)"
-# fi
-
-#nohup node app.js > $HOME/.HandyHost/handyhost.log 2>&1 & \
-#echo "LAUNCHING..." && \
 
 exit 0
