@@ -608,10 +608,7 @@ export class HandyAKT{
 		return this.wallet.createOrUpdateServerCertificate(parsed,walletAddress,providerHost);
 	}
 	registerProvider(requestBody,mode,isGasEstimate){
-		/*
-		{"height":"1840128","txhash":"DA91541C278ED8267241B8BEFD368EDD2728554D8551A78496853928E0138050","codespace":"provider","code":4,"data":"","raw_log":"failed to execute message; message index: 0: id: akash1mqnj2euks0aq82q0f2tknz6kua6zdfn97kmvhj: invalid provider: already exists","logs":[],"info":"","gas_wanted":"200000","gas_used":"52095","tx":null,"timestamp":""}
-
-		*/
+		
 		const {parsed,err} = this.parseRequestBody(requestBody);
 		if(typeof parsed == "undefined"){
 			return new Promise((resolve,reject)=>{
@@ -622,7 +619,14 @@ export class HandyAKT{
 			mode = parsed.mode;
 		}
 		const providerHost = this.getProviderHost();
-		return this.wallet.registerProvider(parsed,mode,providerHost,isGasEstimate);
+
+		/*if(parsed.generateCert && isGasEstimate){
+			const walletAddress = this.getProviderWalletAddress();
+			return this.wallet.createOrUpdateServerCertificate(parsed,walletAddress,providerHost,isGasEstimate);
+		}
+		else{*/
+			return this.wallet.registerProvider(parsed,mode,providerHost,isGasEstimate);
+		//}
 	}
 	getProviderWalletAddress(){
 		const config = JSON.parse(fs.readFileSync(this.clusterConfigFilePath,'utf8'));

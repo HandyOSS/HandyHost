@@ -40,6 +40,31 @@ if [[ -s "$USERHOME/.HandyHost/handyhost.pid" ]] ; then
 	fi
 fi
 
+###
+if [ "${arch_name}" = "x86_64" ]; then
+    if [ "$(sysctl -in sysctl.proc_translated)" = "1" ]; then
+    		##its still arm64, emulated to x86_64......
+        homebrew_prefix_default=/opt/homebrew
+			  if ! grep -q 'eval "$(/opt/homebrew/bin/brew shellenv)"' "${profile_file}" ; then
+				  echo "###Editing ${profile_file} to add $homebrew_prefix_default/bin variables###"
+				  echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> "${profile_file}"
+				  source $profile_file
+				fi
+    else
+        homebrew_prefix_default=/usr/local
+    fi 
+fi
+
+if [ "${arch_name}" = "arm64" ]; then
+	homebrew_prefix_default=/opt/homebrew
+  if ! grep -q 'eval "$(/opt/homebrew/bin/brew shellenv)"' "${profile_file}" ; then
+	  echo "###Editing ${profile_file} to add $homebrew_prefix_default/bin variables###"
+	  echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> "${profile_file}"
+	  source $profile_file
+	fi
+fi
+###
+
 if [[ "$(uname -m)" == "arm64" ]]
 then
   homebrew_prefix_default=/opt/homebrew
@@ -51,7 +76,6 @@ then
 else
   homebrew_prefix_default=/usr/local
 fi
-
 
 
 echo "########## Installing HandyHost Dependencies... ##########"
@@ -123,7 +147,7 @@ then
 	export PATH="/usr/local/bin":$PATH
 	arch -x86_64 zsh
 	#fn m1 only likes > v14...
-	NPMVERSION="15.14.0"
+	NPMVERSION="16.13.0"
 	echo "$NPMVERSION" > "$pwd/.nvmrc"
 	nvm install $NPMVERSION
 else
@@ -255,7 +279,7 @@ if [[ ! -d "${HOME}/.HandyHost/aktData/kubespray" ]] ; then
   cd "${HOME}/.HandyHost/aktData/kubespray" && \
   git clone https://github.com/kubernetes-sigs/kubespray.git . && \
   git checkout "$LATEST_KUBESPRAY"
-  virtualenv --python=python3 venv
+  virtualenv --python="$homebrew_prefix_default/opt/python@3.9/bin/python3.9" venv
   . venv/bin/activate
   pip3 install -r requirements.txt
 else
@@ -271,7 +295,7 @@ else
     echo "kubespray is out of date, updating" && \
     git fetch --all
     git checkout "$LATEST_KUBESPRAY"
-    virtualenv --python=python3 venv
+    virtualenv --python="$homebrew_prefix_default/opt/python@3.9/bin/python3.9" venv
     . venv/bin/activate
     pip3 uninstall -y ansible
     pip3 install -r requirements.txt

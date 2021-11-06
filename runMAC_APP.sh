@@ -24,6 +24,10 @@ if [ "${arch_name}" = "x86_64" ]; then
     fi 
 fi
 
+if [ "${arch_name}" = "arm64" ]; then
+	homebrew_prefix_default=/opt/homebrew
+fi
+
 source $profile_file
 export NVM_DIR=$HOME/.nvm && \
 [ -s "$homebrew_prefix_default/opt/nvm/nvm.sh" ] && \. "$homebrew_prefix_default/opt/nvm/nvm.sh" > /dev/null && \

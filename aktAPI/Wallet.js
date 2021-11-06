@@ -959,12 +959,12 @@ export class Wallet{
 			}
 		})
 	}
-	createOrUpdateServerCertificate(params,wallet,providerHost){
+	createOrUpdateServerCertificate(params,wallet,providerHost,isGasEstimate){
 		//params = {pw,walletName}
 		//if the provider registration was updated lets refresh/revoke the certificate in case they changed the server hostname/IP
 		return new Promise((resolve,reject)=>{
 			const certPath = process.env.HOME+'/.akash/'+wallet+'.pem';
-			if(fs.existsSync(certPath)){
+			if(fs.existsSync(certPath) && !isGasEstimate){
 				//remove the cert
 				fs.unlinkSync(certPath);
 			}
@@ -972,62 +972,67 @@ export class Wallet{
 			let createOut = '';
 			let errorOut = '';
 			this.commonUtils.encrypt(params.pw).then(encPath=>{
-				const homebrewPrefixMAC = process.arch == 'arm64' ? '/opt/homebrew' : '/usr/local';
-		  		const openssl = process.platform == 'darwin' ? homebrewPrefixMAC+'/opt/openssl@1.1/bin/openssl' : 'openssl';
-		  		const fees = typeof params.fees != "undefined" ? (params.fees == "" ? '10000' : params.fees) : '10000';
-		  		const gas = typeof params.gas != "undefined" ? (params.gas) : 'auto';
-				const args = [encPath,this.commonUtils.escapeBashString(params.walletName),providerHost,fees,openssl,gas];
-				let output = '';
-				let errOutput = '';
-				const s = spawn('./createProviderCertAutomated.sh',args,{shell:true,env:process.env,cwd:process.env.PWD+'/aktAPI'});
-				s.stdout.on('data',d=>{
-					output += d.toString();
-				})
-				s.stderr.on('data',d=>{
-					errOutput += d.toString();
-				})
-				s.on('close',()=>{
-					console.log('cert output',output)
-					console.log('cert err? ',errOutput);
-					//all done, check if we did it..
-					let successful = false;
-					let message = '';
-					const testStr = 'transaction successful:y';
-					if(output.indexOf(testStr) >= 0){
-						let json = {};
-						const msgParts = output.split(testStr);
-						try{
-							json = JSON.parse(msgParts[1].trim());
-						}
-						catch(e){
-							console.log("no json here");
-							if(errOutput == ''){
-								if(msgParts.length > 1){
-									message = msgParts[1]
+				this.commonUtils.checkForM1RosettaFun().then(isRosetta=>{
+		  			const homebrewPrefixMAC = isRosetta ? '/opt/homebrew' : '/usr/local';
+		  			//const homebrewPrefixMAC = process.arch == 'arm64' ? '/opt/homebrew' : '/usr/local';
+			  		const openssl = process.platform == 'darwin' ? homebrewPrefixMAC+'/opt/openssl@1.1/bin/openssl' : 'openssl';
+			  		const fees = typeof params.fees != "undefined" ? (params.fees == "" ? '10000' : params.fees) : '10000';
+			  		const gas = typeof params.gas != "undefined" ? (params.gas) : 'auto';
+					let args = [encPath,this.commonUtils.escapeBashString(params.walletName),providerHost,fees,openssl,gas];
+					
+					let output = '';
+					let errOutput = '';
+					
+					const s = spawn('./createProviderCertAutomated.sh',args,{shell:true,env:process.env,cwd:process.env.PWD+'/aktAPI'});
+					s.stdout.on('data',d=>{
+						output += d.toString();
+					})
+					s.stderr.on('data',d=>{
+						errOutput += d.toString();
+					})
+					s.on('close',()=>{
+						console.log('cert output',output)
+						console.log('cert err? ',errOutput);
+						//all done, check if we did it..
+						let successful = false;
+						let message = '';
+						const testStr = 'transaction successful:y';
+						if(output.indexOf(testStr) >= 0){
+							let json = {};
+							const msgParts = output.split(testStr);
+							try{
+								json = JSON.parse(msgParts[1].trim());
+							}
+							catch(e){
+								console.log("no json here");
+								if(errOutput == ''){
+									if(msgParts.length > 1){
+										message = msgParts[1]
+									}
+									
+								}
+								else{
+									message = errOutput;
 								}
 								
 							}
-							else{
-								message = errOutput;
+							if(typeof json.code != "undefined"){
+								if(json.code == 0){
+									//success
+									successful = true;
+									message = 'Akash Server Certificate Generated Successfully';
+								}
+								else{
+									message = json.raw_log;
+								}
 							}
-							
+							resolve({success:successful,message})
 						}
-						if(typeof json.code != "undefined"){
-							if(json.code == 0){
-								//success
-								successful = true;
-								message = 'Akash Server Certificate Generated Successfully';
-							}
-							else{
-								message = json.raw_log;
-							}
+						if(output == '' && errOutput != ''){
+							resolve({success:successful,message:errOutput})
 						}
-						resolve({success:successful,message})
-					}
-					if(output == '' && errOutput != ''){
-						resolve({success:successful,message:errOutput})
-					}
-				})
+					})
+				});//rosetta fun
 			})
 			
 		})

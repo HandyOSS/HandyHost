@@ -71,7 +71,7 @@ if [[ -d "$USERHOME/.nvm" ]] ; then
 			arch -x86_64 zsh
 			#fn m1 only likes > v14...
 			#and we have to do npm update before installing sqlite3 for example
-			NPMVERSION="15.14.0"
+			NPMVERSION="16.13.0"
 			echo "$NPMVERSION" > "$UPDATED_DIR/.nvmrc"
 			nvm install $NPMVERSION && \
 			nvm use && npm update

@@ -199,6 +199,9 @@ export class CommonUtils{
 					resolve(true);
 				}
 				else{
+					if(process.arch == 'arm64'){
+						resolve(true);
+					}
 					resolve(false);
 				}
 			})
@@ -235,7 +238,7 @@ export class CommonUtils{
 			const pubPath = basePath+pubKeyName;
 			const encryptedOutPath = isForDaemon ? basePath+'daemon_'+daemonServiceName : basePath+'k'+(new Date().getTime());
 			this.checkForM1RosettaFun().then(isRosetta=>{
-		  		const homebrewPrefixMAC = isRosetta ? '/opt/homebrew' : '/usr/local';
+				const homebrewPrefixMAC = isRosetta ? '/opt/homebrew' : '/usr/local';
 				const openssl = process.platform == 'darwin' ? homebrewPrefixMAC+'/opt/openssl@1.1/bin/openssl' : 'openssl';
 				const args = ['rsautl', '-pubin', '-inkey', pubPath, '-encrypt', '-pkcs','-out',encryptedOutPath];
 				
