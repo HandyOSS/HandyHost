@@ -930,7 +930,12 @@ export class Wallet{
 			if(fs.existsSync(pidPath)){
 				const pid = parseInt(fs.readFileSync(pidPath,'utf8').trim());
 				console.log('killing provider at',pid);
-				process.kill(pid);
+				try{
+					process.kill(pid);
+				}
+				catch(e){
+					console.log('couldnt kill provider process',e);
+				}
 				fs.unlinkSync(pidPath);
 				resolve(true)
 			}
