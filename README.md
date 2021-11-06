@@ -66,6 +66,10 @@ You can run this command to install Homebrew on your system:
 
 2. ```./runMAC_APP.sh startup``` to start the daemon. Logs are output to ```~/.HandyHost/handyhost.log```. You can kill the daemon with ```./runMAC_APP.sh stop``` or restart the daemon with ```./runMAC_APP.sh restart```
 
+3. After the app is started, you can view the UI in your browser at either:
+[http://localhost:8008](http://localhost:8008) or
+[https://localhost:58008](https://localhost:58008) (self-signed cert, built and signed by you FYI)
+
 ### Build/Run from source (Ubuntu)
 1. Install some apt repos for dependencies:
 ```
@@ -84,7 +88,9 @@ sudo apt install -y git curl jq build-essential curl openssl uidmap unzip libssl
 4. Start the daemon with:
 ```./localdev_bootstrap.sh``` optionally restart with ```./localdev_bootstrap.sh restart```, and stop with ```localdev_bootstrap.sh stop```. note: you may or may not want to change line 5 and 6 depending if you want the app/blockchain datas installed to /root or your user $HOME.
 5. application logs can be found in: ```~/.HandyHost/localdev.log```
-
+6. After the app is started, you can view the UI in your browser at either:
+[http://localhost:8008](http://localhost:8008) or
+[https://localhost:58008](https://localhost:58008) (self-signed cert, built and signed by you FYI)
 <a id="videos"></a>
 ### Video Tutorials
 
@@ -168,6 +174,18 @@ Feel free to set this up on your local network for an extra layer of security. N
 Follow the steps above to enable auth. In step 3, add this: 
 In authSettings.json, set ```"hasInitialized":false,```. After restarting handyhost you can now set your new password.
 
+### v0.5.0 Changelog
+1. Add support for MacOS M1 Processor
+2. Add support for MacOS zsh environment
+3. MacOS: require python3.9 for kubespray in Akash. 
+4. UI: Dark Mode overhaul to use color palette versus filter:invert
+5. Akash: Add better logging to provider startup script
+6. Akash: Add configurator for new setups to reduce any setup friction
+7. Akash: Add gas fees and tx fees estimates to registration forms
+8. Akash: Add "Lost" category of bids to Dashboard and Marketplace UIs
+9. DVPN: Tweak dashboard display logic for donut charts
+10. DVPN: Reduce processing cycles for streamgraph modeling
+11. Ubuntu: Open HandyHost splash page in browser after installation
 
 ##### [LICENSE](https://github.com/HandyOSS/HandyHost/blob/master/LICENSE) 
 
