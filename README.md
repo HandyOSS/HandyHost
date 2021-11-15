@@ -79,16 +79,17 @@ wget -qO- https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /
 echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null && \
 sudo apt update
 ```
-2. Install dependencies:
+2. **Raspberry Pi 4 users on Ubuntu ONLY**: Docker on Raspberry Pi 4 depends on you running ```sudo apt install linux-modules-extra-raspi``` and rebooting.
+3. Install dependencies:
 ```
 sudo apt install -y git curl jq build-essential curl openssl uidmap unzip libssl-dev avahi-utils virtualenv expect kubectl p7zip-full genisoimage whois nmap docker-ce docker-ce-cli containerd.io systemd-container apt-transport-https ca-certificates gnupg lsb-release net-tools
 ```
-3. Run the installer:
+4. Run the installer:
 ```./installUbuntu.sh``` note: you may or may not want to change line 4 or 5 depending if you want the app/blockchain datas installed to /root or your user $HOME.
-4. Start the daemon with:
+5. Start the daemon with:
 ```./localdev_bootstrap.sh``` optionally restart with ```./localdev_bootstrap.sh restart```, and stop with ```localdev_bootstrap.sh stop```. note: you may or may not want to change line 5 and 6 depending if you want the app/blockchain datas installed to /root or your user $HOME.
-5. application logs can be found in: ```~/.HandyHost/localdev.log```
-6. After the app is started, you can view the UI in your browser at either:
+6. application logs can be found in: ```~/.HandyHost/localdev.log```
+7. After the app is started, you can view the UI in your browser at either:
 [http://localhost:8008](http://localhost:8008) or
 [https://localhost:58008](https://localhost:58008) (self-signed cert, built and signed by you FYI)
 <a id="videos"></a>
