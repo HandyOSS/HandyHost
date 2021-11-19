@@ -24,11 +24,16 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
 	arch_name="$(uname -m)"
 	 
 	if [ "${arch_name}" = "x86_64" ]; then
-	    if [ "$(sysctl -in sysctl.proc_translated)" = "1" ]; then
-	        homebrew_prefix_default=/opt/homebrew
-	    else
-	        homebrew_prefix_default=/usr/local
-	    fi 
+		which -s sysctl
+		if [[ $? != 0 ]] ; then
+		    homebrew_prefix_default=/usr/local
+		else 
+		    if [ "$(sysctl -in sysctl.proc_translated)" = "1" ]; then
+		        homebrew_prefix_default=/opt/homebrew
+		    else
+		        homebrew_prefix_default=/usr/local
+		    fi 
+		fi
 	fi
 	[ -s "$homebrew_prefix_default/opt/nvm/nvm.sh" ] && \. "$homebrew_prefix_default/opt/nvm/nvm.sh" > /dev/null && \
 	[ -s "$homebrew_prefix_default/opt/nvm/etc/bash_completion.d/nvm" ] && \. "$homebrew_prefix_default/opt/nvm/etc/bash_completion.d/nvm" > /dev/null
