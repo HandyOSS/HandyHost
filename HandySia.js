@@ -54,7 +54,7 @@ export class HandySia{
 				}
 				else{
 					console.log('starting healthcheck revival');
-					const logString = new Date()+' :: healthcheck is beginning';
+					const logString = new Date()+' :: healthcheck is beginning\n';
 					fs.appendFileSync(process.env.HOME+'/.HandyHost/siaData/healthcheck.log',logString,'utf8');
 					//first make sure theres not a zombie siad
 					const pkill = spawn('pkill',['-f','siad']);
@@ -66,7 +66,7 @@ export class HandySia{
 					})
 					pkill.on('close',()=>{
 						setTimeout(()=>{
-							const logString = new Date()+' :: healthcheck is restarting siad';
+							const logString = new Date()+' :: healthcheck is restarting siad\n';
 							fs.appendFileSync(process.env.HOME+'/.HandyHost/siaData/healthcheck.log',logString,'utf8');
 							_this.trySpawningSiad(true);
 						},90000)
@@ -115,7 +115,7 @@ export class HandySia{
 									});
 								}
 								if(wasFromHealthcheck){
-									const logString = new Date()+' :: healthcheck restarted siad';
+									const logString = new Date()+' :: healthcheck restarted siad\n';
 									fs.appendFileSync(process.env.HOME+'/.HandyHost/siaData/healthcheck.log',logString,'utf8');
 								}
 								this.initHealthCheck();
@@ -149,7 +149,7 @@ export class HandySia{
 									})
 								}
 								if(wasFromHealthcheck){
-									const logString = new Date()+' :: healthcheck restarted siad';
+									const logString = new Date()+' :: healthcheck restarted siad\n';
 									fs.appendFileSync(process.env.HOME+'/.HandyHost/siaData/healthcheck.log',logString,'utf8');
 								}
 								this.initHealthCheck();
@@ -208,7 +208,7 @@ export class HandySia{
 								})
 							}
 							if(wasFromHealthcheck){
-								const logString = new Date()+' :: healthcheck restarted siad';
+								const logString = new Date()+' :: healthcheck restarted siad\n';
 								fs.appendFileSync(process.env.HOME+'/.HandyHost/siaData/healthcheck.log',logString,'utf8');
 							}
 							this.initHealthCheck();
@@ -240,7 +240,7 @@ export class HandySia{
 							this.wallet.unlockWallet(data.value).then(data=>{
 								console.log('wallet unlock success');
 								if(wasFromHealthcheck){
-									const logString = new Date()+' :: healthcheck restarted siad';
+									const logString = new Date()+' :: healthcheck restarted siad\n';
 									fs.appendFileSync(process.env.HOME+'/.HandyHost/siaData/healthcheck.log',logString,'utf8');
 								}
 								this.initHealthCheck();
