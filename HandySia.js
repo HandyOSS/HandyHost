@@ -997,10 +997,14 @@ export class HandySia{
 				}
 				else{
 					this.handyUtils.encrypt(parsed.pw,true,'sc');
+					this.handyUtils.encrypt(parsed.pw,true,'healthcheckSC').then(loc=>{
+						process.env.SCAUTO = 'daemon_healthcheckSC';
+					});
 				}
 				
 				//set encrypted (with root's pubkey) unlock pass for root to pickup
 				console.log('did unlock');
+				this.initHealthCheck();
 				resolve();
 			});
 		})
