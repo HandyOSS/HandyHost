@@ -111,7 +111,7 @@ export class HandySia{
 								if(fs.existsSync(encrypted)){
 									fs.unlinkSync(encrypted);
 									this.handyUtils.encrypt(pass,true,'healthcheckSC').then(outpath=>{
-										process.env.SCAUTO = outpath;
+										process.env.SCAUTO = 'daemon_healthcheckSC';
 									});
 								}
 								if(wasFromHealthcheck){
@@ -198,7 +198,7 @@ export class HandySia{
 							if(fs.existsSync(encrypted)){
 								fs.unlinkSync(encrypted);
 								this.handyUtils.encrypt(pass,true,'healthcheckSC').then(outpath=>{
-									process.env.SCAUTO = outpath;
+									process.env.SCAUTO = 'daemon_healthcheckSC';
 								});
 							}
 							if(didJustUpdate){
