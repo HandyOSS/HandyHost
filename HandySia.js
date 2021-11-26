@@ -57,19 +57,23 @@ export class HandySia{
 					const logString = new Date()+' :: healthcheck is beginning\n';
 					fs.appendFileSync(process.env.HOME+'/.HandyHost/siaData/healthcheck.log',logString,'utf8');
 					//first make sure theres not a zombie siad
-					const pkill = spawn('pkill',['-f','siad']);
+					const pkill = spawn('pkill',['-9','siad']);
 					pkill.stdout.on('data',d=>{
 						console.log('pkill out',d.toString());
+						const pkout = new Date()+' pkill stdout '+d.toString();
+						fs.appendFileSync(process.env.HOME+'/.HandyHost/siaData/healthcheck.log',pkout,'utf8');
 					});
 					pkill.stderr.on('data',d=>{
 						console.log('pkill err',d.toString());
+						const pkout = new Date()+' pkill stderr '+d.toString();
+                                                fs.appendFileSync(process.env.HOME+'/.HandyHost/siaData/healthcheck.log',pkout,'utf8');
 					})
 					pkill.on('close',()=>{
 						setTimeout(()=>{
-							const logString = new Date()+' :: healthcheck is restarting siad\n';
+							const logString = new Date()+' :: pkill complete, healthcheck is restarting siad\n';
 							fs.appendFileSync(process.env.HOME+'/.HandyHost/siaData/healthcheck.log',logString,'utf8');
 							_this.trySpawningSiad(true);
-						},90000)
+						},120000)
 					})
 					//this.trySpawningSiad();
 				}
@@ -208,7 +212,8 @@ export class HandySia{
 								})
 							}
 							if(wasFromHealthcheck){
-								const logString = new Date()+' :: healthcheck restarted siad\n';
+								let logString = new Date()+' :: healthcheck restarted siad\n';
+								logString += 'sia wallet unlock output :: '+JSON.stringify(data)+'\n';
 								fs.appendFileSync(process.env.HOME+'/.HandyHost/siaData/healthcheck.log',logString,'utf8');
 							}
 							this.initHealthCheck();
