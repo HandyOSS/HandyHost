@@ -898,27 +898,48 @@ export class Wallet{
 							this.providerWasHalted = false;
 							if(fs.existsSync(process.env.HOME+'/.HandyHost/aktData/provider.pid')){
 								fs.unlinkSync(process.env.HOME+'/.HandyHost/aktData/provider.pid');
+								this.killAkashZombies(); //make double sure we killed the provider because sometimes we get zombies lingering...
 							}
 						}
 						else{
-							fs.appendFileSync(logsPath,"\n###########  RESTARTING PROVIDER ###########\n",'utf8');
-						
-							//accidental death, likely due to RPC errors
-							//keep things alive
-							this.envUtils.setEnv().then(()=>{
-								//ok we set the env
-								this.startProvider(params);
-							}).catch(e=>{
-								console.log('error setting new envs',e);
-								//try spawning again anyway
-								this.startProvider(params);
+							this.killAkashZombies().then(()=>{
+								//make fn sure we dont have multiple akash providers running
+								fs.appendFileSync(logsPath,"\n###########  RESTARTING PROVIDER ###########\n",'utf8');
+							
+								//accidental death, likely due to RPC errors
+								//keep things alive
+								this.envUtils.setEnv().then(()=>{
+									//ok we set the env
+									this.startProvider(params);
+								}).catch(e=>{
+									console.log('error setting new envs',e);
+									//try spawning again anyway
+									this.startProvider(params);
+								})
 							})
+							
 
 						}
 					})
 				});
 			});
 				
+		});
+	}
+	killAkashZombies(){
+		//for whatever reason sometimes process.kill wont kill akash
+		//so lets fn go nuclear on akash then...
+		return new Promise((resolve,reject)=>{
+			const s = spawn('pkill',['-9','akash']);
+			s.stdout.on('data',d=>{
+				resolve(d.toString());
+			});
+			s.stderr.on('data',d=>{
+				resolve(d.toString());
+			});
+			s.on('close',()=>{
+				resolve(true);
+			});
 		});
 	}
 	pauseProvider(){
@@ -962,6 +983,7 @@ export class Wallet{
 				//ok must laready be dead
 				resolve({success:true});
 			}
+			this.killAkashZombies(); //make sure we killed it.
 		})
 	}
 	createOrUpdateServerCertificate(params,wallet,providerHost,isGasEstimate){

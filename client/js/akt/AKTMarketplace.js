@@ -119,7 +119,14 @@ export class AKTMarketplace{
 				this.renderBidsPanel(data);
 			}
 		})
-		.catch((res)=>{ console.log('error submitting',res) });
+		.catch((res)=>{ 
+			console.log('error submitting',res) 
+			console.log('retrying');
+			setTimeout(()=>{
+				this.fetchBidsData(bidsState);
+			},500);
+			
+		});
 	}
 	fetchSingleOrder(owner,dseq,gseq,oseq){
 		return new Promise((resolve,reject)=>{
@@ -138,7 +145,12 @@ export class AKTMarketplace{
 			    body: JSON.stringify(queryParams)
 			}).then(d=>d.json()).then(data=>{
 				resolve(data);
-			});
+			}).catch(e=>{
+				console.log('fetch single order failed, retrying');
+				setTimeout(()=>{
+					this.fetchSingleOrder(owner,dseq,gseq,oseq);
+				},500)
+			})
 		});
 	}
 	fetchLeasesData(leasesState){
@@ -168,7 +180,13 @@ export class AKTMarketplace{
 				this.renderLeasesPanel(data);
 			}
 		})
-		.catch((res)=>{ console.log('error submitting',res) });
+		.catch((res)=>{ 
+			console.log('error submitting',res) 
+			console.log('retrying');
+			setTimeout(()=>{
+				this.fetchLeasesData(leasesState);
+			},500)
+		});
 	}
 	fetchOrdersData(){
 		const queryStr = JSON.stringify({page:this.pageNow,limit:this.orderLimit});
@@ -190,7 +208,13 @@ export class AKTMarketplace{
 				this.renderOrdersPanel(data);
 			}
 		})
-		.catch((res)=>{ console.log('error submitting',res) });
+		.catch((res)=>{ 
+			console.log('error submitting',res);
+			console.log('retrying');
+			setTimeout(()=>{
+				this.fetchOrdersData();
+			},500) 
+		});
 	}
 	getPagination$El(data){
 		let prevPage = '',nextPage = '';
@@ -389,7 +413,13 @@ export class AKTMarketplace{
 				}
 			
 			})
-			.catch((res)=>{ console.log('error submitting',res) });
+			.catch((res)=>{ 
+				console.log('error submitting',res);
+				console.log('retrying');
+				setTimeout(()=>{
+					this.getAllBidsForOrder(bid,backToDataset);
+				},500) 
+			});
 	}
 	cancelBid(bid){
 		/*
