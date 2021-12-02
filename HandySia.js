@@ -114,7 +114,7 @@ export class HandySia{
 								}
 								if(fs.existsSync(encrypted)){
 									fs.unlinkSync(encrypted);
-									this.handyUtils.encrypt(pass,true,'healthcheckSC').then(outpath=>{
+									this.handyUtils.encrypt(pass,true,'healthcheckSC',true).then(outpath=>{
 										process.env.SCAUTO = 'daemon_healthcheckSC';
 									});
 								}
@@ -201,7 +201,7 @@ export class HandySia{
 							console.log('wallet unlock success');
 							if(fs.existsSync(encrypted)){
 								fs.unlinkSync(encrypted);
-								this.handyUtils.encrypt(pass,true,'healthcheckSC').then(outpath=>{
+								this.handyUtils.encrypt(pass,true,'healthcheckSC',true).then(outpath=>{
 									process.env.SCAUTO = 'daemon_healthcheckSC';
 								});
 							}
@@ -1002,7 +1002,7 @@ export class HandySia{
 				}
 				else{
 					this.handyUtils.encrypt(parsed.pw,true,'sc');
-					this.handyUtils.encrypt(parsed.pw,true,'healthcheckSC').then(loc=>{
+					this.handyUtils.encrypt(parsed.pw,true,'healthcheckSC',true).then(loc=>{
 						process.env.SCAUTO = 'daemon_healthcheckSC';
 					});
 				}
