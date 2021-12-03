@@ -9,6 +9,32 @@ export class AKTUtils{
 		this.k8sUtils = k8sUtils;
 		this.walletUtils = walletUtils
 	}
+	removeDanglingContainers(){
+		return new Promise((resolve,reject)=>{
+			const configJSON = JSON.parse(fs.readFileSync(this.configFilePath,'utf8'));
+			const args = [configJSON.provider.providerWalletAddress];
+			const s = spawn('./removeDanglingContainers.sh',args,{shell:true,env:process.env,cwd:process.env.PWD});
+			let out = '';
+			let err = '';
+			s.stdout.on('data',d=>{
+				console.log('remove dangling containers out',d.toString());
+				out += d.toString();
+			});
+			s.stderr.on('data',d=>{
+				console.log('remove dangling containers err',d.toString());
+				err += d.toString();
+			});
+			s.on('close',()=>{
+				console.log('removed dangling containers done')
+				if(err != ''){
+					reject(err);
+				}
+				else{
+					resolve(out);
+				}
+			});
+		});
+	}
 	getHosts(existingConfigData){
 		//get hosts on my local network
 		if(typeof this.macLookup == "undefined"){
