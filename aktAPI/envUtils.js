@@ -143,11 +143,27 @@ export class EnvUtils{
 					if(n.indexOf('rpc.akash.forbole.com') >= 0){
 						return false;
 					}
+					if(n.indexOf(process.env.AKASH_NODE) >= 0){
+						//dont use the current node that just failed
+						return false;
+					}
 					return true;
-				})
-				// /console.log('nodelist',nodeList);
-				//get a random node
-				resolve(nodeList[Math.floor(Math.random() * (nodeList.length-1))]);
+				});
+				const handyHostNodes = [
+					'http://rpc-1.handyhost.computer:26657'/*,
+					'http://rpc-2.handyhost.computer:26657'*/
+				];
+				if(handyHostNodes.indexOf(process.env.AKASH_NODE) == -1){
+					//first try one our our own rpc nodes.
+					//however if we had a failure, choose another
+					resolve(handyHostNodes[Math.floor(Math.random() * (handyHostNodes.length-1))]);
+				}
+				else{
+					// /console.log('nodelist',nodeList);
+					//get a random node
+					resolve(nodeList[Math.floor(Math.random() * (nodeList.length-1))]);
+				}
+				
 			}).catch(e=>{
 				reject(e);
 			})
