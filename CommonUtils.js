@@ -230,10 +230,10 @@ export class CommonUtils{
 		  	
 		}
 	}
-	encrypt(value,isForDaemon,daemonServiceName){
+	encrypt(value,isForDaemon,daemonServiceName,isForHealthcheck){
 		return new Promise((resolve,reject)=>{
 			
-			const pubKeyName = isForDaemon ? 'daemon.pub' : 'handyhost.pub';
+			const pubKeyName = isForDaemon ? ( isForHealthcheck ? 'handyhost.pub' : 'daemon.pub' ) : 'handyhost.pub';
 			const basePath = process.env.HOME+'/.HandyHost/keystore/';
 			const pubPath = basePath+pubKeyName;
 			const encryptedOutPath = isForDaemon ? basePath+'daemon_'+daemonServiceName : basePath+'k'+(new Date().getTime());
