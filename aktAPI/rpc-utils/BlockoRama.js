@@ -1,8 +1,35 @@
 const fs = require('fs');
 const http = require('http');
 const redis = require('redis');
+const redisCleanup = require(__dirname+'/CleanupRedis.js');
 
 class BlockoRama{
+	/*
+	🥳🥳🥳 Block o Rama is a block party 🥳🥳🥳
+	
+	We go thru all blocks in the chain 1k at a time and ingest any applicable types to redis. We check every 60s for new blocks => push to redis
+	
+	Ultimately this replaces the often faulty RPC calls for:
+	akash query market lease list --limit 1 --output json --provider $wallet --count-total --state active
+	akash query market lease list --limit 1 --output json --provider $wallet --count-total --state open
+	akash query market lease list --limit 1 --output json --provider $wallet --count-total --state closed
+	akash query market lease list --limit 1 --output json --provider $wallet --count-total --state lost
+
+	These aggregate queries, when called on-chain:
+	1. Eat up 2 CPU's to run per API call
+	2. Get queued on the rpc node
+	3. (default) timeouts at 10s, but also when 2 users hit an RPC node and queue up 4-5 of these each, all requests timeout
+	4. Are called every 90s by anybody running a HandyHost dashboard for akash...
+
+	So what we do in Block o Rama is put all the aggregates into a redis in-memory db for fast lookups.
+	This way a provider can get sub-second responses for aggregates thru one endpoint (./redisAggregatesEndpoint.js => getAggregates.lua)
+
+	Conveniently, we have also bundled this into the daemon that runs/keeps akash alive in ./keepAkashAlive.js
+	Bonus: We have also build a Dockerfile so we can containerize an RPC node. Now we can deploy RPC nodes on akash
+	Double Bonus: Any of those nodes will have this same redis fast aggregates setup stood up in with the RPC node
+	Triple Bonus: That riffraff where akash v0.14+ dies syncing on block 969, v0.10.2 dies at block 455200, is automated with our scripts.
+	*/
+
 	constructor(){
 		this.restBase = 'http://127.0.0.1:1317/';
 		this.redisHeight = 0;
@@ -41,6 +68,7 @@ class BlockoRama{
 					}
 					else{
 						resolve({chain:this.chainHeight,redis:this.redisHeight});
+						redisCleanup.cleanup();
 					}
 				})
 			})
@@ -91,15 +119,9 @@ class BlockoRama{
 					catch(e){
 						console.log('no json response');
 					}
-					//console.log('done with',height);
-					//if(height+1 < this.chainHeight){
-						/*if(height % 100 == 0){
-							console.log('done with',height);
-						}*/
-						//this.harvest(height+1);
-						//console.log('resolve json',height,json);
-						resolve({height,json});
-					//}
+					
+					resolve({height,json});
+					
 
 				});
 			});
@@ -120,14 +142,11 @@ class BlockoRama{
 		}
 		for(let i=height;i<nextHeight;i++){
 			this.harvest(i).then((obj)=>{
-				//console.log('data',obj.json,obj.height);
 				this.res[obj.height] = obj.json;
 				doneCount += 1;
-				//console.log('donecount',doneCount);
 				if(doneCount == blockDiff){
 					console.log('done with redis sync, next group',nextHeight);
 					Object.keys(this.res).map(h=>{
-						//console.log('this.res.h',h,this.res[h])
 						if(typeof this.res[h] == "undefined"){
 							return;
 						}
@@ -135,10 +154,14 @@ class BlockoRama{
 						if(typeof this.res[h].txs != "undefined"){
 							this.res[h].txs.map(tx=>{
 								
-								if(tx.codespace == 'sdk' && tx.code == 11){
-									//fees failure
+								if(tx.codespace == 'sdk' && tx.code != 32/* && tx.code == 11*/){
+									//32 == "account sequence mismatch, expected 1218, got 1223: incorrect account sequence"
+									//and thus 32 will go thru.
+									//fees, funds or other failure
+									
 									return;
 								}
+								
 								tx.tx.value.msg.map((msg,i)=>{
 									let type = msg.type;
 									//this.types[type] = true;
@@ -149,15 +172,6 @@ class BlockoRama{
 										this.addToRedis(msg,i,type);
 
 									}
-									/*if(JSON.stringify(msg).indexOf('akash1wfhp0lgtvcfn4xxfmyd7kekv68zwtp72kstql7') >= 0 && JSON.stringify(msg).indexOf('3130888') >= 0){
-										console.log('!!!!!!!!!message from string',JSON.stringify(msg));
-										//console.log('ALL TXES',h,JSON.stringify(this.res[h],null,2))
-									}*/
-									/*else{
-										if(JSON.stringify(msg).indexOf('akash19c9avvw2cfvwe2lz7e4cfzv5f7c7hpqxsrkjgr') >= 0 && JSON.stringify(msg).indexOf('3123181') >= 0){
-											console.log('!!!!!!!!!mesage from string',JSON.stringify(msg));
-										}
-									}*/
 								})
 								
 
@@ -166,7 +180,6 @@ class BlockoRama{
 						}
 					})
 					delete this.res;
-					//console.log('unique types',Object.keys(this.uniqueTypes));
 					this.doGroup(nextHeight,resolveWhenSynced);
 				}
 			})
@@ -205,21 +218,20 @@ class BlockoRama{
 		}
 		if(type == 'market/create-lease'){
 			this.redis.set('lease_'+orderID,provider);
-			//this.openLeases[orderID] = provider;
+			//make sure redis knows this is a lease
 		}
 		
 		if(type == 'market/create-bid'){
-
+			//create a bid in our sorted set for this provider's activity
 			this.redis.zAdd(provider,{score:1,value:orderID},(err,res)=>{});
 		}
 		else{
 			let val;
 			this.redis.get('lease_'+orderID).then(leaseProvider=>{
-			//const leaseProvider = this.openLeases[orderID];
 				if(leaseProvider != null){
-					
 					if(type == 'market/create-lease'){
 					//ok set everybody != the provider to lost status
+					//its likely redundant-ish with a close-bid but also we only get a close-bid event for everybody, not a lost.
 						this.redis.zRange(orderID,'0','-1','WITHSCORES').then((rangeResponse)=>{
 							rangeResponse.map(providerID=>{
 								if(providerID != leaseProvider){
@@ -234,7 +246,6 @@ class BlockoRama{
 					}
 					if(type == 'market/close-lease' || type == 'deployment/close-deployment'){
 						//score=4 is closed lease that provider won
-						
 						this.redis.zRange(orderID,'0','-1','WITHSCORES').then((rangeResponse)=>{
 							rangeResponse.map(providerID=>{
 								if(providerID != leaseProvider){
@@ -246,7 +257,6 @@ class BlockoRama{
 								this.redis.zAdd(providerID,{score:val,value:orderID},(err,res)=>{});
 							});
 						});
-						//this.redis.zAdd(d,{score:4,value:orderID},(err,res)=>{});
 					}
 				}
 				else{
@@ -259,10 +269,7 @@ class BlockoRama{
 							rangeResponse.map(providerID=>{
 								this.redis.zAdd(providerID,{score:0,value:orderID},(err,res)=>{});
 							});
-							//cleanup
-							//delete this.openLeases[orderID];
-							//this.redis.del(orderID);
-							//this.redis.del('lease_'+orderID);
+							this.redis.zAdd('toRemove',{value:orderID,score:1}); //mark for cleanup
 
 						});
 					}
