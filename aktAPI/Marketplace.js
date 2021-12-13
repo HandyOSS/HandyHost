@@ -164,9 +164,9 @@ export class Marketplace{
 			const now = Math.floor(new Date().getTime()/1000);
 			if(typeof this.lastAggs != "undefined"){
 				//check age of last aggregate
-				//we cache for the last minute because these take forrreeevvverrrr to load from rpc..
+				//we cache for the last 20 minutes because these are taxing on the rpc server. TODO: redis in front of rpc for fast stats lookups...
 				let lastAggTime = this.lastAggs.time;
-				if((now - lastAggTime) < 90){
+				if((now - lastAggTime) < 60*20){
 					resolve(this.lastAggs.data);
 					return;
 				}
