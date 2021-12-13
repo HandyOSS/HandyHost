@@ -133,6 +133,10 @@ export class EnvUtils{
 	getRPCNode(){
 		return new Promise((resolve,reject)=>{
 			this.queryHTTPSResponse(`${this.httpsPathBase}/rpc-nodes.txt`).then(nodes=>{
+				//ok so according to this post: https://forum.akash.network/t/tips-rpc-endpoint-and-api-endpoint-address-list/1006
+				//there are a few nodes that are more stable than others
+				//most of the 135.181* are busts so we'll cut them out
+				
 				const nodeList = nodes.split('http').filter(n=>{
 					return n.trim().length > 0;
 				}).map(n=>{
@@ -141,6 +145,9 @@ export class EnvUtils{
 					//forbole is returning http responses to https client
 					//breaking all kinds of shite
 					if(n.indexOf('rpc.akash.forbole.com') >= 0){
+						return false;
+					}
+					if(n.indexOf('135.181') >= 0){
 						return false;
 					}
 					if(n.indexOf(process.env.AKASH_NODE) >= 0){

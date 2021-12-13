@@ -360,6 +360,7 @@ export class CommonUtils{
 	}
 	isAuthEnabled(){
 		//check if auth is enabled
+		return true; //enable auth always
 		const settingsPath = process.env.HOME+'/.HandyHost/authSettings.json';
 		let isEnabled = false;
 		if(fs.existsSync(settingsPath)){
@@ -408,7 +409,7 @@ export class CommonUtils{
 		if(!fs.existsSync(settingsPath)){
 			//init default settings
 			const settings = {
-				enabled:false,
+				enabled:true,
 				initialPassword:'changemeplease',
 				hasInitialized:false,
 				tokenTTL:'30d'
@@ -418,7 +419,8 @@ export class CommonUtils{
 		else{
 			//settings exist, check if auth is enabled or needs enabled
 			let settings = JSON.parse(fs.readFileSync(settingsPath,'utf8'));
-			if(settings.enabled && !settings.hasInitialized){
+			//enable auth always
+			if(/*settings.enabled && */!settings.hasInitialized){
 				fs.writeFileSync(jwtPath,jwtKeyDefault,'utf8'); //bounce the jwtKey in case we were trying to lock out other users
 				const jwtKey = fs.readFileSync(jwtPath,'utf8').trim();
 				//somebody just turned on auth, lets enable it
