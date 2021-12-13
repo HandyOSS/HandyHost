@@ -1,5 +1,5 @@
 const redis = require('redis');
-
+const fs = require('fs');
 const luaScript = fs.readFileSync(__dirname+'/cleanup.lua','utf8');
 
 function cleanup(){

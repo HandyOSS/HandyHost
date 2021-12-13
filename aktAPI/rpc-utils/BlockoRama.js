@@ -1,5 +1,9 @@
 const fs = require('fs');
 const http = require('http');
+const decodeTxRaw = require('@cosmjs/proto-signing').decodeTxRaw;
+const fromBase64 = require('@cosmjs/encoding').fromBase64;
+const crypto = require('crypto');
+const spawn = require('child_process').spawn;
 const redis = require('redis');
 const redisCleanup = require(__dirname+'/CleanupRedis.js');
 
@@ -119,8 +123,28 @@ class BlockoRama{
 					catch(e){
 						console.log('no json response');
 					}
+					//check if this block is legit or not
+					if(typeof json.error != "undefined"){
+						if(json.error.indexOf('this transaction cannot be displayed via legacy REST endpoints') >= 0){
+							//ok this is too big for Amino serialization.
+							//so instead we'll get the raw txes/query tx individually....
+							/*
+							Example: curl http://localhost:1317/txs?tx.height=3146180
+							this transaction cannot be displayed via legacy REST endpoints, because it does not support Amino serialization. 
+							Please either use CLI, gRPC, gRPC-gateway, or directly query the Tendermint RPC endpoint to query this transaction. 
+							The new REST endpoint (via gRPC-gateway) is /cosmos/tx/v1beta1/txs. Please also see theREST endpoints migration guide at https://docs.cosmos.network/master/migrations/rest.html for more info
+							*/
+							this.queryRawTxes(height,resolve);
+						}
+						else{
+							console.log('block err other',json.error,height);
+							resolve({height,json})
+						}
+					}
+					else{
+						resolve({height,json});
+					}
 					
-					resolve({height,json});
 					
 
 				});
@@ -129,6 +153,122 @@ class BlockoRama{
 		})
 		
 		
+	}
+	queryRawTxes(height,resolveDone){
+		const spawnRaw = spawn('/usr/akash/bin/akash',['query','block',height],{shell:true});
+		let rawBlock = '';
+		spawnRaw.stdout.on('data',d=>{
+			rawBlock += d.toString();
+		})
+		spawnRaw.stderr.on('data',d=>{
+			console.log('rawtxerr',d.toString());
+		})
+		spawnRaw.on('close',()=>{
+			let block = {};
+			try{
+				block = JSON.parse(rawBlock);
+			}
+			catch(e){
+				console.log('no json response for raw tx query',rawBlock);
+			}
+			if(typeof block.block == "undefined"){
+				resolveDone({height,json:block})
+			}
+			else{
+				//ok look thru txes for anything we should harvest individually..
+				let toHarvest = [];
+				if(block.block.data.txs != null){
+					block.block.data.txs.map(txRaw=>{
+						const data = fromBase64(txRaw)
+						let tx = decodeTxRaw(data);
+						const txID = crypto.createHash("sha256").update(data).digest('hex');
+						let shouldHarvest = false;
+
+						tx.body.messages.map(msg=>{
+							/*if(msg.typeUrl.indexOf('akash.deployment') >= 0){
+								shouldHarvest = true;
+							}
+							if(msg.typeUrl.indexOf('akash.market') >= 0){
+								shouldHarvest = true;
+							}
+							if(msg.typeUrl.indexOf('akash.provider') >= 0){
+								shouldHarvest = true;
+							}*/
+							if(msg.typeUrl.indexOf('akash') >= 0){
+								shouldHarvest = true;
+							}
+						})
+						if(shouldHarvest){
+							toHarvest.push(txID);
+						}
+						//tx.body.messages[0].value = Buffer.from(tx.body.messages[0].value).toString()
+						if(typeof tx.signatures[0] != "undefined"){
+							tx.signatures[0] = Buffer.from(tx.signatures[0]).toString()
+						}
+					});
+				}
+				if(toHarvest.length == 0){
+					resolveDone({height,json:{}});
+				}
+				else{
+					//ok lets get individual txes then...
+					this.harvestIndividualTxes(toHarvest,block,height,resolveDone);
+				}
+			}
+
+		})
+	}
+	harvestIndividualTxes(txIDs,block,height,resolveDone){
+		let finished = 0;
+		const total = txIDs.length;
+		let output = new Array(total);
+		txIDs.map((txID,i)=>{
+			this.fetchIndividualTX(txID,i,height).then((data)=>{
+				output[data.txI] = data.tx;
+				finished += 1;
+				if(finished == total){
+					//ok we're done here
+					//console.log('done harvesting txes',height);
+					let txOut = {
+						txs:output
+					}
+					//block.block.data.txs = output;
+					/*const txStr = JSON.stringify(txOut);
+					if(txStr.indexOf('akash19jsyw4e2mvdk6tdpwzgghf9y9dljmfgwxg2xtd') >= 0 && (txStr.indexOf('akash14agjkwrne74ayv3j30xepx776dveyunmzv92ts') >= 0)){
+						console.log('individuals',height,JSON.stringify(txOut,null,2));
+					}*/
+					resolveDone({height,json:txOut});
+				}
+			})
+		})
+	}
+	fetchIndividualTX(txID,i,height){
+		return new Promise((resolve,reject)=>{
+			const spawnTx = spawn('/usr/akash/bin/akash',['query','tx',txID,'--output','json'],{shell:true})
+			let tx = '';
+			spawnTx.stdout.on('data',d=>{
+				tx += d.toString();
+			})
+			spawnTx.stderr.on('data',d=>{
+				console.log('err fetching tx',d.toString(),height,txID);
+			})
+			spawnTx.on('close',()=>{
+				let json = {};
+				try{
+					json = JSON.parse(tx);
+				}
+				catch(e){
+					console.log('error parsing tx',txID,height,e,tx);
+				}
+				if(typeof json.tx != "undefined"){
+					json.tx.value = {
+						msg:[]
+					};
+				}
+				//console.log('done fetching indiv tx',tx,txID);
+				resolve({tx:json,txI:i});
+			})
+		})
 	}
 	doGroup(height,resolveWhenSynced){
 		let doneCount = 0;
@@ -139,6 +279,7 @@ class BlockoRama{
 			//console.log('FULLY SYNCED AT BLOCK',this.chainHeight);
 			this.redisHeight = height;
 			resolveWhenSynced({redis:this.redisHeight,chain:this.chainHeight});
+			console.log('unique types',this.uniqueTypes);
 		}
 		for(let i=height;i<nextHeight;i++){
 			this.harvest(i).then((obj)=>{
@@ -153,23 +294,58 @@ class BlockoRama{
 						this.redis.set('latestheight',h);
 						if(typeof this.res[h].txs != "undefined"){
 							this.res[h].txs.map(tx=>{
-								
-								if(tx.codespace == 'sdk' && tx.code != 32/* && tx.code == 11*/){
+								/*if(typeof tx.codespace != "undefined"){
+									if(JSON.stringify(tx).indexOf('akash14agjkwrne74ayv3j30xepx776dveyunmzv92ts') >= 0){
+										console.log('bust tx',JSON.stringify(tx,null,2));
+									}
+									return;
+								}
+								if(tx.codespace == 'sdk' && tx.code != 32){
 									//32 == "account sequence mismatch, expected 1218, got 1223: incorrect account sequence"
 									//and thus 32 will go thru.
 									//fees, funds or other failure
 									
 									return;
+								}*/
+								/*const txStr = JSON.stringify(tx);
+								if(txStr.indexOf('akash19jsyw4e2mvdk6tdpwzgghf9y9dljmfgwxg2xtd') >= 0 && (txStr.indexOf('akash14agjkwrne74ayv3j30xepx776dveyunmzv92ts') >= 0)){
+									console.log('bust tx???',JSON.stringify(tx,null,2));
+								}*/
+								
+								if(typeof tx.codespace != "undefined"){
+									if(tx.codespace == 'market'){
+										const blockCodes = [23,24,12];
+										if(blockCodes.indexOf(tx.code) >= 0){
+											return;
+										}
+										//return;
+										
+									}
+
+									if(tx.codespace == 'sdk'){
+										const blockCodes = [5,11];
+										if(blockCodes.indexOf(tx.code) >= 0){
+											return;
+										}
+										//return;
+									}
 								}
 								
-								tx.tx.value.msg.map((msg,i)=>{
+								const events = this.manuallyParseCloseEventsFromTx(tx).concat(tx.tx.value.msg);
+								/*if(txStr.indexOf('akash19jsyw4e2mvdk6tdpwzgghf9y9dljmfgwxg2xtd') >= 0 && (txStr.indexOf('akash14agjkwrne74ayv3j30xepx776dveyunmzv92ts') >= 0)){
+									console.log('bust tx???',JSON.stringify(events,null,2));
+								}*/
+								//tx.tx.value.msg.map((msg,i)=>{
+								events.map((msg,i)=>{
 									let type = msg.type;
 									//this.types[type] = true;
 									this.uniqueTypes[type] = true;
 									//console.log('types',type);
+									
+									
 									if(this.eventTargets[type]){
 										
-										this.addToRedis(msg,i,type);
+										this.addToRedis(msg,i,type,tx);
 
 									}
 								})
@@ -180,10 +356,70 @@ class BlockoRama{
 						}
 					})
 					delete this.res;
+					//console.log('unique types',Object.keys(this.uniqueTypes));
 					this.doGroup(nextHeight,resolveWhenSynced);
 				}
 			})
 		}
+	}
+	manuallyParseCloseEventsFromTx(tx){
+		//ok it seems that sometimes not all close types of events get a message created (like for close lease etc)
+		//so we'll manually parse it out.
+		let messages = [];
+		
+		function generateEventTemplate(){
+			return {
+				type:'',
+				value:{
+					id:{}
+				}
+			};
+		}
+		if(tx.logs && typeof tx.logs == 'object'){
+			tx.logs.map(logType=>{
+				if(typeof logType.events != "undefined"){
+					logType.events.map(event=>{
+						if(event.type == 'akash.v1'){
+							let currentEvent;// = generateEventTemplate();
+							event.attributes.map(attr=>{
+								let key = attr.key;
+								let value = attr.value;
+								if(key == 'module'){
+									if(typeof currentEvent == 'undefined'){
+										currentEvent = generateEventTemplate();
+									}
+									else{
+										messages.push(currentEvent);
+										currentEvent = generateEventTemplate();
+									}
+									currentEvent.type += value;
+								}
+								else if(key == 'action'){
+									
+		  							let v = value;
+		  							if(v == 'bid-closed'){
+		  								v = 'close-bid';
+		  							}
+		  							if(v == 'lease-closed'){
+		  								v = 'close-lease'
+		  							}
+		  							if(v == 'deployment-closed'){
+		  								v = 'close-deployment'
+		  							}
+									currentEvent.type += '/'+v;
+								}
+								else{
+									currentEvent.value.id[key] = value;
+								}
+							});
+							messages.push(currentEvent);
+						}
+					});
+				}
+			});
+		}
+		return messages;
+		
 	}
 	getIDsFromTXPayload(msg){
 		let provider,owner,dseq,oseq,gseq,orderID;
@@ -207,9 +443,22 @@ class BlockoRama{
 		orderID = `${owner}/${dseq}`///${gseq}/${oseq}
 		return {orderID,provider}
 	}
-	addToRedis(msg,i,type){
+	addToRedis(msg,i,type,ogTX){
 		
 		const {orderID,provider} = this.getIDsFromTXPayload(msg);
+		/*if(provider == 'akash14agjkwrne74ayv3j30xepx776dveyunmzv92ts'){
+			//console.log('create!',JSON.stringify(ogTX,null,2));
+			let targets = [
+				'akash19jsyw4e2mvdk6tdpwzgghf9y9dljmfgwxg2xtd/3146052',
+				'akash19jsyw4e2mvdk6tdpwzgghf9y9dljmfgwxg2xtd/3148288',
+				'akash1yc3lnkh0fde6k9zu6kwv78wa552wrc3zv79vgu/3216364',
+				'akash158rrfryuh08pnr6ka5t55w2utegwwlqjakvgpn/3782495',
+				'akash1cduzr54kdle453lzt28nxnf99ed4tue8l97lvy/3738303'
+			]
+			if(targets.indexOf(orderID) >= 0){
+				console.log('target!!',JSON.stringify(ogTX,null,2));
+			}
+		}*/
 		if(type != 'deployment/close-deployment' && type != 'market/close-lease' && typeof provider != "undefined"){
 			//let zAddval = 1;
 			this.redis.zAdd(orderID,{score:1,value:provider},(err,result)=>{
