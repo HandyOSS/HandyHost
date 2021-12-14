@@ -1,0 +1,28 @@
+Steps to get RPC node launched:
+https://forum.akash.network/t/syncing-an-archive-node/2562
+Start the akash sync with 0.10.2 until block 455200, then update to latest akash and finish the sync (7 days probably).
+
+Manual instructions::
+
+sudo apt install redis 
+
+Install nodejs:
+curl -sL https://deb.nodesource.com/setup_16.x -o nodesource_setup.sh
+chmod +x nodesource_setup.sh
+sudo ./nodesource_setup.sh
+sudo apt install nodejs -y
+
+npm install -g forever
+npm install redis
+
+run the forever daemon on start of the machine in a cron job
+
+forever start --pidFile /usr/akash/forever.pid -l /usr/akash/forever.log -a /usr/akash/keepAkashAlive.js
+
+
+
+#### docker notes
+
+docker build -t akashrpc -f Dockerfile .
+
+docker run -p 26646:26646 -p 26647:26647 -p 26648:26648 -p 4040:4040 -p 9091:9091 -p 26659:26659 --expose 26646 --expose 26647 --expose 9091 --expose 26659 --name akashRPC -td akashrpc
