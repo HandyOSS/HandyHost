@@ -529,4 +529,37 @@ export class CommonUtils{
 		});
 		
 	}
+	getLocalIPRange(){
+		return new Promise((resolve,reject)=>{
+			let getIPCommand;
+			let getIPOpts;
+			let ipCommand;
+			let ipRangeOut;
+			
+			if(process.platform == 'darwin'){
+				getIPCommand = 'ipconfig';
+				getIPOpts =  ['getifaddr', 'en0'];
+			}
+			if(process.platform == 'linux'){
+				//hostname -I [0]
+				getIPCommand = 'hostname';
+				getIPOpts = ['-I'];
+			}
+
+			ipCommand = spawn(getIPCommand,getIPOpts); 
+			ipCommand.stdout.on('data',d=>{
+				ipRangeOut = d.toString('utf8').trim();
+			});
+			ipCommand.on('close',()=>{
+				if(process.platform == 'linux'){
+					ipRangeOut = ipRangeOut.split(' ')[0];
+				}
+				ipRangeOut = ipRangeOut.split('.').slice(0,-1).join('.')
+				ipRangeOut += '.0/24';
+				console.log('ip range ',ipRangeOut);
+				resolve(ipRangeOut);
+			});
+		})
+		
+	}
 }

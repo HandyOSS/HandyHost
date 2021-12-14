@@ -613,6 +613,32 @@ export class DVPNSetup{
 			}
 		}
 	}
+	redlistIP(){
+		//iptables rules for wireguard
+		//setup for 0.5.2: provider can block traffic
+		this.utils.getLocalIPRange().then(ipRange=>{
+			const args = [
+				'exec',
+				'-i',
+				'handyhost-dvpn-node',
+				'sh',
+				'-c',
+				'"iptables -I FORWARD -i wg0 -d '+ipRange+' -j REJECT"'
+			];
+			console.log('rule val',args);
+			const rule = spawn('docker',args,{shell:true,env:process.env,cwd:process.env.PWD});
+			rule.stdout.on('data',d=>{
+				console.log('rule stdout',d.toString());
+			})
+			rule.stderr.on('data',d=>{
+				console.log('rule stderr',d.toString());
+			})
+			rule.on('close',()=>{
+				console.log('iptables rule impl..')
+			})
+			//docker exec -ti handyhost-dvpn-node sh -c '"iptables -I FORWARD -i wg0 -d '+ipRange+' -j REJECT"'
+		})
+	}
 	launchDVPN(pw,socketIONamespaces){
 		return new Promise((resolve,reject)=>{
 			this.getPorts().then(ports=>{
@@ -621,6 +647,8 @@ export class DVPNSetup{
 				const udp = ports.wireguard;
 				const args = [
 					'run', 
+					'--name',
+					'handyhost-dvpn-node',
 					'--rm',
 					'--interactive' ,
 					'--volume', `${process.env.HOME}/.sentinelnode:/root/.sentinelnode` ,
@@ -645,6 +673,9 @@ export class DVPNSetup{
 				
 				const s = spawn('docker',args,{shell:true,env:process.env,cwd:process.env.PWD,detached:true});
 				s.stdin.write(`${pw}\n`);
+				setTimeout(()=>{
+					this.redlistIP();
+				},5000);
 				s.stdout.on('data',d=>{
 					Object.keys(socketIONamespaces).map(serverName=>{
 						socketIONamespaces[serverName].namespace.to('dvpn').emit('logs',d.toString());
