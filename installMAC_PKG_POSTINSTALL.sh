@@ -1,7 +1,5 @@
 #!/bin/bash
 
-
-
 #mac installer
 USERNAME="$(stat -f '%Su' $HOME)"
 USERGROUP="$(id -gn $USERNAME)"
@@ -10,6 +8,7 @@ echo "USER ${USERNAME}, GROUP ${USERGROUP}, HOME ${USERHOME}"
 
 PYTHON="$(which python3)"
 
+profile_file="$HOME/.bash_profile" #default
 if [[ ! -s "$HOME/.bash_profile" && -s "$HOME/.profile" ]] ; then
   profile_file="$HOME/.profile"
 else
@@ -20,6 +19,11 @@ if [[ -s "$HOME/.zshrc" ]] ; then
 fi
 if [[ -s "$HOME/.zprofile" ]] ; then
 	profile_file="$HOME/.zprofile"
+fi
+
+echo "SHELL IS: $SHELL"
+if [ $SHELL = "/bin/zsh" ] ; then
+	profile_file="$HOME/.zshrc"
 fi
 
 source $profile_file
@@ -39,40 +43,53 @@ if [[ -s "$USERHOME/.HandyHost/handyhost.pid" ]] ; then
 		kill $HANDYHOSTPID
 	fi
 fi
+if [[ -s "$USERHOME/.HandyHost/handyhostDaemon.pid" ]] ; then
+	HANDYHOSTPID="$(cat $USERHOME/.HandyHost/handyhostDaemon.pid)"
+	if ps -p $HANDYHOSTPID > /dev/null
+	then
+		echo "###### STOPPING EXISTING HANDYHOST ######" && \
+		kill $HANDYHOSTPID
+	fi
+fi
 
 ###
 if [ "${arch_name}" = "x86_64" ]; then
-    if [ "$(sysctl -in sysctl.proc_translated)" = "1" ]; then
-    		##its still arm64, emulated to x86_64......
-        homebrew_prefix_default=/opt/homebrew
-			  if ! grep -q 'eval "$(/opt/homebrew/bin/brew shellenv)"' "${profile_file}" ; then
-				  echo "###Editing ${profile_file} to add $homebrew_prefix_default/bin variables###"
-				  echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> "${profile_file}"
-				  source $profile_file
-				fi
-    else
-        homebrew_prefix_default=/usr/local
-    fi 
+	which -s sysctl
+	if [[ $? != 0 ]] ; then
+	    homebrew_prefix_default=/usr/local
+	else 
+		if [ "$(sysctl -in sysctl.proc_translated)" = "1" ]; then
+	    		##its still arm64, emulated to x86_64......
+	        homebrew_prefix_default=/opt/homebrew
+				 #  if ! grep -q 'eval "$(/opt/homebrew/bin/brew shellenv)"' "${profile_file}" ; then
+					#   echo "###Editing ${profile_file} to add $homebrew_prefix_default/bin variables###"
+					#   echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> "${profile_file}"
+					#   source $profile_file
+					# fi
+	    else
+	        homebrew_prefix_default=/usr/local
+	    fi
+	fi 
 fi
 
 if [ "${arch_name}" = "arm64" ]; then
 	homebrew_prefix_default=/opt/homebrew
-  if ! grep -q 'eval "$(/opt/homebrew/bin/brew shellenv)"' "${profile_file}" ; then
-	  echo "###Editing ${profile_file} to add $homebrew_prefix_default/bin variables###"
-	  echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> "${profile_file}"
-	  source $profile_file
-	fi
+ #  if ! grep -q 'eval "$(/opt/homebrew/bin/brew shellenv)"' "${profile_file}" ; then
+	#   echo "###Editing ${profile_file} to add $homebrew_prefix_default/bin variables###"
+	#   echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> "${profile_file}"
+	#   source $profile_file
+	# fi
 fi
 ###
 
 if [[ "$(uname -m)" == "arm64" ]]
 then
   homebrew_prefix_default=/opt/homebrew
-  if ! grep -q 'eval "$(/opt/homebrew/bin/brew shellenv)"' "${profile_file}" ; then
-	  echo "###Editing ${profile_file} to add $homebrew_prefix_default/bin variables###"
-	  echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> "${profile_file}"
-	  source $profile_file
-	fi
+ #  if ! grep -q 'eval "$(/opt/homebrew/bin/brew shellenv)"' "${profile_file}" ; then
+	#   echo "###Editing ${profile_file} to add $homebrew_prefix_default/bin variables###"
+	#   echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> "${profile_file}"
+	#   source $profile_file
+	# fi
 else
   homebrew_prefix_default=/usr/local
 fi
@@ -96,8 +113,9 @@ echo "########## Installing HandyHost Dependencies... ##########"
 #     echo "Command Line Developer Tools are already installed!"
 # fi
 
-which -s brew
-if [[ $? != 0 ]] ; then
+#command -v brew
+#if [[ $? != 0 ]] ; then
+if [[ ! -s "$homebrew_prefix_default/bin/brew" ]] ; then
     # Install Homebrew
     
   	echo "******* HOMEBREW IS REQUIRED, EXITING ***********"
@@ -113,23 +131,24 @@ else
 	echo "Homebrew Already Installed. Skipping Install."
 	if ! grep -q ":$homebrew_prefix_default/bin" "${profile_file}" ; then
 	  echo "###Editing ${profile_file} to add $homebrew_prefix_default/bin variables###"
-	  echo "export PATH=$PATH:$homebrew_prefix_default/bin" >> "${profile_file}"
+	  #echo "export PATH=$PATH:$homebrew_prefix_default/bin" >> "${profile_file}"
+	  echo 'eval "$($homebrew_prefix_default/bin/brew shellenv)"' >> "${profile_file}"
 	  source $profile_file
 	fi
 	echo "Updating Homebrew..."
-	su - $USERNAME -c "brew update"
+	su - $USERNAME -c "$homebrew_prefix_default/bin/brew update"
 fi
 
 which -s python3
 if [[ $? != 0 ]] ; then
-	su - $USERNAME -c "brew install python@3.9" && \
+	su - $USERNAME -c "$homebrew_prefix_default/bin/brew install python@3.9" && \
 	PYTHON="$(which python3)"
 fi
 
 if [[ ! -d "$homebrew_prefix_default/opt/nvm" ]] ; then
     # Install nvm
     echo "installing nvm" && \
-    su - $USERNAME -c "brew install nvm" && \
+    su - $USERNAME -c "$homebrew_prefix_default/bin/brew install nvm" && \
     mkdir "$USERHOME/.nvm"
 else
 	echo "nvm was present"
@@ -153,7 +172,7 @@ then
 else
 	nvm install $NPMVERSION
 fi
-chmod -R "$USERNAME:$USERGROUP" "$USERHOME/.nvm"
+chown -R "$USERNAME:$USERGROUP" "$USERHOME/.nvm"
 nvm use && \
 sudo chown -R "$USERNAME:$USERGROUP" $pwd && \
 su - $USERNAME -c "[ -s \"$homebrew_prefix_default/opt/nvm/nvm.sh\" ] && \. \"$homebrew_prefix_default/opt/nvm/nvm.sh\" && cd $pwd && nvm install $NPMVERSION && nvm use && npm config set python $PYTHON && cd $pwd && npm update && npm install --build-from-source --python=$PYTHON" && \
@@ -179,7 +198,7 @@ fi
 which -s go
 if [[ $? != 0 ]] ; then
 	echo "installing golang"
-	su - $USERNAME -c "brew install go"
+	su - $USERNAME -c "$homebrew_prefix_default/bin/brew install go"
 	# wget "https://golang.org/dl/go1.17.darwin-${arch_name}.pkg" && \
 	# sudo rm -rf /usr/local/go && \
 	# sudo tar -C /usr/local -xzf "go1.17.darwin-${arch_name}.pkg"
@@ -208,6 +227,10 @@ if ! grep -q "${USERHOME}/go/bin" "${profile_file}" ; then
   source $profile_file
 fi
 
+if [[ ! -s "$HOME/.zshrc" ]] ; then
+	cp "${profile_file}" "$HOME/.zshrc"
+fi
+
 #################################
 ########### DVPN ################
 #################################
@@ -218,7 +241,7 @@ if [[ $? != 0 ]] ; then
 	echo "****** DOCKER NOT FOUND, EXITING ********"
 	exit 1;
 	# echo "Installing Docker..."
-	# su - $USERNAME -c "brew install --cask docker" && \
+	# su - $USERNAME -c "$homebrew_prefix_default/bin/brew install --cask docker" && \
 	# xattr -d -r com.apple.quarantine /Applications/Docker.app && \
 	# sudo open -a /Applications/Docker.app
 else
@@ -261,12 +284,20 @@ fi
 
 echo "installing akash dependencies..." && \
 
-su - $USERNAME -c "brew install virtualenv" && \
+su - $USERNAME -c "$homebrew_prefix_default/bin/brew install cdrtools" && \
+su - $USERNAME -c "$homebrew_prefix_default/bin/brew install p7zip" && \
+su - $USERNAME -c "$homebrew_prefix_default/bin/brew install whois" && \
+su - $USERNAME -c "$homebrew_prefix_default/bin/brew install coreutils" && \
+su - $USERNAME -c "$homebrew_prefix_default/bin/brew install gnupg" && \
+su - $USERNAME -c "$homebrew_prefix_default/bin/brew install openssl@1.1" && \
+su - $USERNAME -c "$homebrew_prefix_default/bin/brew install jq" && \
+su - $USERNAME -c "$homebrew_prefix_default/bin/brew install nmap" && \
+su - $USERNAME -c "$homebrew_prefix_default/bin/brew install virtualenv"
 
 which -s kubectl
 if [[ $? != 0 ]] ; then
 	echo "Installing Kubectl..."
-	su - $USERNAME -c "brew install kubectl"
+	su - $USERNAME -c "$homebrew_prefix_default/bin/brew install kubectl"
 else
 	echo "kubectl Already Installed. Skipping."
 fi
@@ -327,15 +358,6 @@ else
 fi
 
 cd $HOME/.HandyHost/aktData && \
-
-su - $USERNAME -c "brew install cdrtools" && \
-su - $USERNAME -c "brew install p7zip" && \
-su - $USERNAME -c "brew install whois" && \
-su - $USERNAME -c "brew install coreutils" && \
-su - $USERNAME -c "brew install gnupg" && \
-su - $USERNAME -c "brew install openssl@1.1" && \
-su - $USERNAME -c "brew install jq" && \
-su - $USERNAME -c "brew install nmap" && \
 echo "Finished Installing Akash Dependencies" && \
 
 export AKASH_NET="https://raw.githubusercontent.com/ovrclk/net/master/mainnet"
@@ -367,10 +389,10 @@ if [ ! $1 = "local" ] ; then
 	which -s platypus
 	if [[ $? != 0 ]] ; then
 		echo "Installing Platypus"
-		su - $USERNAME -c "brew install --cask platypus" && \
+		su - $USERNAME -c "$homebrew_prefix_default/bin/brew install --cask platypus" && \
 		xattr -d -r com.apple.quarantine /Applications/Platypus.app && \
-		su - $USERNAME -c "brew install platypus" && \
-		su - $USERNAME -c "brew link platypus"
+		su - $USERNAME -c "$homebrew_prefix_default/bin/brew install platypus" && \
+		su - $USERNAME -c "$homebrew_prefix_default/bin/brew link platypus"
 	else
 		echo "Platypus Installed. Skipping."
 	fi
@@ -411,5 +433,5 @@ if [ ! $1 = "local" ] ; then
 else
 	echo "Finished setting up local build"
 fi
-node $pwd/rainbow.js && \
+su - $USERNAME -c "[ -s \"$homebrew_prefix_default/opt/nvm/nvm.sh\" ] && \. \"$homebrew_prefix_default/opt/nvm/nvm.sh\" && cd $pwd && nvm install $NPMVERSION && nvm use && node $pwd/rainbow.js" && \
 exit 0

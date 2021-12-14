@@ -209,7 +209,7 @@ export class DVPNNodeConfig{
 		$('.walletUtil #mnemonic').off('input').on('input',()=>{
 			let wordLen = $('.walletUtil #mnemonic').val().trim().split(' ').length;
 			console.log('updated',wordLen);
-			if(wordLen == 24){
+			if(wordLen == 24 || wordLen == 12){
 				$('.walletUtil #importWallet').addClass('save').removeClass('cancel');
 				$('.walletUtil #importWallet').addClass('canSave');
 			}

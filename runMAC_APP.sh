@@ -17,11 +17,16 @@ fi
 arch_name="$(uname -m)"
  
 if [ "${arch_name}" = "x86_64" ]; then
-    if [ "$(sysctl -in sysctl.proc_translated)" = "1" ]; then
-        homebrew_prefix_default=/opt/homebrew
-    else
-        homebrew_prefix_default=/usr/local
-    fi 
+	which -s sysctl
+	if [[ $? != 0 ]] ; then
+	    homebrew_prefix_default=/usr/local
+	else 
+	    if [ "$(sysctl -in sysctl.proc_translated)" = "1" ]; then
+	        homebrew_prefix_default=/opt/homebrew
+	    else
+	        homebrew_prefix_default=/usr/local
+	    fi 
+	fi
 fi
 
 if [ "${arch_name}" = "arm64" ]; then

@@ -230,10 +230,10 @@ export class CommonUtils{
 		  	
 		}
 	}
-	encrypt(value,isForDaemon,daemonServiceName){
+	encrypt(value,isForDaemon,daemonServiceName,isForHealthcheck){
 		return new Promise((resolve,reject)=>{
 			
-			const pubKeyName = isForDaemon ? 'daemon.pub' : 'handyhost.pub';
+			const pubKeyName = isForDaemon ? ( isForHealthcheck ? 'handyhost.pub' : 'daemon.pub' ) : 'handyhost.pub';
 			const basePath = process.env.HOME+'/.HandyHost/keystore/';
 			const pubPath = basePath+pubKeyName;
 			const encryptedOutPath = isForDaemon ? basePath+'daemon_'+daemonServiceName : basePath+'k'+(new Date().getTime());
@@ -360,6 +360,7 @@ export class CommonUtils{
 	}
 	isAuthEnabled(){
 		//check if auth is enabled
+		return true; //enable auth always
 		const settingsPath = process.env.HOME+'/.HandyHost/authSettings.json';
 		let isEnabled = false;
 		if(fs.existsSync(settingsPath)){
@@ -408,7 +409,7 @@ export class CommonUtils{
 		if(!fs.existsSync(settingsPath)){
 			//init default settings
 			const settings = {
-				enabled:false,
+				enabled:true,
 				initialPassword:'changemeplease',
 				hasInitialized:false,
 				tokenTTL:'30d'
@@ -418,7 +419,8 @@ export class CommonUtils{
 		else{
 			//settings exist, check if auth is enabled or needs enabled
 			let settings = JSON.parse(fs.readFileSync(settingsPath,'utf8'));
-			if(settings.enabled && !settings.hasInitialized){
+			//enable auth always
+			if(/*settings.enabled && */!settings.hasInitialized){
 				fs.writeFileSync(jwtPath,jwtKeyDefault,'utf8'); //bounce the jwtKey in case we were trying to lock out other users
 				const jwtKey = fs.readFileSync(jwtPath,'utf8').trim();
 				//somebody just turned on auth, lets enable it
@@ -525,6 +527,39 @@ export class CommonUtils{
 		    const token = jsonwebtoken.sign(data, jwtKey, { expiresIn: tokenTTL }); //likely their browser sesh will last 30 days..
 	        resolve(token);
 		});
+		
+	}
+	getLocalIPRange(){
+		return new Promise((resolve,reject)=>{
+			let getIPCommand;
+			let getIPOpts;
+			let ipCommand;
+			let ipRangeOut;
+			
+			if(process.platform == 'darwin'){
+				getIPCommand = 'ipconfig';
+				getIPOpts =  ['getifaddr', 'en0'];
+			}
+			if(process.platform == 'linux'){
+				//hostname -I [0]
+				getIPCommand = 'hostname';
+				getIPOpts = ['-I'];
+			}
+
+			ipCommand = spawn(getIPCommand,getIPOpts); 
+			ipCommand.stdout.on('data',d=>{
+				ipRangeOut = d.toString('utf8').trim();
+			});
+			ipCommand.on('close',()=>{
+				if(process.platform == 'linux'){
+					ipRangeOut = ipRangeOut.split(' ')[0];
+				}
+				ipRangeOut = ipRangeOut.split('.').slice(0,-1).join('.')
+				ipRangeOut += '.0/24';
+				console.log('ip range ',ipRangeOut);
+				resolve(ipRangeOut);
+			});
+		})
 		
 	}
 }

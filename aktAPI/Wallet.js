@@ -825,6 +825,14 @@ export class Wallet{
 					const s = spawn('./runProviderAutomated.sh',args,{env:process.env,cwd:process.env.PWD+'/aktAPI',detached:true});
 					fs.writeFileSync(process.env.HOME+'/.HandyHost/aktData/provider.pid',s.pid.toString());
 					let logsPath = process.env.HOME+'/.HandyHost/aktData/providerRun.log';
+					
+					let wasTimedRestart = false; //were going to restart akash provider every few hours because it tends to die a lot...
+					let timedRestartTimeout = setTimeout(()=>{
+						wasTimedRestart = true;
+						fs.appendFileSync(logsPath,"\n###########  Provider Restart (every 4-hours) Initiated... ###########\n",'utf8');
+						this.killAkashZombies();
+					},60*1000*60*4); //4 hours
+
 					if(fs.existsSync(logsPath)){
 						//unlink if exists
 						fs.unlinkSync(logsPath);
@@ -891,6 +899,7 @@ export class Wallet{
 						hasReturned = true;
 						clearTimeout(returnTimeout);
 						clearInterval(logInterval);
+						clearTimeout(timedRestartTimeout);
 						resolve({success:false,error:output});
 						
 						if(this.providerWasHalted){
@@ -898,27 +907,58 @@ export class Wallet{
 							this.providerWasHalted = false;
 							if(fs.existsSync(process.env.HOME+'/.HandyHost/aktData/provider.pid')){
 								fs.unlinkSync(process.env.HOME+'/.HandyHost/aktData/provider.pid');
+								this.killAkashZombies(); //make double sure we killed the provider because sometimes we get zombies lingering...
 							}
 						}
+						else if(wasTimedRestart){
+							//ok we restarted akash on the 4th hour..
+							console.log('initializing akash 4-hour restart zombie prevention routine...')
+							wasTimedRestart = false;
+							setTimeout(()=>{
+								fs.appendFileSync(logsPath,"\n###########  PERIODICALLY RESTARTING PROVIDER ###########\n",'utf8');
+								this.startProvider(params);
+							},10000)
+							
+						}
 						else{
-							fs.appendFileSync(logsPath,"\n###########  RESTARTING PROVIDER ###########\n",'utf8');
-						
-							//accidental death, likely due to RPC errors
-							//keep things alive
-							this.envUtils.setEnv().then(()=>{
-								//ok we set the env
-								this.startProvider(params);
-							}).catch(e=>{
-								console.log('error setting new envs',e);
-								//try spawning again anyway
-								this.startProvider(params);
+							this.killAkashZombies().then(()=>{
+								//make fn sure we dont have multiple akash providers running
+								fs.appendFileSync(logsPath,"\n###########  RESTARTING PROVIDER ###########\n",'utf8');
+							
+								//accidental death, likely due to RPC errors
+								//keep things alive
+								this.envUtils.setEnv().then(()=>{
+									//ok we set the env
+									this.startProvider(params);
+								}).catch(e=>{
+									console.log('error setting new envs',e);
+									//try spawning again anyway
+									this.startProvider(params);
+								})
 							})
+							
 
 						}
 					})
 				});
 			});
 				
+		});
+	}
+	killAkashZombies(){
+		//for whatever reason sometimes process.kill wont kill akash
+		//so lets fn go nuclear on akash then...
+		return new Promise((resolve,reject)=>{
+			const s = spawn('pkill',['-9','akash']);
+			s.stdout.on('data',d=>{
+				resolve(d.toString());
+			});
+			s.stderr.on('data',d=>{
+				resolve(d.toString());
+			});
+			s.on('close',()=>{
+				resolve(true);
+			});
 		});
 	}
 	pauseProvider(){
@@ -962,6 +1002,7 @@ export class Wallet{
 				//ok must laready be dead
 				resolve({success:true});
 			}
+			this.killAkashZombies(); //make sure we killed it.
 		})
 	}
 	createOrUpdateServerCertificate(params,wallet,providerHost,isGasEstimate){

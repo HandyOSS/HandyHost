@@ -444,6 +444,13 @@ export class HandyAKT{
 					reject(error);
 				})
 			break;
+			case 'removeDanglingContainers':
+				this.utils.removeDanglingContainers().then(data=>{
+					resolve(data);
+				}).catch(error=>{
+					reject(error);
+				});
+			break;
 		}
 		
 	}

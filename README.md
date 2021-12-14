@@ -142,7 +142,13 @@ Then you can just load ```http://localhost:8008``` in your browser and you will 
 
 HandyHost has an extra layer of authentication for folks who wish to access their machine externally. Note: SSH Tunneling is the most locked down option for remote access. We highly (highly) recommend that when loading HandyHost externally (not SSH tunneled) with Authentication that you use the ```https://your-external-ip:58008``` SSL url (FYI: self-signed certificate, created by you when you install HandyHost. You will have to accept the self signed certificate once when you initially load the site).
 
-By default, authentication is disabled. How to enable it:
+Authentication is enabled by default as of v0.5.1
+
+When you load any HandyHost URL you will first be prompted with a UI to set/confirm your access password.
+
+Subsequent loads will pass thru your authentication token (preserved in the browser for 30 days). Note: incognito browser sessions will login after each browser session (ie full close/restart of the browser).
+
+#### Forgot your password?
 
 1. Stop the HandyHost service. Mac: Use the TaskBar UI, Linux: ```sudo systemctl stop handyhost```
 2. On the machine, edit the file ```~/.HandyHost/authSettings.json``` (on linux: ```/root/.HandyHost/authSettings.json```).
@@ -157,23 +163,17 @@ The auth settings file will look like:
 }
 ```
 
-3. All you need to edit to enable auth is: 
-```"enabled": true,``` setting to true will enable auth on next start. No quotes but make sure the comma is present.
-```"initialPassword": "changemeplease",``` change the default password, keep it within the quotes pls.
-```tokenTTL: "30d"``` optional. How long does a login token live until you must reset it.
-
-4. After saving the authSettings.json file, you can restart HandyHost. Mac users can use the TaskBar UI, Linux users: ```sudo systemctl start handyhost```
-
-5. Now when you load any HandyHost URL you will first be prompted with a UI to set/confirm your access password (to something different than the initial password).
-
-6. Subsequent loads will pass thru your authentication token (preserved in the browser for 30 days). Note: incognito browser sessions will login after each browser session (ie full close/restart of the browser).
-
-Feel free to set this up on your local network for an extra layer of security. Note: Without Authentication, all wallet routines are password protected so your funds are always safe. This is more of an extra layer of security around your HandyHost configurations.
-
-#### Forgot your password?
-
-Follow the steps above to enable auth. In step 3, add this: 
+Follow the steps above to find your authSettings.json file.
 In authSettings.json, set ```"hasInitialized":false,```. After restarting handyhost you can now set your new password.
+
+
+### v0.5.1 Changelog
+1. DVPN/AKT: Support 12-word Mnemonic Keys
+2. SC: Healthcheck for zombie siad. Auto-restarts siad within 20 minutes of an untimely death
+3. AKT: 20-minute refresh cycle for dashboard stats
+4. AKT: use handyhost rpc node for aggregates query. Prep env for a db-backed stats page as rpc is slow for aggregates
+5. AKT: Zombie checker/restart provider every 4 hours. Also clean kill zombie akash provider.
+6. ALL: Enable authentication by default versus previously disabled by default.
 
 ### v0.5.0 Changelog
 1. Add support for MacOS M1 Processor
