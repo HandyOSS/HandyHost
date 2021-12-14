@@ -249,7 +249,7 @@ export class Marketplace{
 	tryAggregatesQuery(args,resolve,reject,attemptCount){
 		let output = '';
 		let errOut = '';
-		
+		process.env.AKASH_NODE='http://rpc-1.handyhost.computer'; //aggs queries timeout a lot. We run our own node with high timeout times
 		const s = spawn('./bin/akash',args,{shell:true,env:process.env,cwd:process.env.HOME+'/.HandyHost/aktData'});
 		s.stdout.on('data',d=>{
 			output += d.toString();
@@ -260,7 +260,7 @@ export class Marketplace{
 		});
 		s.on('close',()=>{
 			if(errOut != ''){
-				if(errOut.indexOf('Error: post failed') >= 0 && errOut.indexOf('EOF') >= 0){
+				if((errOut.indexOf('Error: post failed') >= 0 && errOut.indexOf('EOF') >= 0) || errOut.indexOf('Error: error unmarshalling') >= 0){
 					//rpc error, retry...
 					if(attemptCount >= 10){
 						console.log('reset env attempt is too many, failing now...')
