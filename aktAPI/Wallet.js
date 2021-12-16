@@ -829,8 +829,10 @@ export class Wallet{
 					let wasTimedRestart = false; //were going to restart akash provider every few hours because it tends to die a lot...
 					let timedRestartTimeout = setTimeout(()=>{
 						wasTimedRestart = true;
+						console.log('do periodic akash restart',new Date())
 						fs.appendFileSync(logsPath,"\n###########  Provider Restart (every 4-hours) Initiated... ###########\n",'utf8');
 						this.killAkashZombies();
+
 					},60*1000*60*4); //4 hours
 
 					if(fs.existsSync(logsPath)){
@@ -929,11 +931,17 @@ export class Wallet{
 								//keep things alive
 								this.envUtils.setEnv().then(()=>{
 									//ok we set the env
-									this.startProvider(params);
+									setTimeout(()=>{
+										this.startProvider(params);
+									},4000); //give it time to spin down post kill zombies
+									
 								}).catch(e=>{
 									console.log('error setting new envs',e);
 									//try spawning again anyway
-									this.startProvider(params);
+									setTimeout(()=>{
+										this.startProvider(params);
+									},4000); //give it time to spin down post kill zombies
+									
 								})
 							})
 							
@@ -951,10 +959,10 @@ export class Wallet{
 		return new Promise((resolve,reject)=>{
 			const s = spawn('pkill',['-9','akash']);
 			s.stdout.on('data',d=>{
-				resolve(d.toString());
+				//resolve(d.toString());
 			});
 			s.stderr.on('data',d=>{
-				resolve(d.toString());
+				//resolve(d.toString());
 			});
 			s.on('close',()=>{
 				resolve(true);
