@@ -159,15 +159,16 @@ export class Marketplace{
 			this.envUtils.trySetEnv(); //reset env on fail
 		});
 	}
-	getMarketAggregates(wallet){
+	getMarketAggregatesLegacyRPC(wallet,resolveOGCall){
 		return new Promise((resolve,reject)=>{
 			const now = Math.floor(new Date().getTime()/1000);
 			if(typeof this.lastAggs != "undefined"){
 				//check age of last aggregate
 				//we cache for the last 20 minutes because these are taxing on the rpc server. TODO: redis in front of rpc for fast stats lookups...
 				let lastAggTime = this.lastAggs.time;
-				if((now - lastAggTime) < 60*20){
-					resolve(this.lastAggs.data);
+				if((now - lastAggTime) < 90){
+					resolveOGCall(this.lastAggs.data);
+
 					return;
 				}
 			}
@@ -229,7 +230,7 @@ export class Marketplace{
 						time: Math.floor(new Date().getTime()/1000),
 						data: dataOut
 					};
-					resolve(dataOut)
+					resolveOGCall(dataOut)
 				}
 			}
 
@@ -237,6 +238,49 @@ export class Marketplace{
 		}).catch(error=>{
 			//this.envUtils = new EnvUtils();
 			this.envUtils.trySetEnv(); //reset env on fail
+		})
+	}
+	getMarketAggregates(wallet){
+		//fallback to legacy if this fails
+		return new Promise((resolve,reject)=>{
+			const url = 'http://rpc-1.handyhost.computer:26659/'+wallet;
+			let output = {};
+			const request = http.request(url,response=>{
+
+				response.on('data',chunk=>{
+					output += chunk;
+				})
+				response.on('end',() =>{
+					let json = {};
+					let height = 0;
+					try{
+						json = JSON.parse(output);
+					}
+					catch(e){
+						console.log('no json response');
+					}
+					const dataOut = {
+						leasesActive: json.active_leases,
+						leasesClosed: json.closed_leases,
+						bidsOpen: json.open_bids,
+						bidsClosed: json.closed_bids,
+						bidsLost: json.lost_bids
+					};
+					this.lastAggs = {
+						time: Math.floor(new Date().getTime()/1000),
+						data: dataOut
+					};
+					resolve(dataOut);
+				});
+				
+			});
+			request.on('error',(e)=>{
+				console.log('error calling',url,e);
+				this.getMarketAggregatesLegacyRPC(wallet,resolve);
+			})
+			request.end();
+			
+			
 		})
 	}
 	getAggregatesQuery(args){
