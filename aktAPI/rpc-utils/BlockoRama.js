@@ -265,7 +265,7 @@
 				//console.log('FULLY SYNCED AT BLOCK',this.chainHeight);
 				this.redisHeight = height;
 				resolveWhenSynced({redis:this.redisHeight,chain:this.chainHeight});
-				console.log('unique types',this.uniqueTypes);
+				//console.log('unique types',this.uniqueTypes);
 			}
 			for(let i=height;i<nextHeight;i++){
 				this.harvest(i).then((obj)=>{

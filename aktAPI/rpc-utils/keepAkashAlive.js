@@ -94,5 +94,5 @@ function startAkash(){
 	timeout = setTimeout(()=>{
 		console.log(new Date()+':: manual kill akash')
 		const pk = spawn('pkill',['-9','akash']);
-	},60*1000*60*4);
+	},60*1000*60*1); //every hour
 }

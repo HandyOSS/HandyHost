@@ -1,6 +1,7 @@
 import {spawn} from 'child_process';
 import {EnvUtils} from './envUtils.js';
 import {CommonUtils} from '../CommonUtils.js';
+import http from 'http';
 export class Marketplace{
 	constructor(){
 		this.envUtils = new EnvUtils();
@@ -244,7 +245,7 @@ export class Marketplace{
 		//fallback to legacy if this fails
 		return new Promise((resolve,reject)=>{
 			const url = 'http://rpc-1.handyhost.computer:26659/'+wallet;
-			let output = {};
+			let output = '';
 			const request = http.request(url,response=>{
 
 				response.on('data',chunk=>{
