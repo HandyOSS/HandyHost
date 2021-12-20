@@ -709,7 +709,9 @@ export class HandyAKT{
 						statsOut.balance = balance;
 						statsFetched++;
 						finish(statsFetched,statsToFetch,statsOut,resolve);
-					});
+					}).catch(err=>{
+						console.log('error fetching balance',err);
+					})
 				}
 				else{
 					statsOut.balance = {balance:{balances:[]}};
