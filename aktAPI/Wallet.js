@@ -691,7 +691,11 @@ export class Wallet{
 					catch(e){
 						console.log('bad json response',output.toString());
 					}
-
+					//TODO: if provider is already running (restarted app)
+					//we need to start the 4-hour restart timer
+					if(typeof this.timedRestartTimeout == "undefined"){
+						this.setProviderRestartTimeout();
+					}
 					resolve(json);
 
 				});
@@ -774,6 +778,13 @@ export class Wallet{
 					}
 				}
 			}
+			//TODO: if provider is already running (restarted app)
+			//we need to start the 4-hour restart timer
+			this.checkProviderUpStatus().then(d=>{
+				console.log('akt provider is already running');
+			}).catch(e=>{
+				//do nothing
+			})
 		}
 	}
 	setupProviderAutostart(params,doAutostart){
@@ -795,6 +806,23 @@ export class Wallet{
 				fs.unlinkSync(autostartFile);
 			}
 		}
+	}
+	setProviderRestartTimeout(){
+		/*
+		akash provider can freeze up but stay a zombie process sometimes
+		thus we will kill it every 4 hours and restart
+		*/
+		const logsPath = process.env.HOME+'/.HandyHost/aktData/providerRun.log';
+		if(typeof this.timedRestartTimeout != "undefined"){
+			clearTimeout(this.timedRestartTimeout);
+			delete this.timedRestartTimeout;
+		}
+		this.timedRestartTimeout = setTimeout(()=>{
+			this.wasTimedRestart = true;
+			console.log('doing periodic akash restart',new Date())
+			fs.appendFileSync(logsPath,"\n###########  Provider Restart (every 4-hours) Initiated... ###########\n",'utf8');
+			this.killAkashZombies();
+		},60*1000*60*4); //4 hours
 	}
 	startProvider(params){
 		if(this.providerPaused){
@@ -826,14 +854,8 @@ export class Wallet{
 					fs.writeFileSync(process.env.HOME+'/.HandyHost/aktData/provider.pid',s.pid.toString());
 					let logsPath = process.env.HOME+'/.HandyHost/aktData/providerRun.log';
 					
-					let wasTimedRestart = false; //were going to restart akash provider every few hours because it tends to die a lot...
-					let timedRestartTimeout = setTimeout(()=>{
-						wasTimedRestart = true;
-						console.log('do periodic akash restart',new Date())
-						fs.appendFileSync(logsPath,"\n###########  Provider Restart (every 4-hours) Initiated... ###########\n",'utf8');
-						this.killAkashZombies();
-
-					},60*1000*60*4); //4 hours
+					this.wasTimedRestart = false; //were going to restart akash provider every few hours because it tends to die a lot...
+					this.setProviderRestartTimeout();
 
 					if(fs.existsSync(logsPath)){
 						//unlink if exists
@@ -901,7 +923,11 @@ export class Wallet{
 						hasReturned = true;
 						clearTimeout(returnTimeout);
 						clearInterval(logInterval);
-						clearTimeout(timedRestartTimeout);
+						if(typeof this.timedRestartTimeout != "undefined"){
+							clearTimeout(this.timedRestartTimeout);
+							delete this.timedRestartTimeout;
+						}
+						
 						resolve({success:false,error:output});
 						
 						if(this.providerWasHalted){
@@ -912,18 +938,20 @@ export class Wallet{
 								this.killAkashZombies(); //make double sure we killed the provider because sometimes we get zombies lingering...
 							}
 						}
-						else if(wasTimedRestart){
+						else if(this.wasTimedRestart){
 							//ok we restarted akash on the 4th hour..
 							console.log('initializing akash 4-hour restart zombie prevention routine...')
-							wasTimedRestart = false;
+							this.wasTimedRestart = false;
 							setTimeout(()=>{
 								fs.appendFileSync(logsPath,"\n###########  PERIODICALLY RESTARTING PROVIDER ###########\n",'utf8');
+								console.log('starting akash provider');
 								this.startProvider(params);
 							},10000)
 							
 						}
 						else{
 							this.killAkashZombies().then(()=>{
+								console.log('akash provider crashed, restart it...',new Date());
 								//make fn sure we dont have multiple akash providers running
 								fs.appendFileSync(logsPath,"\n###########  RESTARTING PROVIDER ###########\n",'utf8');
 							

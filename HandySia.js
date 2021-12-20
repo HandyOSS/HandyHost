@@ -42,9 +42,9 @@ export class HandySia{
 		},1000*60*20)
 		const _this = this;
 		function checkHealth(){
-			console.log('performing SC health check')
+			//console.log('performing SC health check')
 			_this.daemon.getVersion().then(data=>{
-				console.log('SC is alive')
+				//console.log('SC is alive')
 			}).catch(err=>{
 				console.log('SC health check error: siad must be down');
 				const didJustUpdateFileLoc = process.env.HOME+'/.HandyHost/siaData/isUpdating';
