@@ -662,7 +662,7 @@ export class Wallet{
 			})
 		});
 	}
-	checkProviderUpStatus(){
+	checkProviderUpStatus(akashParams){
 		return new Promise((resolve,reject)=>{
 			const options = {
 				host: '127.0.0.1',
@@ -693,8 +693,8 @@ export class Wallet{
 					}
 					//TODO: if provider is already running (restarted app)
 					//we need to start the 4-hour restart timer
-					if(typeof this.timedRestartTimeout == "undefined"){
-						this.setProviderRestartTimeout();
+					if(typeof this.timedRestartTimeout == "undefined" && typeof akashParams != "undefined"){
+						this.setProviderRestartTimeout(akashParams);
 					}
 					resolve(json);
 
@@ -714,7 +714,7 @@ export class Wallet{
 	}
 	autostartProvider(){
 		const autostartFile = process.env.HOME+'/.HandyHost/aktData/autostart.json';
-		
+		const akashParamsFile = process.env.HOME+'/.HandyHost/aktData/akashProviderParams.json';
 		if(fs.existsSync(autostartFile)){
 			const params = JSON.parse(fs.readFileSync(autostartFile,'utf8'));
 			if(typeof process.env.AKTAUTO != "undefined"){
@@ -722,7 +722,7 @@ export class Wallet{
 				if(fs.existsSync(encFilePath)){
 					this.commonUtils.decrypt(encFilePath).then(pw=>{
 						params.pw = pw;
-						this.checkProviderUpStatus().then(d=>{
+						this.checkProviderUpStatus(params).then(d=>{
 							console.log('autostart: akt provider is already running');
 						}).catch(e=>{
 							this.startProvider(params);
@@ -741,7 +741,7 @@ export class Wallet{
 						if(data.exists){
 							params.pw = data.value;
 
-							this.checkProviderUpStatus().then(d=>{
+							this.checkProviderUpStatus(params).then(d=>{
 								console.log('autostart: akt provider is already running');
 							}).catch(e=>{
 								this.startProvider(params);
@@ -755,6 +755,7 @@ export class Wallet{
 				else{
 					console.log('no akt autostart params present');
 					//remove configs if present
+					//they wont be.
 					if(typeof process.env.AKTAUTO != "undefined"){
 						const encFilePath = process.env.HOME+'/.HandyHost/keystore/'+process.env.AKTAUTO;
 						if(fs.existsSync(encFilePath)){
@@ -774,32 +775,67 @@ export class Wallet{
 					const encFilePath = process.env.HOME+'/.HandyHost/keystore/'+process.env.AKTAUTO;
 					if(fs.existsSync(encFilePath)){
 						//remove the config if it exists
-						this.commonUtils.decrypt(encFilePath).then(p=>{})
+						this.commonUtils.decrypt(encFilePath).then(p=>{
+							if(fs.existsSync(akashParamsFile)){
+								//ok params exist, make sure restart timeout has params
+								const akashParams = JSON.parse(fs.readFileSync(akashParamsFile,'utf8'));
+								akashParams.pw = p;
+								//TODO: if provider is already running (restarted app)
+								//we need to start the 4-hour restart timer
+								this.checkProviderUpStatus(akashParams).then(d=>{
+									console.log('akt provider is already running');
+								}).catch(e=>{
+									//do nothing
+								})
+							}
+						})
 					}
 				}
 			}
-			//TODO: if provider is already running (restarted app)
-			//we need to start the 4-hour restart timer
-			this.checkProviderUpStatus().then(d=>{
-				console.log('akt provider is already running');
-			}).catch(e=>{
-				//do nothing
-			})
+			if(process.platform == 'darwin'){
+				this.commonUtils.getDarwinKeychainPW('HANDYHOST_AKTAUTO').then(data=>{
+					if(data.exists){
+						if(fs.existsSync(akashParamsFile)){
+							//ok params exist, make sure restart timeout has params
+							const akashParams = JSON.parse(fs.readFileSync(akashParamsFile,'utf8'));
+							akashParams.pw = data.value;
+							//TODO: if provider is already running (restarted app)
+							//we need to start the 4-hour restart timer
+							this.checkProviderUpStatus(akashParams).then(d=>{
+								console.log('akt provider is already running');
+							}).catch(e=>{
+								//do nothing
+							})
+						}
+						
+						
+					}
+					else{
+						console.log('no darwin akt start params exist');
+					}
+				})
+			}
+			
 		}
 	}
 	setupProviderAutostart(params,doAutostart){
 		//auto start provider on app startup
 		const autostartFile = process.env.HOME+'/.HandyHost/aktData/autostart.json';
+		const akashParamsFile = process.env.HOME+'/.HandyHost/aktData/akashProviderParams.json';
+		let stripped = JSON.parse(JSON.stringify(params));
+		delete stripped.pw;
+		fs.writeFileSync(akashParamsFile,JSON.stringify(stripped),'utf8');
+		
+		if(process.platform == 'darwin'){
+			this.commonUtils.setDarwinKeychainPW(params.pw,'HANDYHOST_AKTAUTO');
+		}	
+		else{
+			this.commonUtils.encrypt(params.pw,true,'akt');
+		}
+
 		if(doAutostart){
-			let stripped = JSON.parse(JSON.stringify(params));
-			delete stripped.pw;
 			fs.writeFileSync(autostartFile,JSON.stringify(stripped),'utf8');
-			if(process.platform == 'darwin'){
-				this.commonUtils.setDarwinKeychainPW(params.pw,'HANDYHOST_AKTAUTO');
-			}	
-			else{
-				this.commonUtils.encrypt(params.pw,true,'akt');
-			}
+			
 		}
 		else{
 			if(fs.existsSync(autostartFile)){
@@ -807,10 +843,11 @@ export class Wallet{
 			}
 		}
 	}
-	setProviderRestartTimeout(){
+	setProviderRestartTimeout(akashParams){
 		/*
 		akash provider can freeze up but stay a zombie process sometimes
 		thus we will kill it every 4 hours and restart
+		we pass in akashParams only when we start/restart akash from the app
 		*/
 		const logsPath = process.env.HOME+'/.HandyHost/aktData/providerRun.log';
 		if(typeof this.timedRestartTimeout != "undefined"){
@@ -821,7 +858,16 @@ export class Wallet{
 			this.wasTimedRestart = true;
 			console.log('doing periodic akash restart',new Date())
 			fs.appendFileSync(logsPath,"\n###########  Provider Restart (every 4-hours) Initiated... ###########\n",'utf8');
-			this.killAkashZombies();
+			this.killAkashZombies().then(()=>{
+				console.log('kill akash zombies called')
+				if(typeof this.providerWasStartedInThisSession == "undefined"){
+					//TODO:::
+					//need to write auth plus provider params to disk
+					//and after this kill op, startProvider with params
+					//possibly bootstrap autostart
+					this.startProvider(akashParams);
+				}
+			})
 		},60*1000*60*4); //4 hours
 	}
 	startProvider(params){
@@ -855,6 +901,7 @@ export class Wallet{
 					let logsPath = process.env.HOME+'/.HandyHost/aktData/providerRun.log';
 					
 					this.wasTimedRestart = false; //were going to restart akash provider every few hours because it tends to die a lot...
+					this.providerWasStartedInThisSession = true;
 					this.setProviderRestartTimeout();
 
 					if(fs.existsSync(logsPath)){
