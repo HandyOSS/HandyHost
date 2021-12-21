@@ -974,7 +974,8 @@ export class Wallet{
 							clearTimeout(this.timedRestartTimeout);
 							delete this.timedRestartTimeout;
 						}
-						
+						console.log('was timed restart',this.wasTimedRestart);
+						console.log('was halted?',this.providerWasHalted);
 						resolve({success:false,error:output});
 						
 						if(this.providerWasHalted){
@@ -997,6 +998,7 @@ export class Wallet{
 							
 						}
 						else{
+							console.log('akash crashed, try restart');
 							this.killAkashZombies().then(()=>{
 								console.log('akash provider crashed, restart it...',new Date());
 								//make fn sure we dont have multiple akash providers running
