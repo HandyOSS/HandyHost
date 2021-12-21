@@ -572,7 +572,7 @@ export class AKTDashboard {
 		</div>
 		*/
 		$('#runSave').off('click').on('click',()=>{
-			const fees = $('#runFees').val() == '' ? 1000 : parseInt($('#runFees').val());
+			const fees = $('#runFees').val() == '' ? 5000 : parseInt($('#runFees').val());
 			const cpu = $('#cpuPrice').val() == '' ? 1 : parseFloat($('#cpuPrice').val());
 			const autostart = $('#autostart').is(':checked');
 			$('#runSave .foreground').html('Starting Up...');
