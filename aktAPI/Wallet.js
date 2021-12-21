@@ -694,6 +694,7 @@ export class Wallet{
 					//TODO: if provider is already running (restarted app)
 					//we need to start the 4-hour restart timer
 					if(typeof this.timedRestartTimeout == "undefined" && typeof akashParams != "undefined"){
+						console.log('setting provider restart timeout since akash is up')
 						this.setProviderRestartTimeout(akashParams);
 					}
 					resolve(json);
@@ -861,10 +862,11 @@ export class Wallet{
 			this.killAkashZombies().then(()=>{
 				console.log('kill akash zombies called')
 				if(typeof this.providerWasStartedInThisSession == "undefined"){
-					//TODO:::
-					//need to write auth plus provider params to disk
-					//and after this kill op, startProvider with params
-					//possibly bootstrap autostart
+					this.startProvider(akashParams);
+				}
+			}).catch(err=>{
+				console.log('kill akash zombies called')
+				if(typeof this.providerWasStartedInThisSession == "undefined"){
 					this.startProvider(akashParams);
 				}
 			})
@@ -1000,28 +1002,33 @@ export class Wallet{
 						else{
 							console.log('akash crashed, try restart');
 							this.killAkashZombies().then(()=>{
+								finish(params,logsPath);
+							}).catch(err=>{
+								finish(params,logsPath);
+							})
+							const _this = this;
+							function finish(params,logsPath){
 								console.log('akash provider crashed, restart it...',new Date());
 								//make fn sure we dont have multiple akash providers running
 								fs.appendFileSync(logsPath,"\n###########  RESTARTING PROVIDER ###########\n",'utf8');
 							
 								//accidental death, likely due to RPC errors
 								//keep things alive
-								this.envUtils.setEnv().then(()=>{
+								_this.envUtils.setEnv().then(()=>{
 									//ok we set the env
 									setTimeout(()=>{
-										this.startProvider(params);
+										_this.startProvider(params);
 									},4000); //give it time to spin down post kill zombies
 									
 								}).catch(e=>{
 									console.log('error setting new envs',e);
 									//try spawning again anyway
 									setTimeout(()=>{
-										this.startProvider(params);
+										_this.startProvider(params);
 									},4000); //give it time to spin down post kill zombies
 									
 								})
-							})
-							
+							}
 
 						}
 					})
