@@ -718,6 +718,11 @@ export class Wallet{
 		const akashParamsFile = process.env.HOME+'/.HandyHost/aktData/akashProviderParams.json';
 		if(fs.existsSync(autostartFile)){
 			const params = JSON.parse(fs.readFileSync(autostartFile,'utf8'));
+			if(!fs.existsSync(akashParamsFile)){
+				//if we just installed 0.5.2 and had autostart going 
+				//we should cache the provider run params
+				fs.writeFileSync(akashParamsFile,JSON.stringify(params),'utf8');
+			}
 			if(typeof process.env.AKTAUTO != "undefined"){
 				const encFilePath = process.env.HOME+'/.HandyHost/keystore/'+process.env.AKTAUTO;
 				if(fs.existsSync(encFilePath)){
