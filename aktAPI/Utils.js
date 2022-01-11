@@ -718,7 +718,7 @@ export class AKTUtils{
 					yaml += `${tab}  value: ${configJSON.provider.regionName}\n`;
 					yaml += `${tab}- key: host\n`;
 					yaml += `${tab}  value: ${configJSON.provider.clusterName}\n`;
-					yaml += `${tab}- key: tier:\n`;
+					yaml += `${tab}- key: tier\n`;
 					yaml += `${tab}  value: ${configJSON.provider.tier}\n`;
 					if(configJSON.provider.email != ''){
 						yaml += `info:\n`;
