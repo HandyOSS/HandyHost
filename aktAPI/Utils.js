@@ -718,6 +718,15 @@ export class AKTUtils{
 					yaml += `${tab}  value: ${configJSON.provider.regionName}\n`;
 					yaml += `${tab}- key: host\n`;
 					yaml += `${tab}  value: ${configJSON.provider.clusterName}\n`;
+					yaml += `${tab}- key: tier:\n`;
+					yaml += `${tab}  value: ${configJSON.provider.tier}\n`;
+					if(configJSON.provider.email != ''){
+						yaml += `info:\n`;
+						yaml += `${tab}email: ${configJSON.provider.email}\n`;
+						if(configJSON.provider.website != ''){
+							yaml += `${tab}website: ${configJSON.provider.website}\n`
+						}
+					}
 					fs.writeFileSync(this.providerYAMLPath,yaml,'utf8');
 					//we need to verify that the registration needs or does not need to be updated
 					if(typeof socketIONamespaces != "undefined"){
@@ -777,6 +786,24 @@ export class AKTUtils{
 											shouldNotify = true;
 										}
 									}
+									const tier = config.attributes.find(d=>{return d.key == 'tier';});
+									if(typeof tier == "undefined"){
+										shouldNotify = false; //optional
+									}
+									else{
+										if(tier.value != configJSON.provider.tier){
+											shouldNotify = true;
+										}
+									}
+									const email = config.info.email;
+									const website = config.info.website;
+									if(email != configJSON.provider.email){
+										shouldNotify = true;
+									}
+									if(website != configJSON.provider.website){
+										shouldNotify = true;
+									}
+
 									console.log('should we notify of a registration change?',shouldNotify);
 									if(!shouldNotify){
 										//check if config file exists for UI checkboxes..

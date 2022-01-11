@@ -449,7 +449,7 @@ export class AKTClusterConfig{
 		let needsErrorMessage = {};
 		Object.keys(configData.provider).map(key=>{
 			const val = configData.provider[key];
-			if(val == ''){
+			if(val == '' && (key != 'website' && key != 'email' && key != 'tier')){
 				needsErrorMessage[key] = true;
 				canContinue = false;
 				$('.provider_'+key).addClass('hasError');
@@ -495,13 +495,19 @@ export class AKTClusterConfig{
 			const clusterName = $('#clusterName').val();
 			const providerWalletName = $('#providerWalletName').val();
 			const providerWalletAddress = $('#providerWalletAddress').val();
+			const tierName = $('#tier').val();
+			const email = $('#email').val();
+			const website = $('#website').val();
 			output.provider = {
 				providerIP,
 				clusterIP,
 				regionName,
 				clusterName,
 				providerWalletName,
-				providerWalletAddress
+				providerWalletAddress,
+				tier:tierName,
+				email,
+				website
 			}
 			const continueSubmission = this.validateConfig(output);
 			if(!continueSubmission){
@@ -850,13 +856,19 @@ export class AKTClusterConfig{
 		const clusterName = $('#clusterNameConfigurator').val();
 		const providerWalletName = $('#providerWalletNameConfigurator').val();
 		const providerWalletAddress = $('#providerWalletAddressConfigurator').val();
+		const tierName = $('#tierNameConfigurator').val();
+		const email = $('#emailConfigurator').val();
+		const website = $('#websiteConfigurator').val();
 		output.provider = {
 			providerIP:domainName,
 			clusterIP:domainName,
 			regionName,
 			clusterName,
 			providerWalletName,
-			providerWalletAddress
+			providerWalletAddress,
+			tier:tierName,
+			email,
+			website
 		}
 		Object.keys(configData.preConfiguredNVMe).map(nodeName=>{
 			const nodeData = configData.preConfiguredNVMe[nodeName];
