@@ -357,6 +357,46 @@ export class Wallet{
 		
 	}
 	getBalance(address){
+		//use cosmostation APIs bc the wait time on an rpc failure can cause un-necessary wait time on the UI.
+		return new Promise((resolve,reject)=>{
+			const url = 'https://lcd-akash.cosmostation.io/cosmos/bank/v1beta1/balances/'+address;
+			let output = '';
+			const request = https.request(url,response=>{
+				response.on('data', (chunk) => {
+					output += chunk;
+				});
+
+				//the whole response has been received, so we just print it out here
+				response.on('end', () => {
+					let json = {};
+					try{
+						json = JSON.parse(output);
+					}
+					catch(e){
+						console.log('bad json response from balance query',url,output.toString());
+					}
+					this.getQRCode(address).then(qrData=>{
+						const balanceData = {
+							balance:json,
+							qr:qrData
+						};
+						resolve(balanceData);
+					});
+				});
+
+				if(response.statusCode.toString() != '200'){
+					//something went wrong
+					reject(output);
+				}
+			});
+
+			request.on('error', (err)=> {
+			    reject(err)
+			});
+			request.end();
+		});
+	}
+	getBalanceAkashBin(address){
 		
 		return new Promise((resolve,reject)=>{
 			//get public IP for them at least..

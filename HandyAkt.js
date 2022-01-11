@@ -451,6 +451,13 @@ export class HandyAKT{
 					reject(error);
 				});
 			break;
+			case 'getProviderParams':
+				this.utils.getProviderParams().then(data=>{
+					resolve(data);
+				}).catch(error=>{
+
+				});
+			break;
 		}
 		
 	}

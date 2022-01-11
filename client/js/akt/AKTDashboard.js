@@ -371,8 +371,17 @@ export class AKTDashboard {
 			$('#updateKubesprayModal').hide();
 		})
 	}
+	initProviderParams(){
+		fetch('/api/akt/getProviderParams').then(d=>d.json()).then(data=>{
+			if(typeof data.fees != "undefined"){
+				$('#runProviderModal #runFees').val(data.fees);
+				$('#runProviderModal #cpuPrice').val(data.cpuPrice);
+			}
+		})
+	}
 	initDashboard(){
 		const _this = this;
+		this.initProviderParams();
 		fetch('/api/akt/getState').then(d=>d.json()).then(json=>{
 			console.log('state',json);
 			//json.exists = false;

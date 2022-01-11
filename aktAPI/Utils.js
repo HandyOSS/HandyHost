@@ -35,6 +35,16 @@ export class AKTUtils{
 			});
 		});
 	}
+	getProviderParams(){
+		return new Promise((resolve,reject)=>{
+			const akashParamsFile = process.env.HOME+'/.HandyHost/aktData/akashProviderParams.json';
+			let output = {};
+			if(fs.existsSync(akashParamsFile)){
+				output = JSON.parse(fs.readFileSync(akashParamsFile,'utf8'));
+			}
+			resolve(output);
+		})
+	}
 	getHosts(existingConfigData){
 		//get hosts on my local network
 		if(typeof this.macLookup == "undefined"){
