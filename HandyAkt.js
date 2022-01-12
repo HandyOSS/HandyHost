@@ -789,8 +789,8 @@ export class HandyAKT{
 			})
 		}
 		return new Promise((resolve,reject)=>{
-			this.utils.saveClusterConfig(parsed,this.clusterConfigFilePath).then(()=>{
-				this.k8sUtils.createKubernetesInventory(this.clusterConfigFilePath,this.ioNamespaces).then((data)=>{
+			this.utils.saveClusterConfig(parsed,this.clusterConfigFilePath).then((changes)=>{
+				this.k8sUtils.createKubernetesInventory(this.clusterConfigFilePath,this.ioNamespaces,undefined,changes.changedNodes).then((data)=>{
 					resolve(data);
 				}).catch(error=>{
 					reject(error);

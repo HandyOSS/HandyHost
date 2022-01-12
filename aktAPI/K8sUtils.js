@@ -77,7 +77,7 @@ export class K8sUtils{
 		})
 		
 	}
-	createKubernetesInventory(configPath,socketIONamespaces,customEmitMessage){
+	createKubernetesInventory(configPath,socketIONamespaces,customEmitMessage,nodeChanges){
 		return new Promise((resolve,reject)=>{
 
 			const configJSON = JSON.parse(fs.readFileSync(configPath,'utf8'));
@@ -86,6 +86,7 @@ export class K8sUtils{
 			let config = 'all:\n';
 			config += `${tab}vars:\n`;
 			config += `${tab}${tab}cluster_id: "1.0.0.1"\n`;
+			config += `${tab}${tab}gvisor_enabled: true\n`;
 			//config += `${tab}${tab}ansible_user:ubuntu\n`;
 			config += `${tab}hosts:\n`;
 			let nodeNames = [];
@@ -184,13 +185,18 @@ export class K8sUtils{
 				this.initNewCluster(socketIONamespaces,customEmitMessage).then(()=>{
 					this.cleanupKnownHosts(allIPs).then(()=>{
 						this.postInitNewCluster(socketIONamespaces,masterNodeName,masterUser,masterIP,masterMDNS,ingressNode,customEmitMessage).then(()=>{
-							Object.keys(socketIONamespaces).map(serverName=>{
-								socketIONamespaces[serverName].namespace.to('akt').emit(emitMessage,{part:'init',status:'finished'})
+							//add or remove nodes if we need to
+							this.addOrRemoveClusterNodes(nodeChanges,socketIONamespaces).then(()=>{
+								Object.keys(socketIONamespaces).map(serverName=>{
+									socketIONamespaces[serverName].namespace.to('akt').emit(emitMessage,{part:'init',status:'finished'})
+								})
+								//socketIONamespace.to('akt').emit(emitMessage,{part:'init',status:'finished'})
+								if(typeof customEmitMessage != "undefined"){
+									resolve({success:true})
+								}
+							}).catch(error=>{
+								console.log('error adding cluster nodes',error);
 							})
-							//socketIONamespace.to('akt').emit(emitMessage,{part:'init',status:'finished'})
-							if(typeof customEmitMessage != "undefined"){
-								resolve({success:true})
-							}
 						});
 					});
 					
@@ -203,6 +209,47 @@ export class K8sUtils{
 		}).catch(error=>{
 			console.log('error init cluster',error);
 		});
+	}
+	addOrRemoveClusterNodes(nodeChanges,socketIONamespaces){
+		//remove is taken care of during reset.yml
+		return new Promise((resolve,reject)=>{
+			let success = 0;
+			if(nodeChanges.add.length > 0){
+				if(nodeChanges.add.length > 0){
+					nodeChanges.add.map(nodeName=>{
+						const p = spawn('./addK8sClusterNode.sh',[nodeName],{env:process.env,cwd:process.env.PWD+'/aktAPI'});
+						p.stderr.on('data',d=>{
+							console.log('kubernetes error adding cluster node',d.toString());
+							Object.keys(socketIONamespaces).map(serverName=>{
+								socketIONamespaces[serverName].namespace.to('akt').emit('k8sBuildLogs','K8S Add Node Error: '+d.toString())
+							})
+							
+						})
+						p.stdout.on('data',d=>{
+							Object.keys(socketIONamespaces).map(serverName=>{
+								socketIONamespaces[serverName].namespace.to('akt').emit('k8sBuildLogs','K8S Add Node: '+d.toString())
+							})
+							
+						})
+						p.on('close',d=>{
+							Object.keys(socketIONamespaces).map(serverName=>{
+								socketIONamespaces[serverName].namespace.to('akt').emit('k8sBuildLogs','K8S Add Node Success: '+nodeName)
+							})
+							success += 1;
+							if(success == nodeChanges.add.length){
+								resolve();
+							}
+						})
+						
+					})
+				}
+				
+			}
+			else{
+				resolve();
+			}
+		});
+		
 	}
 	checkForKubesprayUpdates(){
 		return new Promise((resolve,reject)=>{
