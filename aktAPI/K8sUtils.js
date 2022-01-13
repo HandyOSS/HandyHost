@@ -77,9 +77,50 @@ export class K8sUtils{
 		})
 		
 	}
-	createKubernetesInventory(configPath,socketIONamespaces,customEmitMessage,nodeChanges){
-		return new Promise((resolve,reject)=>{
+	getExistingKubernetesInventory(configPath){
+		const inventoryFile = process.env.HOME+'/.HandyHost/aktData/kubespray/handyhost/myinventory.yaml';
+		let output = {
+			add:[],
+			remove:[]
+		}
+		const isConfigured = fs.existsSync(inventoryFile);
+		if(isConfigured){
+			const doc = yaml.loadAll(fs.readFileSync(inventoryFile))
+			let yamlNodesObj = {};
+			try{
+				yamlNodesObj = doc[0].all.hosts;
+			}
+			catch(e){
+				console.log('error parsing inventory.yaml',e);
+			}
 
+			
+			const configJSON = JSON.parse(fs.readFileSync(configPath,'utf8'));
+			let newNodes = {};
+			if(typeof configJSON.nodes != "undefined"){
+				configJSON.nodes.filter(node=>{
+					return typeof node.kubernetes != "undefined";
+				}).map(node=>{
+					newNodes[node.kubernetes.name] = node;
+					if(typeof yamlNodesObj[node.kubernetes.name] == "undefined"){
+						//new node was added
+						output.add.push(node.kubernetes.name);
+					}
+				});
+				Object.keys(yamlNodesObj).map(nodeName=>{
+					if(typeof newNodes[nodeName] == "undefined"){
+						//needs removed
+						output.remove.push(nodeName);
+					}
+				})
+
+			}
+		}
+		return output;
+	}
+	createKubernetesInventory(configPath,socketIONamespaces,customEmitMessage){
+		return new Promise((resolve,reject)=>{
+			const nodeChanges = this.getExistingKubernetesInventory(configPath);
 			const configJSON = JSON.parse(fs.readFileSync(configPath,'utf8'));
 			//take configJSON and make k8s inventory
 			let tab = '  ';
@@ -217,6 +258,7 @@ export class K8sUtils{
 			if(nodeChanges.add.length > 0){
 				if(nodeChanges.add.length > 0){
 					nodeChanges.add.map(nodeName=>{
+						console.log('adding kubernetes node',nodeName);
 						const p = spawn('./addK8sClusterNode.sh',[nodeName],{env:process.env,cwd:process.env.PWD+'/aktAPI'});
 						p.stderr.on('data',d=>{
 							console.log('kubernetes error adding cluster node',d.toString());

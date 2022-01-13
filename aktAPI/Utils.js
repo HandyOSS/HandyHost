@@ -831,43 +831,9 @@ export class AKTUtils{
 					}
 				}
 			}
-			let changedNodes = {
-				add:[],
-				remove:[]
-			};
-			if(fs.existsSync(configPath)){
-				//old config exists. We need to check if we are adding or removing nodes from our kubernetes cluster here
-				const oldConfig = JSON.parse(fs.readFileSync(configPath));
-				if(typeof oldConfig.nodes != "undefined"){
-					let existing = {};
-					let newnodes = {};
-					oldConfig.nodes.filter(node=>{
-						return typeof existing.kubernetes != "undefined";
-					}).map(node=>{
-						existing[node.kubernetes.name] = node;
-					});
-
-					configJSON.nodes.filter(node=>{
-						return typeof node.kubernetes != "undefined":
-					}).map(node=>{
-						if(typeof existing[node.kubernetes.name] == "undefined"){
-							//new node was added.
-							changedNodes.add.push(node.kubernetes.name);
-						}
-						newnodes[node.kubernetes.name] = node;
-					});
-
-					Object.keys(existing).map(nodeName=>{
-						if(typeof newnodes[nodeName] == "undefined"){
-							//has been removed.
-							changedNodes.remove.push(nodeName);
-						}
-					})
-
-				}
-			}
+			
 			fs.writeFileSync(configPath,JSON.stringify(configJSON,null,2),'utf8');
-			resolve({saved:true,changedNodes});
+			resolve({saved:true});
 		})
 	}
 	getCurrentAkashVersion(){
