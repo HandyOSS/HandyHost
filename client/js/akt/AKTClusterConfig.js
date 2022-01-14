@@ -277,6 +277,7 @@ export class AKTClusterConfig{
 			$k8nRoleSelect.append('<option value="none">none</option>');
 			$k8nRoleSelect.append('<option value="master">Master Node</option>');
 			$k8nRoleSelect.append('<option value="etcd">etcd</option>');
+			
 
 			const $isComputeCheckbox = $('<input type="checkbox" class="isCompute" />')
 
@@ -326,6 +327,14 @@ export class AKTClusterConfig{
 			const $ingress = $(`<td><input type="radio" class="ingressRadio" name="ingress" value="${node.kubernetes.name}"${ingressSelected} data-ip="${node.ip}" /></td>`)
 			$tr.append($ingress);
 			$table.append($tr);
+			$k8nRoleSelect.off('change').on('change',()=>{
+				const val = $('option:selected',$k8nRoleSelect).val();
+				node.kubernetes.role = val;
+			})
+			$isComputeCheckbox.off('change').on('change',()=>{
+				const val = $isComputeChackbox.is(':checked');
+				node.kubernetes.isCompute = val;
+			})
 		})
 		$('input[name="ingress"]').off('change').on('change',()=>{
 			const ip = $('input[name="ingress"]:checked').attr('data-ip');
@@ -339,7 +348,7 @@ export class AKTClusterConfig{
 					node.kubernetes.ingress = isIngress;
 				}
 			})
-		})
+		});
 		$('#initCluster').off('click').on('click',()=>{
 			/*if(!confirm('If there is currently a kubernetes cluster, this operation will completely remove it. Still Continue?')){
 				console.log('aborted');

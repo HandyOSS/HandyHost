@@ -81,14 +81,23 @@ export class K8sUtils{
 		const inventoryFile = process.env.HOME+'/.HandyHost/aktData/kubespray/handyhost/myinventory.yaml';
 		let output = {
 			add:[],
-			remove:[]
+			remove:[],
+			didEtcdChange:false,
+			didMasterChange:false
 		}
 		const isConfigured = fs.existsSync(inventoryFile);
+		console.log('is k8s already configured?',isConfigured);
 		if(isConfigured){
 			const doc = yaml.loadAll(fs.readFileSync(inventoryFile))
 			let yamlNodesObj = {};
+			let yamlMaster = {};
+			let yamlEtcd = {};
+
 			try{
 				yamlNodesObj = doc[0].all.hosts;
+				yamlMaster = doc[0].all.children.kube_control_plane;
+				yamlEtcd = doc[0].all.children.etcd;
+
 			}
 			catch(e){
 				console.log('error parsing inventory.yaml',e);
@@ -97,6 +106,8 @@ export class K8sUtils{
 			
 			const configJSON = JSON.parse(fs.readFileSync(configPath,'utf8'));
 			let newNodes = {};
+			console.log('yaml nodes',yamlNodesObj);
+			console.log('configJSON nodes',configJSON.nodes);
 			if(typeof configJSON.nodes != "undefined"){
 				configJSON.nodes.filter(node=>{
 					return typeof node.kubernetes != "undefined";
@@ -105,6 +116,17 @@ export class K8sUtils{
 					if(typeof yamlNodesObj[node.kubernetes.name] == "undefined"){
 						//new node was added
 						output.add.push(node.kubernetes.name);
+						if(node.kubernetes.role == 'etcd'){
+							//check if its a new etcd
+							if(typeof yamlEtcd[node.kubernetes.name] == "undefined"){
+								output.didEtcdChange = true;
+							}
+						}
+						if(node.kubernetes.role == 'master'){
+							if(typeof yamlMaster[node.kubernetes.name] == "undefined"){
+								output.didMasterChange = true;
+							}
+						}
 					}
 				});
 				Object.keys(yamlNodesObj).map(nodeName=>{
@@ -121,6 +143,7 @@ export class K8sUtils{
 	createKubernetesInventory(configPath,socketIONamespaces,customEmitMessage){
 		return new Promise((resolve,reject)=>{
 			const nodeChanges = this.getExistingKubernetesInventory(configPath);
+			console.log('k8s node changes',nodeChanges);
 			const configJSON = JSON.parse(fs.readFileSync(configPath,'utf8'));
 			//take configJSON and make k8s inventory
 			let tab = '  ';
@@ -225,9 +248,9 @@ export class K8sUtils{
 				
 				this.initNewCluster(socketIONamespaces,customEmitMessage).then(()=>{
 					this.cleanupKnownHosts(allIPs).then(()=>{
-						this.postInitNewCluster(socketIONamespaces,masterNodeName,masterUser,masterIP,masterMDNS,ingressNode,customEmitMessage).then(()=>{
-							//add or remove nodes if we need to
-							this.addOrRemoveClusterNodes(nodeChanges,socketIONamespaces).then(()=>{
+						//add or remove nodes if we need to
+						this.addOrRemoveClusterNodes(nodeChanges,socketIONamespaces).then(()=>{		
+							this.postInitNewCluster(socketIONamespaces,masterNodeName,masterUser,masterIP,masterMDNS,ingressNode,customEmitMessage).then(()=>{
 								Object.keys(socketIONamespaces).map(serverName=>{
 									socketIONamespaces[serverName].namespace.to('akt').emit(emitMessage,{part:'init',status:'finished'})
 								})
@@ -235,10 +258,10 @@ export class K8sUtils{
 								if(typeof customEmitMessage != "undefined"){
 									resolve({success:true})
 								}
-							}).catch(error=>{
-								console.log('error adding cluster nodes',error);
-							})
-						});
+							});
+						}).catch(error=>{
+							console.log('error adding cluster nodes',error);
+						})
 					});
 					
 					
