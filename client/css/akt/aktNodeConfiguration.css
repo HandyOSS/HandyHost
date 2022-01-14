@@ -302,7 +302,7 @@ a.getGlobalIP{
 	font-weight: 200;
 }
 
-.ingressRadio, .masterRoleRadio, .etcRoleRadio{
+.ingressRadio, .masterRoleRadio, .etcdRoleRadio{
 	width: 23px;
 	height: 23px;
 }
