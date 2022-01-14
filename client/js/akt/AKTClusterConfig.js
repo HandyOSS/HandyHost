@@ -216,6 +216,12 @@ export class AKTClusterConfig{
 				if(myRole == 'etcd'){
 					isEtcd = true;
 				}
+				if(node.kubernetes.isMaster){
+					isMaster = true;
+				}
+				if(node.kubernetes.isEtcd){
+					isEtcd = true;
+				}
 				node.kubernetes = {
 					//role:myRole,
 					isCompute:true,
