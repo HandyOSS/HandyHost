@@ -210,6 +210,12 @@ export class AKTClusterConfig{
 					//single node cluster is both
 					isEtcd = true;
 				}
+				if(myRole == 'master'){
+					isMaster = true;
+				}
+				if(myRole == 'etcd'){
+					isEtcd = true;
+				}
 				node.kubernetes = {
 					//role:myRole,
 					isCompute:true,
@@ -311,6 +317,8 @@ export class AKTClusterConfig{
 			let isMaster = false;
 			let isEtcd = false;
 			let ingressSelected = '';
+			let masterRoleSelected = '';
+			let etcdRoleSelected = '';
 			const $k8nRoleSelect = $('<select class="role" />');
 			$k8nRoleSelect.append('<option value="none">none</option>');
 			$k8nRoleSelect.append('<option value="master">Master Node</option>');
@@ -331,6 +339,15 @@ export class AKTClusterConfig{
 				isCompute = node.kubernetes.isCompute;
 				isMaster = node.kubernetes.isMaster;
 				isEtcd = node.kubernetes.isEtcd;
+				if(typeof k8nRole != "undefined"){
+					//legacy mode
+					if(k8nRole == 'master'){
+						isMaster = true;
+					}
+					if(k8nRole == 'etcd'){
+						isEtcd = true;
+					}
+				}
 				$('option[value="'+k8nRole+'"]',$k8nRoleSelect).attr('selected','selected');
 				if(isCompute){
 					$isComputeCheckbox.attr('checked','checked');
