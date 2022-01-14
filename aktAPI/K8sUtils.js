@@ -170,22 +170,39 @@ export class K8sUtils{
 			configJSON.nodes.map((node,i)=>{
 			    //let name = node.hostname == '?' : 'akashnode'+i : node.hostname.split('.local')[0];
 				let name = node.kubernetes.name;
-				if(node.kubernetes.role == 'master'){
-					masterNodeName = name;
-					masterUser = node.user;
-					masterIP = node.ip;
-					allIPs.push(node.ip);
-					masterMDNS = node.hostname;
-					//ingressNode = name;
+				if(typeof node.kubernetes.role != "undefined"){
+					//support legacy "role" property
+					if(node.kubernetes.role == 'master'){
+						masterNodeName = name;
+						masterUser = node.user;
+						masterIP = node.ip;
+						allIPs.push(node.ip);
+						masterMDNS = node.hostname;
+						//ingressNode = name;
+					}
+					if(node.kubernetes.role == 'etcd'){
+						etcdNodeName = name;
+					}
+					/*if(node.kubernetes.role == 'ingress'){
+						ingressNode = name;
+					}*/
+					if(node.kubernetes.role == 'none'){
+						noneNode = name;
+					}
 				}
-				if(node.kubernetes.role == 'etcd'){
-					etcdNodeName = name;
-				}
-				/*if(node.kubernetes.role == 'ingress'){
-					ingressNode = name;
-				}*/
-				if(node.kubernetes.role == 'none'){
-					noneNode = name;
+				else{
+					//however we move to a structure where i can be both master and etcd (single node cluster)
+					//and later scale up to more nodes and not break things
+					if(node.kubernetes.isMaster){
+						masterNodeName = name;
+						masterUser = node.user;
+						masterIP = node.ip;
+						allIPs.push(node.ip);
+						masterMDNS = node.hostname;
+					}
+					if(node.kubernetes.isEtcd){
+						etcdNodeName = name;
+					}
 				}
 				if(node.kubernetes.isCompute){
 					nodeNames.push(name);
@@ -275,7 +292,7 @@ export class K8sUtils{
 		});
 	}
 	addOrRemoveClusterNodes(nodeChanges,socketIONamespaces){
-		//remove is taken care of during reset.yml
+		//remove is taken care of during reset.yml?
 		return new Promise((resolve,reject)=>{
 			let success = 0;
 			if(nodeChanges.add.length > 0){
