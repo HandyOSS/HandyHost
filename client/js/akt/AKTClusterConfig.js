@@ -195,7 +195,7 @@ export class AKTClusterConfig{
 			}
 			else{
 				myRole = node.kubernetes.role;
-
+				let isCompute = typeof node.kubernetes.isCompute == "undefined" ? true : node.kubernetes.isCompute;
 				if(!hasMaster){
 					myRole = 'master';
 					hasMaster = true;
@@ -224,7 +224,7 @@ export class AKTClusterConfig{
 				}
 				node.kubernetes = {
 					//role:myRole,
-					isCompute:true,
+					isCompute,
 					isMaster,
 					isEtcd,
 					ingress:node.kubernetes.ingress,
@@ -356,6 +356,7 @@ export class AKTClusterConfig{
 				}
 				$('option[value="'+k8nRole+'"]',$k8nRoleSelect).attr('selected','selected');
 				if(isCompute){
+
 					$isComputeCheckbox.attr('checked','checked');
 				}
 				/*if(masterName == ''){
@@ -363,7 +364,7 @@ export class AKTClusterConfig{
 					k8nRole = 'master';
 					$('option[value="'+k8nRole+'"]',$k8nRoleSelect).attr('selected','selected');
 				}*/
-				if(ingressName == '' && k8nRole == 'master'){
+				if(ingressName == '' && (k8nRole == 'master' || isMaster)){
 					ingressName = k8nName;
 					isIngress = true;
 					ingressSelected = ' checked="checked"';
@@ -410,7 +411,7 @@ export class AKTClusterConfig{
 				node.kubernetes.role = val;
 			})
 			$isComputeCheckbox.off('change').on('change',()=>{
-				const val = $isComputeChackbox.is(':checked');
+				const val = $isComputeCheckbox.is(':checked');
 				node.kubernetes.isCompute = val;
 			})
 		})

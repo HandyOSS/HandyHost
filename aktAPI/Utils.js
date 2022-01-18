@@ -195,14 +195,26 @@ export class AKTUtils{
 							Object.keys(machine).map(key=>{
 								existingNode[key] = machine[key];
 							});
-							machines.push(existingNode);
+							let existingMachine = machines.find(m=>{
+								return m['mac'] == existingNode['mac'];
+							})
+							if(typeof existingMachine == "undefined"){
+								machines.push(existingNode);
+							}
 						}
 
 					});
 				}
 				else{
 					if(Object.keys(machine).length > 0 && typeof machine.mac != "undefined"){
-						machines.push(machine);
+						let existingMachine = existingConfigData.nodes.find(existingNode=>{
+							return existingNode['mac'] == machine['mac'];
+						});
+						if(typeof existingMachine == "undefined"){
+							//sometimes arp can return an old IP address for a machine my mac address.
+							//so only push to machines if it doesnt already exist in the configs
+							machines.push(machine);
+						}
 					}
 				}
 				
@@ -306,14 +318,19 @@ export class AKTUtils{
 			if(process.platform != 'darwin'){
 				let machineCount = machines.length;
 				let finished = 0;
+				let macIndex = {};
 				machines.map(machine=>{
 					const ip = machine.ip;
+
 					const s = spawn('avahi-resolve-address',[ip]);
 					let out = '';
 					s.stdout.on('data',(d)=>{
 						out += d.toString();
 					})
 					s.stderr.on('data',(d)=>{
+						if(typeof macIndex[machine.mac] == "undefined"){
+							macIndex[machine.mac] = [];
+						}
 						console.log('avahi resolve address err',d.toString())
 					})
 					s.on('close',()=>{
@@ -322,14 +339,52 @@ export class AKTUtils{
 						});
 						if(cells.length > 1){
 							machine.hostname = cells[1].replace('\n','').trim();
+							if(typeof macIndex[machine.mac] == "undefined"){
+								macIndex[machine.mac] = [];
+							}
+							macIndex[machine.mac].push(machine.hostname);
 						}
+						else{
+							if(typeof macIndex[machine.mac] == "undefined"){
+								macIndex[machine.mac] = [];
+							}
+							macIndex[machine.mac].push('?');
+						}
+						
 							
 						finished++;
 						if(finished == machineCount){
-							resolve(machines);
+							let machinesOut = [];
+							Object.keys(macIndex).map(mac=>{
+								let hostnames = macIndex[mac];
+								//sometimes arp can return 2 ip's for a single mac address idk..
+								if(hostnames.length == 1){
+									const machine = machines.find(d=>{
+										return d.mac == mac;
+									});
+									machinesOut.push(machine);
+								}
+								else{
+									//uhoh, collision...
+
+									const targets = hostnames.filter(d=>{
+										return d != '?';
+										//just in case its a named collision vs ghost...
+									});
+									if(targets.length == 0){
+										targets = ['?']; //default then.
+									}
+									const machineTargets = machines.filter(d=>{
+										return targets.indexOf(d.hostname) >= 0 && d.mac == mac;
+									});
+									machinesOut = machinesOut.concat(machineTargets);
+								}
+							})
+							resolve(machinesOut);
 						}
 					})
-				})
+				});
+
 			}
 			else{
 				//no avahi utils on mac, nor is arp (or anything) consistent at getting hostnames

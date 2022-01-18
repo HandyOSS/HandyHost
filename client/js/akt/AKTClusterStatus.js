@@ -502,8 +502,8 @@ export class AKTClusterStatus{
 		$('#registrationModal').hide();
 		$('#unlockRegPW').val('');
 		$('#regFees').val('');
-		$('#runFees').val('');
-		$('#cpuPrive').val('');
+		//$('#runFees').val('');
+		//$('#cpuPrice').val('');
 		$( "#generateCert" ).prop('checked', false );
 		//$('.registerProviderModal .checkboxWrap').show();
 		$('.walletUtil').addClass('showing');
