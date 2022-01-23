@@ -79,7 +79,7 @@ export class K8sUtils{
 	}
 	getExistingKubernetesInventory(configPath){
 		return new Promise((resolve,reject)=>{
-			const inventoryFile = process.env.HOME+'/.HandyHost/aktData/kubespray/handyhost/myinventory.yaml';
+			const inventoryFile = process.env.HOME+'/.HandyHost/aktData/kubespray/inventory/handyhost/myinventory.yaml';
 			let output = {
 				add:[],
 				remove:[],

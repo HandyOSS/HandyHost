@@ -500,7 +500,7 @@ export class Marketplace{
 				'--gas', 'auto',
 				'--keyring-backend', 'file',
 				'--from', this.commonUtils.escapeBashString(walletName),
-				'--node' `${process.env.AKASH_NODE}`,
+				'--node', `${process.env.AKASH_NODE}`,
 				'--owner', params.orderData.order_id.owner,
 				'--provider', params.orderData.order_id.provider,
 				'-y'

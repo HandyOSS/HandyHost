@@ -758,9 +758,8 @@ export class AKTMarketplace{
 		$('.marketplaceMessage .success').show();
 		$('.marketplaceBidModal').removeClass('showing');
 		$('.marketplaceMessage').addClass('showing');
-		this.clusterStatus.fetchStats();
 		this.handleVerifyModalHide();
-
+		this.dashboard.clusterStatus.fetchStats();
 	}
 	handleVerifyModalHide(wasError){
 		//TODO button not firing?????
