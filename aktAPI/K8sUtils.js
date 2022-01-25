@@ -77,132 +77,268 @@ export class K8sUtils{
 		})
 		
 	}
+	getExistingKubernetesInventory(configPath){
+		return new Promise((resolve,reject)=>{
+			const inventoryFile = process.env.HOME+'/.HandyHost/aktData/kubespray/inventory/handyhost/myinventory.yaml';
+			let output = {
+				add:[],
+				remove:[],
+				didEtcdChange:false,
+				didMasterChange:false
+			}
+			const isConfigured = fs.existsSync(inventoryFile);
+			console.log('is k8s already configured?',isConfigured);
+			if(isConfigured){
+				const doc = yaml.loadAll(fs.readFileSync(inventoryFile))
+				let yamlNodesObj = {};
+				let yamlMaster = {};
+				let yamlEtcd = {};
+
+				try{
+					yamlNodesObj = doc[0].all.hosts;
+					yamlMaster = doc[0].all.children.kube_control_plane;
+					yamlEtcd = doc[0].all.children.etcd;
+
+				}
+				catch(e){
+					console.log('error parsing inventory.yaml',e);
+				}
+
+				
+				const configJSON = JSON.parse(fs.readFileSync(configPath,'utf8'));
+				let newNodes = {};
+				console.log('yaml nodes',yamlNodesObj);
+				console.log('configJSON nodes',configJSON.nodes);
+				if(typeof configJSON.nodes != "undefined"){
+					configJSON.nodes.filter(node=>{
+						return typeof node.kubernetes != "undefined";
+					}).map(node=>{
+						newNodes[node.kubernetes.name] = node;
+						if(typeof yamlNodesObj[node.kubernetes.name] == "undefined"){
+							//new node was added
+							output.add.push(node.kubernetes.name);
+							if(node.kubernetes.role == 'etcd'){
+								//check if its a new etcd
+								if(typeof yamlEtcd[node.kubernetes.name] == "undefined"){
+									output.didEtcdChange = true;
+								}
+							}
+							if(node.kubernetes.role == 'master'){
+								if(typeof yamlMaster[node.kubernetes.name] == "undefined"){
+									output.didMasterChange = true;
+								}
+							}
+						}
+					});
+					Object.keys(yamlNodesObj).map(nodeName=>{
+						if(typeof newNodes[nodeName] == "undefined"){
+							//needs removed
+							output.remove.push(nodeName);
+						}
+					})
+
+				}
+			}
+			resolve(output);
+		})
+		
+	}
 	createKubernetesInventory(configPath,socketIONamespaces,customEmitMessage){
 		return new Promise((resolve,reject)=>{
-
-			const configJSON = JSON.parse(fs.readFileSync(configPath,'utf8'));
-			//take configJSON and make k8s inventory
-			let tab = '  ';
-			let config = 'all:\n';
-			config += `${tab}vars:\n`;
-			config += `${tab}${tab}cluster_id: "1.0.0.1"\n`;
-			//config += `${tab}${tab}ansible_user:ubuntu\n`;
-			config += `${tab}hosts:\n`;
-			let nodeNames = [];
-			let masterNodeName = '';
-			let masterUser = '';
-			let masterIP = ''
-			let masterMDNS = '';
-			let etcdNodeName = '';
-			let ingressNode = '';
-			let noneNode = ''; //in case we didnt add ingress...
-			let allIPs = [];
-			configJSON.nodes.filter(node=>{
-				return node.kubernetes.ingress;
-			}).map(node=>{
-				ingressNode = node.kubernetes.name;
-			})
-			configJSON.nodes.map((node,i)=>{
-			    //let name = node.hostname == '?' : 'akashnode'+i : node.hostname.split('.local')[0];
-				let name = node.kubernetes.name;
-				if(node.kubernetes.role == 'master'){
-					masterNodeName = name;
-					masterUser = node.user;
-					masterIP = node.ip;
-					allIPs.push(node.ip);
-					masterMDNS = node.hostname;
-					//ingressNode = name;
-				}
-				if(node.kubernetes.role == 'etcd'){
-					etcdNodeName = name;
-				}
-				/*if(node.kubernetes.role == 'ingress'){
-					ingressNode = name;
-				}*/
-				if(node.kubernetes.role == 'none'){
-					noneNode = name;
-				}
-				if(node.kubernetes.isCompute){
-					nodeNames.push(name);
-				}
-				if(configJSON.nodes.length == 1){
-					etcdNodeName = name;
-					ingressNode = name;
-				}
-				if(i == configJSON.nodes.length-1){
-					//its the last node, check if we set etcd and ingress
-					if(ingressNode == ''){
+			this.getExistingKubernetesInventory(configPath).then(nodeChanges=>{
+				console.log('k8s node changes',nodeChanges);
+				const configJSON = JSON.parse(fs.readFileSync(configPath,'utf8'));
+				//take configJSON and make k8s inventory
+				let tab = '  ';
+				let config = 'all:\n';
+				config += `${tab}vars:\n`;
+				config += `${tab}${tab}cluster_id: "1.0.0.1"\n`;
+				config += `${tab}${tab}gvisor_enabled: true\n`;
+				//config += `${tab}${tab}ansible_user:ubuntu\n`;
+				config += `${tab}hosts:\n`;
+				let nodeNames = [];
+				let masterNodeName = '';
+				let masterUser = '';
+				let masterIP = ''
+				let masterMDNS = '';
+				let etcdNodeName = '';
+				let ingressNode = '';
+				let noneNode = ''; //in case we didnt add ingress...
+				let allIPs = [];
+				configJSON.nodes.filter(node=>{
+					return node.kubernetes.ingress;
+				}).map(node=>{
+					ingressNode = node.kubernetes.name;
+				})
+				configJSON.nodes.map((node,i)=>{
+				    //let name = node.hostname == '?' : 'akashnode'+i : node.hostname.split('.local')[0];
+					let name = node.kubernetes.name;
+					if(typeof node.kubernetes.role != "undefined"){
+						//support legacy "role" property
+						if(node.kubernetes.role == 'master'){
+							masterNodeName = name;
+							masterUser = node.user;
+							masterIP = node.ip;
+							allIPs.push(node.ip);
+							masterMDNS = node.hostname;
+							//ingressNode = name;
+						}
+						if(node.kubernetes.role == 'etcd'){
+							etcdNodeName = name;
+						}
+						/*if(node.kubernetes.role == 'ingress'){
+							ingressNode = name;
+						}*/
+						if(node.kubernetes.role == 'none'){
+							noneNode = name;
+						}
+					}
+					else{
+						//however we move to a structure where i can be both master and etcd (single node cluster)
+						//and later scale up to more nodes and not break things
+						if(node.kubernetes.isMaster){
+							masterNodeName = name;
+							masterUser = node.user;
+							masterIP = node.ip;
+							allIPs.push(node.ip);
+							masterMDNS = node.hostname;
+						}
+						if(node.kubernetes.isEtcd){
+							etcdNodeName = name;
+						}
+					}
+					if(node.kubernetes.isCompute){
+						nodeNames.push(name);
+					}
+					if(configJSON.nodes.length == 1){
+						etcdNodeName = name;
 						ingressNode = name;
 					}
-					if(etcdNodeName == ''){
-						etcdNodeName = name;
+					if(i == configJSON.nodes.length-1){
+						//its the last node, check if we set etcd and ingress
+						if(ingressNode == ''){
+							ingressNode = name;
+						}
+						if(etcdNodeName == ''){
+							etcdNodeName = name;
+						}
 					}
-				}
 
-				let entry = `${tab}${tab}${name}:\n`;
-				   entry += `${tab}${tab}${tab}ansible_host: ${node.hostname}\n`;
- 				   entry += `${tab}${tab}${tab}ansible_user: ${node.user}\n`;
- 				   entry += `${tab}${tab}${tab}access_ip: ${node.ip}\n`;
- 				   entry += `${tab}${tab}${tab}ip: ${node.ip}\n`;
-				config += entry;
-			})
-
-			config += `${tab}children:\n`;
-			config += `${tab}${tab}kube_control_plane:\n`
-			config += `${tab}${tab}${tab}hosts:\n`;
-			config += `${tab}${tab}${tab}${tab}${masterNodeName}:\n`;
-			config += `${tab}${tab}etcd:\n`;
-			config += `${tab}${tab}${tab}hosts:\n`;
-			config += `${tab}${tab}${tab}${tab}${etcdNodeName}:\n`
-			config += `${tab}${tab}kube_node:\n`;
-			config += `${tab}${tab}${tab}hosts:\n`;
-			nodeNames.map(name=>{
-				config += `${tab}${tab}${tab}${tab}${name}:\n`;
-			});
-			/*config += `${tab}${tab}calico-rr:\n`;
-			config += `${tab}${tab}${tab}hosts:\n`;
-			nodeNames.map(name=>{
-				config += `${tab}${tab}${tab}${tab}${name}:\n`;
-			});*/
-			
-			config += `${tab}${tab}k8s_cluster:\n`;
-			config += `${tab}${tab}${tab}children:\n`;
-			config += `${tab}${tab}${tab}${tab}kube_control_plane:\n`;
-			config += `${tab}${tab}${tab}${tab}kube_node:\n`;
-			config += `${tab}${tab}calico_rr:\n`;
-			config += `${tab}${tab}${tab}hosts:{}\n`
-
-			console.log('built config',config);
-			const emitMessage = typeof customEmitMessage == "undefined" ? 'k8sBuildLogStatus' : customEmitMessage;
-			fs.writeFileSync(process.env.HOME+'/.HandyHost/aktData/inventory.yaml',config,'utf8');
-			this.teardownOldCluster(socketIONamespaces,customEmitMessage).then(()=>{
-				Object.keys(socketIONamespaces).map(serverName=>{
-					socketIONamespaces[serverName].namespace.to('akt').emit(emitMessage,{part:'teardown',status:'finished'});
+					let entry = `${tab}${tab}${name}:\n`;
+					   entry += `${tab}${tab}${tab}ansible_host: ${node.hostname}\n`;
+	 				   entry += `${tab}${tab}${tab}ansible_user: ${node.user}\n`;
+	 				   entry += `${tab}${tab}${tab}access_ip: ${node.ip}\n`;
+	 				   entry += `${tab}${tab}${tab}ip: ${node.ip}\n`;
+					config += entry;
 				})
-				//socketIONamespace.to('akt').emit(emitMessage,{part:'teardown',status:'finished'})
+
+				config += `${tab}children:\n`;
+				config += `${tab}${tab}kube_control_plane:\n`
+				config += `${tab}${tab}${tab}hosts:\n`;
+				config += `${tab}${tab}${tab}${tab}${masterNodeName}:\n`;
+				config += `${tab}${tab}etcd:\n`;
+				config += `${tab}${tab}${tab}hosts:\n`;
+				config += `${tab}${tab}${tab}${tab}${etcdNodeName}:\n`
+				config += `${tab}${tab}kube_node:\n`;
+				config += `${tab}${tab}${tab}hosts:\n`;
+				nodeNames.map(name=>{
+					config += `${tab}${tab}${tab}${tab}${name}:\n`;
+				});
+				/*config += `${tab}${tab}calico-rr:\n`;
+				config += `${tab}${tab}${tab}hosts:\n`;
+				nodeNames.map(name=>{
+					config += `${tab}${tab}${tab}${tab}${name}:\n`;
+				});*/
 				
-				this.initNewCluster(socketIONamespaces,customEmitMessage).then(()=>{
-					this.cleanupKnownHosts(allIPs).then(()=>{
-						this.postInitNewCluster(socketIONamespaces,masterNodeName,masterUser,masterIP,masterMDNS,ingressNode,customEmitMessage).then(()=>{
-							Object.keys(socketIONamespaces).map(serverName=>{
-								socketIONamespaces[serverName].namespace.to('akt').emit(emitMessage,{part:'init',status:'finished'})
+				config += `${tab}${tab}k8s_cluster:\n`;
+				config += `${tab}${tab}${tab}children:\n`;
+				config += `${tab}${tab}${tab}${tab}kube_control_plane:\n`;
+				config += `${tab}${tab}${tab}${tab}kube_node:\n`;
+				config += `${tab}${tab}calico_rr:\n`;
+				config += `${tab}${tab}${tab}hosts:{}\n`
+
+				console.log('built config',config);
+				const emitMessage = typeof customEmitMessage == "undefined" ? 'k8sBuildLogStatus' : customEmitMessage;
+				fs.writeFileSync(process.env.HOME+'/.HandyHost/aktData/inventory.yaml',config,'utf8');
+				this.teardownOldCluster(socketIONamespaces,customEmitMessage).then(()=>{
+					Object.keys(socketIONamespaces).map(serverName=>{
+						socketIONamespaces[serverName].namespace.to('akt').emit(emitMessage,{part:'teardown',status:'finished'});
+					})
+					//socketIONamespace.to('akt').emit(emitMessage,{part:'teardown',status:'finished'})
+					
+					this.initNewCluster(socketIONamespaces,customEmitMessage).then(()=>{
+						this.cleanupKnownHosts(allIPs).then(()=>{
+							//add or remove nodes if we need to
+							this.addOrRemoveClusterNodes(nodeChanges,socketIONamespaces).then(()=>{		
+								this.postInitNewCluster(socketIONamespaces,masterNodeName,masterUser,masterIP,masterMDNS,ingressNode,customEmitMessage).then(()=>{
+									Object.keys(socketIONamespaces).map(serverName=>{
+										socketIONamespaces[serverName].namespace.to('akt').emit(emitMessage,{part:'init',status:'finished'})
+									})
+									//socketIONamespace.to('akt').emit(emitMessage,{part:'init',status:'finished'})
+									if(typeof customEmitMessage != "undefined"){
+										resolve({success:true})
+									}
+								});
+							}).catch(error=>{
+								console.log('error adding cluster nodes',error);
 							})
-							//socketIONamespace.to('akt').emit(emitMessage,{part:'init',status:'finished'})
-							if(typeof customEmitMessage != "undefined"){
-								resolve({success:true})
-							}
 						});
-					});
-					
-					
+						
+						
+					})
 				})
+				if(typeof customEmitMessage == "undefined"){
+					resolve({config});
+				}
+			}).catch(changeErr=>{
+				console.log('error getting node changes in k8s inventory',changeErr);
 			})
-			if(typeof customEmitMessage == "undefined"){
-				resolve({config});
-			}
+			
 		}).catch(error=>{
 			console.log('error init cluster',error);
 		});
+	}
+	addOrRemoveClusterNodes(nodeChanges,socketIONamespaces){
+		//remove is taken care of during reset.yml?
+		return new Promise((resolve,reject)=>{
+			let success = 0;
+			if(nodeChanges.add.length > 0){
+				if(nodeChanges.add.length > 0){
+					nodeChanges.add.map(nodeName=>{
+						console.log('adding kubernetes node',nodeName);
+						const p = spawn('./addK8sClusterNode.sh',[nodeName],{env:process.env,cwd:process.env.PWD+'/aktAPI'});
+						p.stderr.on('data',d=>{
+							console.log('kubernetes error adding cluster node',d.toString());
+							Object.keys(socketIONamespaces).map(serverName=>{
+								socketIONamespaces[serverName].namespace.to('akt').emit('k8sBuildLogs','K8S Add Node Error: '+d.toString())
+							})
+							
+						})
+						p.stdout.on('data',d=>{
+							Object.keys(socketIONamespaces).map(serverName=>{
+								socketIONamespaces[serverName].namespace.to('akt').emit('k8sBuildLogs','K8S Add Node: '+d.toString())
+							})
+							
+						})
+						p.on('close',d=>{
+							Object.keys(socketIONamespaces).map(serverName=>{
+								socketIONamespaces[serverName].namespace.to('akt').emit('k8sBuildLogs','K8S Add Node Success: '+nodeName)
+							})
+							success += 1;
+							if(success == nodeChanges.add.length){
+								resolve();
+							}
+						})
+						
+					})
+				}
+				
+			}
+			else{
+				resolve();
+			}
+		});
+		
 	}
 	checkForKubesprayUpdates(){
 		return new Promise((resolve,reject)=>{

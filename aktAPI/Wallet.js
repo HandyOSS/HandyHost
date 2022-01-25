@@ -357,6 +357,46 @@ export class Wallet{
 		
 	}
 	getBalance(address){
+		//use cosmostation APIs bc the wait time on an rpc failure can cause un-necessary wait time on the UI.
+		return new Promise((resolve,reject)=>{
+			const url = 'https://lcd-akash.cosmostation.io/cosmos/bank/v1beta1/balances/'+address;
+			let output = '';
+			const request = https.request(url,response=>{
+				response.on('data', (chunk) => {
+					output += chunk;
+				});
+
+				//the whole response has been received, so we just print it out here
+				response.on('end', () => {
+					let json = {};
+					try{
+						json = JSON.parse(output);
+					}
+					catch(e){
+						console.log('bad json response from balance query',url,output.toString());
+					}
+					this.getQRCode(address).then(qrData=>{
+						const balanceData = {
+							balance:json,
+							qr:qrData
+						};
+						resolve(balanceData);
+					});
+				});
+
+				if(response.statusCode.toString() != '200'){
+					//something went wrong
+					reject(output);
+				}
+			});
+
+			request.on('error', (err)=> {
+			    reject(err)
+			});
+			request.end();
+		});
+	}
+	getBalanceAkashBin(address){
 		
 		return new Promise((resolve,reject)=>{
 			//get public IP for them at least..
@@ -662,7 +702,7 @@ export class Wallet{
 			})
 		});
 	}
-	checkProviderUpStatus(){
+	checkProviderUpStatus(akashParams){
 		return new Promise((resolve,reject)=>{
 			const options = {
 				host: '127.0.0.1',
@@ -691,7 +731,12 @@ export class Wallet{
 					catch(e){
 						console.log('bad json response',output.toString());
 					}
-
+					//TODO: if provider is already running (restarted app)
+					//we need to start the 4-hour restart timer
+					if(typeof this.timedRestartTimeout == "undefined" && typeof akashParams != "undefined"){
+						console.log('setting provider restart timeout since akash is up')
+						this.setProviderRestartTimeout(akashParams);
+					}
 					resolve(json);
 
 				});
@@ -710,15 +755,20 @@ export class Wallet{
 	}
 	autostartProvider(){
 		const autostartFile = process.env.HOME+'/.HandyHost/aktData/autostart.json';
-		
+		const akashParamsFile = process.env.HOME+'/.HandyHost/aktData/akashProviderParams.json';
 		if(fs.existsSync(autostartFile)){
 			const params = JSON.parse(fs.readFileSync(autostartFile,'utf8'));
+			if(!fs.existsSync(akashParamsFile)){
+				//if we just installed 0.5.2 and had autostart going 
+				//we should cache the provider run params
+				fs.writeFileSync(akashParamsFile,JSON.stringify(params),'utf8');
+			}
 			if(typeof process.env.AKTAUTO != "undefined"){
 				const encFilePath = process.env.HOME+'/.HandyHost/keystore/'+process.env.AKTAUTO;
 				if(fs.existsSync(encFilePath)){
 					this.commonUtils.decrypt(encFilePath).then(pw=>{
 						params.pw = pw;
-						this.checkProviderUpStatus().then(d=>{
+						this.checkProviderUpStatus(params).then(d=>{
 							console.log('autostart: akt provider is already running');
 						}).catch(e=>{
 							this.startProvider(params);
@@ -737,7 +787,7 @@ export class Wallet{
 						if(data.exists){
 							params.pw = data.value;
 
-							this.checkProviderUpStatus().then(d=>{
+							this.checkProviderUpStatus(params).then(d=>{
 								console.log('autostart: akt provider is already running');
 							}).catch(e=>{
 								this.startProvider(params);
@@ -751,6 +801,7 @@ export class Wallet{
 				else{
 					console.log('no akt autostart params present');
 					//remove configs if present
+					//they wont be.
 					if(typeof process.env.AKTAUTO != "undefined"){
 						const encFilePath = process.env.HOME+'/.HandyHost/keystore/'+process.env.AKTAUTO;
 						if(fs.existsSync(encFilePath)){
@@ -770,31 +821,101 @@ export class Wallet{
 					const encFilePath = process.env.HOME+'/.HandyHost/keystore/'+process.env.AKTAUTO;
 					if(fs.existsSync(encFilePath)){
 						//remove the config if it exists
-						this.commonUtils.decrypt(encFilePath).then(p=>{})
+						this.commonUtils.decrypt(encFilePath).then(p=>{
+							if(fs.existsSync(akashParamsFile)){
+								//ok params exist, make sure restart timeout has params
+								const akashParams = JSON.parse(fs.readFileSync(akashParamsFile,'utf8'));
+								akashParams.pw = p;
+								//TODO: if provider is already running (restarted app)
+								//we need to start the 4-hour restart timer
+								this.checkProviderUpStatus(akashParams).then(d=>{
+									console.log('akt provider is already running');
+								}).catch(e=>{
+									//do nothing
+								})
+							}
+						})
 					}
 				}
 			}
+			if(process.platform == 'darwin'){
+				this.commonUtils.getDarwinKeychainPW('HANDYHOST_AKTAUTO').then(data=>{
+					if(data.exists){
+						if(fs.existsSync(akashParamsFile)){
+							//ok params exist, make sure restart timeout has params
+							const akashParams = JSON.parse(fs.readFileSync(akashParamsFile,'utf8'));
+							akashParams.pw = data.value;
+							//TODO: if provider is already running (restarted app)
+							//we need to start the 4-hour restart timer
+							this.checkProviderUpStatus(akashParams).then(d=>{
+								console.log('akt provider is already running');
+							}).catch(e=>{
+								//do nothing
+							})
+						}
+						
+						
+					}
+					else{
+						console.log('no darwin akt start params exist');
+					}
+				})
+			}
+			
 		}
 	}
 	setupProviderAutostart(params,doAutostart){
 		//auto start provider on app startup
 		const autostartFile = process.env.HOME+'/.HandyHost/aktData/autostart.json';
+		const akashParamsFile = process.env.HOME+'/.HandyHost/aktData/akashProviderParams.json';
+		let stripped = JSON.parse(JSON.stringify(params));
+		delete stripped.pw;
+		fs.writeFileSync(akashParamsFile,JSON.stringify(stripped),'utf8');
+		
+		if(process.platform == 'darwin'){
+			this.commonUtils.setDarwinKeychainPW(params.pw,'HANDYHOST_AKTAUTO');
+		}	
+		else{
+			this.commonUtils.encrypt(params.pw,true,'akt');
+		}
+
 		if(doAutostart){
-			let stripped = JSON.parse(JSON.stringify(params));
-			delete stripped.pw;
 			fs.writeFileSync(autostartFile,JSON.stringify(stripped),'utf8');
-			if(process.platform == 'darwin'){
-				this.commonUtils.setDarwinKeychainPW(params.pw,'HANDYHOST_AKTAUTO');
-			}	
-			else{
-				this.commonUtils.encrypt(params.pw,true,'akt');
-			}
+			
 		}
 		else{
 			if(fs.existsSync(autostartFile)){
 				fs.unlinkSync(autostartFile);
 			}
 		}
+	}
+	setProviderRestartTimeout(akashParams){
+		/*
+		akash provider can freeze up but stay a zombie process sometimes
+		thus we will kill it every 4 hours and restart
+		we pass in akashParams only when we start/restart akash from the app
+		*/
+		const logsPath = process.env.HOME+'/.HandyHost/aktData/providerRun.log';
+		if(typeof this.timedRestartTimeout != "undefined"){
+			clearTimeout(this.timedRestartTimeout);
+			delete this.timedRestartTimeout;
+		}
+		this.timedRestartTimeout = setTimeout(()=>{
+			this.wasTimedRestart = true;
+			console.log('doing periodic akash restart',new Date())
+			fs.appendFileSync(logsPath,"\n###########  Provider Restart (every 4-hours) Initiated... ###########\n",'utf8');
+			this.killAkashZombies().then(()=>{
+				console.log('kill akash zombies called')
+				if(typeof this.providerWasStartedInThisSession == "undefined"){
+					this.startProvider(akashParams);
+				}
+			}).catch(err=>{
+				console.log('kill akash zombies called')
+				if(typeof this.providerWasStartedInThisSession == "undefined"){
+					this.startProvider(akashParams);
+				}
+			})
+		},60*1000*60*4); //4 hours
 	}
 	startProvider(params){
 		if(this.providerPaused){
@@ -826,12 +947,9 @@ export class Wallet{
 					fs.writeFileSync(process.env.HOME+'/.HandyHost/aktData/provider.pid',s.pid.toString());
 					let logsPath = process.env.HOME+'/.HandyHost/aktData/providerRun.log';
 					
-					let wasTimedRestart = false; //were going to restart akash provider every few hours because it tends to die a lot...
-					let timedRestartTimeout = setTimeout(()=>{
-						wasTimedRestart = true;
-						fs.appendFileSync(logsPath,"\n###########  Provider Restart (every 4-hours) Initiated... ###########\n",'utf8');
-						this.killAkashZombies();
-					},60*1000*60*4); //4 hours
+					this.wasTimedRestart = false; //were going to restart akash provider every few hours because it tends to die a lot...
+					this.providerWasStartedInThisSession = true;
+					this.setProviderRestartTimeout();
 
 					if(fs.existsSync(logsPath)){
 						//unlink if exists
@@ -899,7 +1017,12 @@ export class Wallet{
 						hasReturned = true;
 						clearTimeout(returnTimeout);
 						clearInterval(logInterval);
-						clearTimeout(timedRestartTimeout);
+						if(typeof this.timedRestartTimeout != "undefined"){
+							clearTimeout(this.timedRestartTimeout);
+							delete this.timedRestartTimeout;
+						}
+						console.log('was timed restart',this.wasTimedRestart);
+						console.log('was halted?',this.providerWasHalted);
 						resolve({success:false,error:output});
 						
 						if(this.providerWasHalted){
@@ -910,33 +1033,47 @@ export class Wallet{
 								this.killAkashZombies(); //make double sure we killed the provider because sometimes we get zombies lingering...
 							}
 						}
-						else if(wasTimedRestart){
+						else if(this.wasTimedRestart){
 							//ok we restarted akash on the 4th hour..
 							console.log('initializing akash 4-hour restart zombie prevention routine...')
-							wasTimedRestart = false;
+							this.wasTimedRestart = false;
 							setTimeout(()=>{
 								fs.appendFileSync(logsPath,"\n###########  PERIODICALLY RESTARTING PROVIDER ###########\n",'utf8');
+								console.log('starting akash provider');
 								this.startProvider(params);
 							},10000)
 							
 						}
 						else{
+							console.log('akash crashed, try restart');
 							this.killAkashZombies().then(()=>{
+								finish(params,logsPath);
+							}).catch(err=>{
+								finish(params,logsPath);
+							})
+							const _this = this;
+							function finish(params,logsPath){
+								console.log('akash provider crashed, restart it...',new Date());
 								//make fn sure we dont have multiple akash providers running
 								fs.appendFileSync(logsPath,"\n###########  RESTARTING PROVIDER ###########\n",'utf8');
 							
 								//accidental death, likely due to RPC errors
 								//keep things alive
-								this.envUtils.setEnv().then(()=>{
+								_this.envUtils.setEnv().then(()=>{
 									//ok we set the env
-									this.startProvider(params);
+									setTimeout(()=>{
+										_this.startProvider(params);
+									},4000); //give it time to spin down post kill zombies
+									
 								}).catch(e=>{
 									console.log('error setting new envs',e);
 									//try spawning again anyway
-									this.startProvider(params);
+									setTimeout(()=>{
+										_this.startProvider(params);
+									},4000); //give it time to spin down post kill zombies
+									
 								})
-							})
-							
+							}
 
 						}
 					})
@@ -951,10 +1088,10 @@ export class Wallet{
 		return new Promise((resolve,reject)=>{
 			const s = spawn('pkill',['-9','akash']);
 			s.stdout.on('data',d=>{
-				resolve(d.toString());
+				//resolve(d.toString());
 			});
 			s.stderr.on('data',d=>{
-				resolve(d.toString());
+				//resolve(d.toString());
 			});
 			s.on('close',()=>{
 				resolve(true);

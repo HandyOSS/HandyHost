@@ -14,6 +14,8 @@ RUN apt install -y redis
 RUN npm install -g project-name-generator
 RUN npm install -g forever
 RUN npm install redis
+RUN npm install @cosmjs/proto-signing
+RUN npm install @cosmjs/encoding
 
 ENV AKASH_VERSION="v0.14.1"
 ENV AKASH_NET="https://raw.githubusercontent.com/ovrclk/net/master/mainnet"

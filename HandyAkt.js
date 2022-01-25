@@ -451,6 +451,13 @@ export class HandyAKT{
 					reject(error);
 				});
 			break;
+			case 'getProviderParams':
+				this.utils.getProviderParams().then(data=>{
+					resolve(data);
+				}).catch(error=>{
+
+				});
+			break;
 		}
 		
 	}
@@ -532,7 +539,7 @@ export class HandyAKT{
 			}).catch(err=>{
 				//throws error when node isnt up
 				this.getClusterStats().then(statsOut=>{
-					console.log('shold run? ',statsOut.providerIsRegistered && statsOut.providerHasGeneratedCert);
+					console.log('should akash run? ',statsOut.providerIsRegistered && statsOut.providerHasGeneratedCert);
 					if(statsOut.providerIsRegistered && statsOut.providerHasGeneratedCert){
 						//we should auto start this node then..
 						const params = {
@@ -709,7 +716,9 @@ export class HandyAKT{
 						statsOut.balance = balance;
 						statsFetched++;
 						finish(statsFetched,statsToFetch,statsOut,resolve);
-					});
+					}).catch(err=>{
+						console.log('error fetching balance',err);
+					})
 				}
 				else{
 					statsOut.balance = {balance:{balances:[]}};

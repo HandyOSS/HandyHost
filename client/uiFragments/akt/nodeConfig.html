@@ -427,9 +427,30 @@
 				<span class="configuratorNote">A region name is a freeform name you make up for your geographic region. Common regions: westcoast, eastcoast, midwest, us-west, etc. Note that region name will not stop you from winning or losing contracts, it helps renters more than anything.</span>
 			</div>
 			<div class="akashField">
+				<label for="tierNameConfigurator">
+					Akash Tier Name
+				</label>
+				<input class="styledSelect" type="text" id="tierNameConfigurator" value="" placeholder="ie: community" size=32 />
+				<span class="configuratorNote">A tier name is a freeform name you make up for your machine tiers. It is recommended (and default) to use &quot;community&quot;, however you may opt for some other value in the future to describe the tier of hardware you operate.  </span>
+			</div>
+			<div class="akashField">
 				<label for="clusterNameConfigurator">Akash Cluster Name</label>
 				<input class="styledSelect" type="text" id="clusterNameConfigurator" value="" placeholder="Akash Cluster Name" size=32 />
 				<span class="configuratorNote">We generate a random name for your cluster, feel free to change it to anything you would like to be known as.</span>
+			</div>
+			<div class="akashField">
+				<label for="emailConfigurator">
+					Akash Provider Email
+				</label>
+				<input class="styledSelect" type="text" id="emailConfigurator" value="" placeholder="Your contact email" size=32 />
+				<span class="configuratorNote">Optionally you may choose to list your email so that potential or active clients can contact you.</span>
+			</div>
+			<div class="akashField">
+				<label for="websiteConfigurator">
+					Akash Provider Website
+				</label>
+				<input class="styledSelect" type="text" id="websiteConfigurator" value="" placeholder="Your website" size=32 />
+				<span class="configuratorNote">If you advertise your services on a website, list it here (optional).</span>
 			</div>
 			<div class="akashField">
 				<label for="providerWalletNameConfigurator">Choose an Akash Wallet to receive payments and pay fees from.</label>
@@ -540,6 +561,33 @@
 					</td>
 					<td>
 						<input class="styledSelect" type="text" id="clusterName" value="" placeholder="Akash Cluster Name" size=32 />
+					</td>
+				</tr>
+				<tr class="provider_tierName">
+					<td>
+						<div class="errorMessage">Required Value</div>
+						<label for="tier">Tier Name: </label>
+					</td>
+					<td>
+						<input class="styledSelect" type="text" id="tier" value="" placeholder="example: community" size=32 />
+					</td>
+				</tr>
+				<tr class="provider_email">
+					<td>
+						<div class="errorMessage">Required Value</div>
+						<label for="email">Email: </label>
+					</td>
+					<td>
+						<input class="styledSelect" type="text" id="email" value="" placeholder="optional: contact email" size=32 />
+					</td>
+				</tr>
+				<tr class="provider_website">
+					<td>
+						<div class="errorMessage">Required Value</div>
+						<label for="website">Website: </label>
+					</td>
+					<td>
+						<input class="styledSelect" type="text" id="website" value="" placeholder="optional: your website" size=32 />
 					</td>
 				</tr>
 				<tr class="provider_walletName">

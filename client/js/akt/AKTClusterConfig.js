@@ -148,7 +148,14 @@ export class AKTClusterConfig{
 				if(node.kubernetes.role == 'master'){
 					hasMaster = true;
 				}
+				if(node.kubernetes.isMaster){
+					//new format to accommodate single node cluster which can scale up to more nodes later
+					hasMaster = true;
+				}
 				if(node.kubernetes.role == 'etcd'){
+					hasEtcd = true;
+				}
+				if(node.kubernetes.isEtcd){
 					hasEtcd = true;
 				}
 				if(node.kubernetes.ingress){
@@ -158,36 +165,68 @@ export class AKTClusterConfig{
 		})
 		const modified = configData.nodes.map((node,i)=>{
 			let myRole;
+			let isMaster = false;
+			let isEtcd = false;
 			if(typeof node.kubernetes == "undefined"){
+				
 				myRole = 'none';
 				if(!hasMaster){
 					myRole = 'master';
+					isMaster = true;
 					hasMaster = true;
 				}
 				if(myRole == 'none' && !hasEtcd){
 					myRole = 'etcd';
 					hasEtcd = true;
+					isEtcd = true;
+				}
+				if(configData.nodes.length == 1){
+					//single node cluster is both
+					isEtcd = true;
 				}
 				node.kubernetes = {
-					role:myRole,
+					//role:myRole,
 					isCompute:true,
+					isMaster,
+					isEtcd,
 					ingress:(i == 0 && !hasIngress ? true : false),
 					name:node.hostname.replace('.local','')
 				}
 			}
 			else{
 				myRole = node.kubernetes.role;
+				let isCompute = typeof node.kubernetes.isCompute == "undefined" ? true : node.kubernetes.isCompute;
 				if(!hasMaster){
 					myRole = 'master';
 					hasMaster = true;
+					isMaster = true;
 				}
 				if(myRole == 'none' && !hasEtcd){
 					myRole = 'etcd';
 					hasEtcd = true;
+					isEtcd = true;
+				}
+				if(configData.nodes.length == 1){
+					//single node cluster is both
+					isEtcd = true;
+				}
+				if(myRole == 'master'){
+					isMaster = true;
+				}
+				if(myRole == 'etcd'){
+					isEtcd = true;
+				}
+				if(node.kubernetes.isMaster){
+					isMaster = true;
+				}
+				if(node.kubernetes.isEtcd){
+					isEtcd = true;
 				}
 				node.kubernetes = {
-					role:myRole,
-					isCompute:true,
+					//role:myRole,
+					isCompute,
+					isMaster,
+					isEtcd,
 					ingress:node.kubernetes.ingress,
 					name:node.hostname.replace('.local','')
 				}
@@ -204,6 +243,14 @@ export class AKTClusterConfig{
 			case 'roleAnswer':
 				title = 'Cluster Role:';
 				body = 'Use at least one master node and one etcd for a small (2-4 node) cluster.';
+			break;
+			case 'masterAnswer':
+				title = 'Master Role:';
+				body = 'Select a master node for the cluster. Plan not to change this after you build your cluster else you will probably have to rebuild the cluster.';
+			break;
+			case 'etcdAnswer':
+				title = 'etcd Role:';
+				body = 'Select an etcd node for the cluster. Plan not to change this after you build your cluster else you will probably have to rebuild the cluster.';
 			break;
 			case 'computeAnswer':
 				title = 'Compute Nodes:';
@@ -234,7 +281,8 @@ export class AKTClusterConfig{
 		$header.append('<th>Hostname</th>');
 		$header.append('<th>IP</th>');
 		$header.append('<th>Node Name</th>');
-		$header.append('<th>Cluster Role <div class="question" id="roleAnswer">?</div></th>');
+		$header.append('<th>Master Role <div class="question" id="masterAnswer">?</div></th>');
+		$header.append('<th>etcd Role <div class="question" id="etcdAnswer">?</div></th>');
 		$header.append('<th>Is Compute Node <div class="question" id="computeAnswer">?</div></th>');
 		$header.append('<th>Ingress Controller <div class="question" id="ingressAnswer">?</div></th>')
 		$table.append($header);
@@ -272,11 +320,16 @@ export class AKTClusterConfig{
 			let k8nRole = '';
 			let isCompute = false;
 			let isIngress = false;
+			let isMaster = false;
+			let isEtcd = false;
 			let ingressSelected = '';
+			let masterRoleSelected = '';
+			let etcdRoleSelected = '';
 			const $k8nRoleSelect = $('<select class="role" />');
 			$k8nRoleSelect.append('<option value="none">none</option>');
 			$k8nRoleSelect.append('<option value="master">Master Node</option>');
 			$k8nRoleSelect.append('<option value="etcd">etcd</option>');
+			
 
 			const $isComputeCheckbox = $('<input type="checkbox" class="isCompute" />')
 
@@ -290,8 +343,20 @@ export class AKTClusterConfig{
 				}
 				k8nRole = node.kubernetes.role;
 				isCompute = node.kubernetes.isCompute;
+				isMaster = node.kubernetes.isMaster;
+				isEtcd = node.kubernetes.isEtcd;
+				if(typeof k8nRole != "undefined"){
+					//legacy mode
+					if(k8nRole == 'master'){
+						isMaster = true;
+					}
+					if(k8nRole == 'etcd'){
+						isEtcd = true;
+					}
+				}
 				$('option[value="'+k8nRole+'"]',$k8nRoleSelect).attr('selected','selected');
 				if(isCompute){
+
 					$isComputeCheckbox.attr('checked','checked');
 				}
 				/*if(masterName == ''){
@@ -299,7 +364,7 @@ export class AKTClusterConfig{
 					k8nRole = 'master';
 					$('option[value="'+k8nRole+'"]',$k8nRoleSelect).attr('selected','selected');
 				}*/
-				if(ingressName == '' && k8nRole == 'master'){
+				if(ingressName == '' && (k8nRole == 'master' || isMaster)){
 					ingressName = k8nName;
 					isIngress = true;
 					ingressSelected = ' checked="checked"';
@@ -312,20 +377,43 @@ export class AKTClusterConfig{
 				if(isIngress){
 					$('#ingressPortsMessage .ip').html(node.ip);
 				}
+
+				if(isMaster){
+					masterRoleSelected = ' checked="checked"';
+				}
+				if(isEtcd){
+					etcdRoleSelected = ' checked="checked"';
+				}
 			}
 			const $tr = $('<tr />');
 			$tr.append(`<td>${node.hostname}</td>`);
 			$tr.append(`<td class="ip">${node.ip}</td>`);
 			$tr.append(`<td><input class="nodename" type="hidden" placeholder="Short Name ie: akash0" value="${k8nName}" />${k8nName}</td>`)
-			const $sel = $('<td />');
+			/*const $sel = $('<td />');
 			$sel.append($k8nRoleSelect);
-			$tr.append($sel);
+			$tr.append($sel);*/
+			const $masterRole = $('<td />');
+			$masterRole.append(`<input type="radio" class="masterRoleRadio" name="masterRole" value="${node.kubernetes.name}"${masterRoleSelected} data-ip="${node.ip}" />`)
+			$tr.append($masterRole);
+
+			const $etcdRole = $('<td />');
+			$etcdRole.append(`<input type="radio" class="etcdRoleRadio" name="etcdRole" value="${node.kubernetes.name}"${etcdRoleSelected} data-ip="${node.ip}" />`)
+			$tr.append($etcdRole);
+
 			const $comp = $('<td />');
 			$comp.append($isComputeCheckbox);
 			$tr.append($comp)
 			const $ingress = $(`<td><input type="radio" class="ingressRadio" name="ingress" value="${node.kubernetes.name}"${ingressSelected} data-ip="${node.ip}" /></td>`)
 			$tr.append($ingress);
 			$table.append($tr);
+			$k8nRoleSelect.off('change').on('change',()=>{
+				const val = $('option:selected',$k8nRoleSelect).val();
+				node.kubernetes.role = val;
+			})
+			$isComputeCheckbox.off('change').on('change',()=>{
+				const val = $isComputeCheckbox.is(':checked');
+				node.kubernetes.isCompute = val;
+			})
 		})
 		$('input[name="ingress"]').off('change').on('change',()=>{
 			const ip = $('input[name="ingress"]:checked').attr('data-ip');
@@ -339,7 +427,31 @@ export class AKTClusterConfig{
 					node.kubernetes.ingress = isIngress;
 				}
 			})
-		})
+		});
+		$('input[name="masterRole"]').off('change').on('change',()=>{
+			const ip = $('input[name="masterRole"]:checked').attr('data-ip');
+			this.configData.nodes.map(node=>{
+				let isMasterRole = false;
+				if(node.ip == ip){
+					isMasterRole = true;
+				}
+				if(typeof node.kubernetes != "undefined"){
+					node.kubernetes.isMaster = isMasterRole;
+				}
+			})
+		});
+		$('input[name="etcdRole"]').off('change').on('change',()=>{
+			const ip = $('input[name="etcdRole"]:checked').attr('data-ip');
+			this.configData.nodes.map(node=>{
+				let isEtcdRole = false;
+				if(node.ip == ip){
+					isEtcdRole = true;
+				}
+				if(typeof node.kubernetes != "undefined"){
+					node.kubernetes.isEtcd = isEtcdRole;
+				}
+			})
+		});
 		$('#initCluster').off('click').on('click',()=>{
 			/*if(!confirm('If there is currently a kubernetes cluster, this operation will completely remove it. Still Continue?')){
 				console.log('aborted');
@@ -354,12 +466,16 @@ export class AKTClusterConfig{
 				const role = $('select option:selected',$(this)).val();
 				const isCompute = $('input[type="checkbox"]',$(this)).is(':checked');
 				const isIngress = $('input[name="ingress"]',$(this)).is(':checked');
+				const isEtcd = $('input[name="etcdRole"]',$(this)).is(':checked');
+				const isMaster = $('input[name="masterRole"]',$(this)).is(':checked');
 				const ip = $('td.ip',$(this)).html();
 				configOut.nodes.map(node=>{
 					if(node.ip == ip){
 						node.kubernetes = {
 							name,
-							role,
+							//role,
+							isMaster,
+							isEtcd,
 							isCompute,
 							ingress:isIngress
 						}
@@ -449,7 +565,7 @@ export class AKTClusterConfig{
 		let needsErrorMessage = {};
 		Object.keys(configData.provider).map(key=>{
 			const val = configData.provider[key];
-			if(val == ''){
+			if(val == '' && (key != 'website' && key != 'email' && key != 'tier')){
 				needsErrorMessage[key] = true;
 				canContinue = false;
 				$('.provider_'+key).addClass('hasError');
@@ -495,13 +611,19 @@ export class AKTClusterConfig{
 			const clusterName = $('#clusterName').val();
 			const providerWalletName = $('#providerWalletName').val();
 			const providerWalletAddress = $('#providerWalletAddress').val();
+			const tierName = $('#tier').val();
+			const email = $('#email').val();
+			const website = $('#website').val();
 			output.provider = {
 				providerIP,
 				clusterIP,
 				regionName,
 				clusterName,
 				providerWalletName,
-				providerWalletAddress
+				providerWalletAddress,
+				tier:tierName,
+				email,
+				website
 			}
 			const continueSubmission = this.validateConfig(output);
 			if(!continueSubmission){
@@ -850,13 +972,19 @@ export class AKTClusterConfig{
 		const clusterName = $('#clusterNameConfigurator').val();
 		const providerWalletName = $('#providerWalletNameConfigurator').val();
 		const providerWalletAddress = $('#providerWalletAddressConfigurator').val();
+		const tierName = $('#tierNameConfigurator').val();
+		const email = $('#emailConfigurator').val();
+		const website = $('#websiteConfigurator').val();
 		output.provider = {
 			providerIP:domainName,
 			clusterIP:domainName,
 			regionName,
 			clusterName,
 			providerWalletName,
-			providerWalletAddress
+			providerWalletAddress,
+			tier:tierName,
+			email,
+			website
 		}
 		Object.keys(configData.preConfiguredNVMe).map(nodeName=>{
 			const nodeData = configData.preConfiguredNVMe[nodeName];
