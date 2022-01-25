@@ -166,6 +166,21 @@ The auth settings file will look like:
 Follow the steps above to find your authSettings.json file.
 In authSettings.json, set ```"hasInitialized":false,```. After restarting handyhost you can now set your new password.
 
+### v0.5.2 Changelog
+This release is mostly Akash focused. Akash RPC queries, specifically getting provider order/bid stats, were causing a ton of issues on HandyHost client. So we basically re-architected a lot of the RPC issues at hand into an index that is fast to query. In addition, the Akash provider was having a lot of issues falling over silently (staying alive as a zombie process). We fixed this by restarting the provider every few hours to keep it alive.
+In addition to these major components, we did a lot of bug fixing around the Akash service, as well as some enhancements that will help providers get audited. Getting audited will likely help providers get more contracts. Read more about getting your provider audited here: [https://docs.akash.network/operations/akash-audited-attributes#attribute-auditors](https://docs.akash.network/operations/akash-audited-attributes#attribute-auditors)
+ 
+A longer list of fixes:
+
+1. AKT: change port for provider aggregates lookups
+2. AKT: use redis aggregates instead of rpc for provider aggregates queries, as rpc causes all kinds of timeout and cascading barf issues.
+3. AKT: make sure akash zombies get killed. When akash provider errors happen (active balance query), catch the error and continue with the restart. Furthermore, if we had a previously running akash, make sure that the restart timer starts up if we restarted/started HandyHost,
+4. AKT: Bump the provider fee minumum back up to 5000uakt
+5. AKT: Add fields to registration for tier, email, website. Tier will get you audited.
+6. AKT: Kubernetes: Add gvisor support. Gvisor support can help with audits. Make sure to rebuild your kubernetes cluster from the 'Configuration' Panel to enable gvisor.
+7. AKT: Kubernetes: Add new compute nodes script.
+8. AKT: Bugfixes for compute node types in kubernetes advanced settings
+9. AKT: Manual bid cancellation bugfix
 
 ### v0.5.1 Changelog
 1. DVPN/AKT: Support 12-word Mnemonic Keys
