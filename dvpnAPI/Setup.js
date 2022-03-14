@@ -741,7 +741,8 @@ export class DVPNSetup{
 	rebuildDvpn(socketIONamespaces){
 		return new Promise((resolve,reject)=>{
 			if(this.isRebuildingDVPN){
-				resolve({closed:'already rebuilding dvpn'})
+				resolve({closed:'already rebuilding dvpn'});
+				return;
 			}
 			this.stopDVPN().then(()=>{
 				Object.keys(socketIONamespaces).map(serverName=>{
