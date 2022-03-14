@@ -39,7 +39,7 @@
 	word-wrap: break-word;       /* Internet Explorer 5.5+ */
 
 }
-#showLaunchModal, #haltDVPN{
+#showLaunchModal, #haltDVPN, #rebuildNode{
 	width:200px;
 	margin-top: 10px;
 }

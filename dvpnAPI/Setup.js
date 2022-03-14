@@ -7,6 +7,7 @@ import {CommonUtils} from '../CommonUtils.js';
 
 export class DVPNSetup{
 	constructor(){
+		this.isRebuildingDVPN = false;
 		this.redlistPortsPath = process.env.HOME+'/.HandyHost/ports.json';
 		this.utils = new CommonUtils();
 	}
@@ -645,6 +646,7 @@ export class DVPNSetup{
 				console.log('should start dvpn',ports)
 				const tcp = ports.node;
 				const udp = ports.wireguard;
+
 				const args = [
 					'run', 
 					'--name',
@@ -735,6 +737,71 @@ export class DVPNSetup{
 			})
 			
 		});
+	}
+	rebuildDvpn(socketIONamespaces){
+		return new Promise((resolve,reject)=>{
+			if(this.isRebuildingDVPN){
+				resolve({closed:'already rebuilding dvpn'});
+				return;
+			}
+			this.stopDVPN().then(()=>{
+				Object.keys(socketIONamespaces).map(serverName=>{
+					socketIONamespaces[serverName].namespace.to('dvpn').emit('logs',"\nREBUILDING DOCKER CONTAINER\n");
+					socketIONamespaces[serverName].namespace.to('dvpn').emit('status','disconnected');
+				})
+				let output = '';
+				let lineCount = 0;
+				let hasFailed = false;
+				let hasReturned = false;
+				this.isRebuildingDVPN = true;
+				//rebuild dvpn docker container
+				const args = ['./rebuildDockerContainer.sh'];
+				const s = spawn('bash',args,{shell:true,env:process.env,cwd:process.env.PWD+'/dvpnAPI',detached:true});
+				s.stdout.on('data',d=>{
+					Object.keys(socketIONamespaces).map(serverName=>{
+						socketIONamespaces[serverName].namespace.to('dvpn').emit('logs',d.toString());
+					})
+					//socketIONamespace.to('dvpn').emit('logs',d.toString());
+					output += d.toString();
+					lineCount++;
+					if(lineCount >= 100){
+						//truncate
+						output = output.split('\n').slice(-20).join('\n');
+					}
+					fs.writeFileSync(`${process.env.HOME}/.HandyHost/sentinelData/hostLogs`,output,'utf8')
+				});
+				s.stderr.on('data',d=>{
+					//hasFailed = true;
+					output += d.toString();
+					
+				    //console.log('stderr',d.toString());
+				    lineCount++;
+					if(lineCount >= 100){
+						//truncate
+						output = output.split('\n').slice(-20).join('\n');
+					}
+					fs.writeFileSync(`${process.env.HOME}/.HandyHost/sentinelData/hostLogs`,output,'utf8')
+				    Object.keys(socketIONamespaces).map(serverName=>{
+						socketIONamespaces[serverName].namespace.to('dvpn').emit('logs',d.toString());
+					})
+				    //socketIONamespace.to('dvpn').emit('logs',d.toString());
+				    //reject({'error':d.toString()})
+				});
+				s.on('close',d=>{
+					this.isRebuildingDVPN = false;
+					//hasFailed = true;
+					//console.log('closed',output);
+					Object.keys(socketIONamespaces).map(serverName=>{
+						socketIONamespaces[serverName].namespace.to('dvpn').emit('logs',"\nDVPN NODE WAS REBUILT\n");
+					})
+					//socketIONamespace.to('dvpn').emit('logs',"\nDVPN NODE STOPPED\n");
+				    //socketIONamespace.to('dvpn').emit('status','disconnected');
+				    if(!hasReturned){
+				    	resolve({closed:output});
+					}
+				});
+			});
+		})
 	}
 	stopDVPN(){
 		//stop the dvpn docker container
