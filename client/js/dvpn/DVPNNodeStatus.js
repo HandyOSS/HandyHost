@@ -64,6 +64,7 @@ export class DVPNNodeStatus{
 		$('#cancelLaunch').off('click').on('click',()=>{
 			this.hideModal();
 		})
+		
 	}
 	hideModal(){
 		$('#launchPW').val('');
@@ -107,6 +108,13 @@ export class DVPNNodeStatus{
 					this.parentComponent.fetchDashboardData();
 				}
 			})
+		})
+		$('#rebuildNode').off('click').on('click',()=>{
+			if(confirm('Rebuilding the DVPN Container will take ~10-20 minutes. It will not remove or change any DVPN configurations.')){
+				fetch('/api/dvpn/rebuild').then(d=>d.json()).then(data=>{
+					console.log('done rebuilding',data);
+				})
+			}
 		})
 	}
 	updateLogs(message,showTimestamp){

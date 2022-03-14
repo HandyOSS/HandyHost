@@ -240,6 +240,13 @@ export class HandyDVPN{
 					reject(error);
 				})
 			break;
+			case 'rebuild':
+				this.rebuildNode().then(data=>{
+					resolve(data);
+				}).catch(error=>{
+					reject(error);
+				})
+			break;
 			case 'stop':
 				this.dvpnSetup.stopDVPN().then(()=>{
 					resolve({stop:true})
@@ -297,6 +304,9 @@ export class HandyDVPN{
 			}
 			resolve(output);
 		})
+	}
+	rebuildNode(){
+		return this.dvpnSetup.rebuildDvpn(this.ioNamespaces);
 	}
 	launchNode(requestBody){
 		const {parsed,err} = this.parseRequestBody(requestBody);
