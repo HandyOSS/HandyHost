@@ -1,6 +1,7 @@
 #!/bin/bash
 #udpate dvpn-node
 cd ${HOME}/.HandyHost/sentinelData/dvpn-node && \
+git stash && \
 git fetch --all && \
 git checkout "$1" && \
 docker build --file Dockerfile \

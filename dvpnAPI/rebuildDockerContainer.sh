@@ -2,8 +2,9 @@
 USERNAME="$USER"
 USERHOME="$(eval echo ~$USERNAME)"
 
-cp ./Dockerfile-hnsdfix ${USERHOME}/.HandyHost/sentinelData/dvpn-node/Dockerfile && \
+#cp ./Dockerfile-hnsdfix ${USERHOME}/.HandyHost/sentinelData/dvpn-node/Dockerfile && \
 cd ${USERHOME}/.HandyHost/sentinelData/dvpn-node && \
+git stash && \
 docker build --file ${USERHOME}/.HandyHost/sentinelData/dvpn-node/Dockerfile \
   --tag sentinel-dvpn-node \
   --force-rm \
