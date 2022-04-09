@@ -4,12 +4,14 @@ import https from 'https';
 import http from 'http';
 import generator from 'project-name-generator';
 import {CommonUtils} from '../CommonUtils.js';
+import {UpdateHelper} from './UpdateHelper.js';
 
 export class DVPNSetup{
 	constructor(){
 		this.isRebuildingDVPN = false;
 		this.redlistPortsPath = process.env.HOME+'/.HandyHost/ports.json';
 		this.utils = new CommonUtils();
+		this.updateHelper = new UpdateHelper();
 	}
 	
 	initWallet(pw,walletName){
@@ -755,51 +757,69 @@ export class DVPNSetup{
 				let hasReturned = false;
 				this.isRebuildingDVPN = true;
 				//rebuild dvpn docker container
-				const args = ['./rebuildDockerContainer.sh'];
-				const s = spawn('bash',args,{shell:true,env:process.env,cwd:process.env.PWD+'/dvpnAPI',detached:true});
-				s.stdout.on('data',d=>{
-					Object.keys(socketIONamespaces).map(serverName=>{
-						socketIONamespaces[serverName].namespace.to('dvpn').emit('logs',d.toString());
-					})
-					//socketIONamespace.to('dvpn').emit('logs',d.toString());
-					output += d.toString();
-					lineCount++;
-					if(lineCount >= 100){
-						//truncate
-						output = output.split('\n').slice(-20).join('\n');
+				this.updateHelper.checkForUpdates().then(versionData=>{
+					let status = {latest:'v0.3.0'};
+					if(Object.keys(versionData).length > 0){
+						status.current = versionData.current;
+						status.latest = versionData.all[versionData.all.length-1];
 					}
-					fs.writeFileSync(`${process.env.HOME}/.HandyHost/sentinelData/hostLogs`,output,'utf8')
-				});
-				s.stderr.on('data',d=>{
-					//hasFailed = true;
-					output += d.toString();
-					
-				    //console.log('stderr',d.toString());
-				    lineCount++;
-					if(lineCount >= 100){
-						//truncate
-						output = output.split('\n').slice(-20).join('\n');
-					}
-					fs.writeFileSync(`${process.env.HOME}/.HandyHost/sentinelData/hostLogs`,output,'utf8')
-				    Object.keys(socketIONamespaces).map(serverName=>{
-						socketIONamespaces[serverName].namespace.to('dvpn').emit('logs',d.toString());
-					})
-				    //socketIONamespace.to('dvpn').emit('logs',d.toString());
-				    //reject({'error':d.toString()})
-				});
-				s.on('close',d=>{
+					console.log('version status',status);
+					const args = ['./rebuildDockerContainer.sh',status.latest];
+					const s = spawn('bash',args,{shell:true,env:process.env,cwd:process.env.PWD+'/dvpnAPI',detached:true});
+					s.stdout.on('data',d=>{
+						Object.keys(socketIONamespaces).map(serverName=>{
+							socketIONamespaces[serverName].namespace.to('dvpn').emit('logs',d.toString());
+						})
+						//socketIONamespace.to('dvpn').emit('logs',d.toString());
+						output += d.toString();
+						lineCount++;
+						if(lineCount >= 100){
+							//truncate
+							output = output.split('\n').slice(-20).join('\n');
+						}
+						fs.writeFileSync(`${process.env.HOME}/.HandyHost/sentinelData/hostLogs`,output,'utf8')
+					});
+					s.stderr.on('data',d=>{
+						//hasFailed = true;
+						output += d.toString();
+						
+					    //console.log('stderr',d.toString());
+					    lineCount++;
+						if(lineCount >= 100){
+							//truncate
+							output = output.split('\n').slice(-20).join('\n');
+						}
+						fs.writeFileSync(`${process.env.HOME}/.HandyHost/sentinelData/hostLogs`,output,'utf8')
+					    Object.keys(socketIONamespaces).map(serverName=>{
+							socketIONamespaces[serverName].namespace.to('dvpn').emit('logs',d.toString());
+						})
+					    //socketIONamespace.to('dvpn').emit('logs',d.toString());
+					    //reject({'error':d.toString()})
+					});
+					s.on('close',d=>{
+						this.isRebuildingDVPN = false;
+						//hasFailed = true;
+						//console.log('closed',output);
+						Object.keys(socketIONamespaces).map(serverName=>{
+							socketIONamespaces[serverName].namespace.to('dvpn').emit('logs',"\nDVPN NODE WAS REBUILT\n");
+						})
+						//socketIONamespace.to('dvpn').emit('logs',"\nDVPN NODE STOPPED\n");
+					    //socketIONamespace.to('dvpn').emit('status','disconnected');
+					    if(!hasReturned){
+					    	resolve({closed:output});
+						}
+					});
+				}).catch(e=>{
 					this.isRebuildingDVPN = false;
-					//hasFailed = true;
-					//console.log('closed',output);
-					Object.keys(socketIONamespaces).map(serverName=>{
-						socketIONamespaces[serverName].namespace.to('dvpn').emit('logs',"\nDVPN NODE WAS REBUILT\n");
-					})
-					//socketIONamespace.to('dvpn').emit('logs',"\nDVPN NODE STOPPED\n");
-				    //socketIONamespace.to('dvpn').emit('status','disconnected');
-				    if(!hasReturned){
-				    	resolve({closed:output});
+					console.log('err',e);
+					let errout = e;
+					if(typeof e == 'object'){
+						errout = JSON.stringify(e);
 					}
-				});
+					Object.keys(socketIONamespaces).map(serverName=>{
+						socketIONamespaces[serverName].namespace.to('dvpn').emit('logs','error '+errout);
+					})
+				})
 			});
 		})
 	}
