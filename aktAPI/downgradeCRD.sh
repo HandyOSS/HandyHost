@@ -4,14 +4,14 @@
 #./postInitK8sCluster.sh ansible akash-disastrous-smooth-offer.local akash-disastrous-smooth-offer 192.168.0.220
 AKASH_VERSION=$1
 
-MASTERNODEUSER=$(cat "$HOME/.HandyHost/aktData/clusterConfig.json" | jq '.nodes[] | . as $parent | .kubernetes | select(.isMaster) | $parent.user')
-MASTERNODENAME=$(cat "$HOME/.HandyHost/aktData/clusterConfig.json" | jq '.nodes[] | . as $parent | .kubernetes | select(.isMaster) | $parent.hostname')
-MASTERNODEIP=$(cat "$HOME/.HandyHost/aktData/clusterConfig.json" | jq '.nodes[] | . as $parent | .kubernetes | select(.isMaster) | $parent.ip')
-INGRESSNAME=$(cat "$HOME/.HandyHost/aktData/clusterConfig.json" | jq '.nodes[] | . as $parent | .kubernetes | select(.ingress) | $parent.kubernetes.name')
+MASTERNODEUSER=$(cat "$HOME/.HandyHost/aktData/clusterConfig.json" | jq -r '.nodes[] | . as $parent | .kubernetes | select(.isMaster) | $parent.user')
+MASTERNODENAME=$(cat "$HOME/.HandyHost/aktData/clusterConfig.json" | jq -r '.nodes[] | . as $parent | .kubernetes | select(.isMaster) | $parent.hostname')
+MASTERNODEIP=$(cat "$HOME/.HandyHost/aktData/clusterConfig.json" | jq -r '.nodes[] | . as $parent | .kubernetes | select(.isMaster) | $parent.ip')
+INGRESSNAME=$(cat "$HOME/.HandyHost/aktData/clusterConfig.json" | jq -r '.nodes[] | . as $parent | .kubernetes | select(.ingress) | $parent.kubernetes.name')
 
-
+echo "AKASH VERSION IN DOWNGRADE TO $AKASH_VERSION" && \
 echo "INGRESS NODE NAME $INGRESSNAME" && \
-echo "MASTER IP $4" && \
+echo "MASTER IP $MASTERNODEIP" && \
 cd "$HOME/.HandyHost/aktData"
 if [[ -s "$HOME/.ssh/known_hosts" ]] ; then
 	ssh-keygen -f "${HOME}/.ssh/known_hosts" -R "${MASTERNODEIP}"
