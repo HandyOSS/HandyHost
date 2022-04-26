@@ -169,6 +169,7 @@ In authSettings.json, set ```"hasInitialized":false,```. After restarting handyh
 ### v0.5.5 Changelog
 
 Akash Major Release v0.16.1 support.
+After running the HandyHost update, you will see a button in the Akash configuration panel called "Migrate to Akash v0.16.x". Clicking it will migrate your provider (and any contracts) to the latest v0.16.x CRD. Note: Akash v0.16 is a major release and will not be backward compatible with v0.14.x RPC nodes.
 
 ### v0.5.4 Changelog
 
