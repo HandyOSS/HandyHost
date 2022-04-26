@@ -166,6 +166,10 @@ The auth settings file will look like:
 Follow the steps above to find your authSettings.json file.
 In authSettings.json, set ```"hasInitialized":false,```. After restarting handyhost you can now set your new password.
 
+### v0.5.5 Changelog
+
+Akash Major Release v0.16.1 support.
+
 ### v0.5.4 Changelog
 
 DVPN Has released their own official release fixing the hnsd issue in their Dockerfile we patched in v0.5.3. This build reverts our fix on dvpn rebuild and uses the DVPN latest tagged release.
