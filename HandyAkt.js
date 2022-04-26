@@ -458,6 +458,13 @@ export class HandyAKT{
 
 				});
 			break;
+			case 'migrateToV016':
+				this.k8sUtils.migrateToV016(this.ioNamespaces).then(data=>{
+					resolve(data);
+				}).catch(error=>{
+					console.log('error during migration',error);
+				})
+			break;
 		}
 		
 	}

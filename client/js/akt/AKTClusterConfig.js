@@ -503,6 +503,18 @@ export class AKTClusterConfig{
 
 			});
 		})
+		$('#migrateCluster').off('click').on('click',()=>{
+			
+			$('#logs').addClass('showing');
+			this.kubernetesHasError = false;
+			$('#logs .logsMessage').html('Migrating Akash to v0.16.x')
+			setTimeout(()=>{
+				$('body').scrollTop($('#initCluster').offset().top)
+			},250);
+			fetch('/api/akt/migrateToV016').then(res=>res.json()).then(data=>{
+				console.log('done migrating');
+			})
+		})
 	}
 	initLogs(){
 		$('#logs').addClass('showing');

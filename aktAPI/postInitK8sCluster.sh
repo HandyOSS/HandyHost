@@ -32,7 +32,8 @@ fi
 ## first we apply the crd for all the things like manifests/etc
 export KUBECONFIG=$PWD/admin.conf
 mkdir -p ./akash_cluster_resources
-cp "${HOME}/.HandyHost/aktData/akashRepo/pkg/apis/akash.network/crd_v1_v2beta1.yaml" ./akash_cluster_resources/crd.yaml && \
+#cp "${HOME}/.HandyHost/aktData/akashRepo/pkg/apis/akash.network/crd_v1_v2beta1.yaml" ./akash_cluster_resources/crd.yaml && \
+cp "${HOME}/.HandyHost/aktData/akashRepo/pkg/apis/akash.network/crd.yaml" ./akash_cluster_resources/crd.yaml && \
 kubectl apply -f ./akash_cluster_resources/crd.yaml --overwrite
 
 ## new things: we aply the provider crd and new ingress
