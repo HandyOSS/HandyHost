@@ -1279,7 +1279,7 @@ export class K8sUtils{
 		const emitMessage = typeof customEmitMessage == "undefined" ? 'k8sBuildLogs' : customEmitMessage;
 		return new Promise((resolve,reject)=>{
 			this.walletUtils.haltProvider().then(()=>{
-				console.log('provider is paused, do kubespray update')
+				console.log('provider is paused, do akash migration')
 				//step0: stop provider DONE
 				//step1: download latest akash
 				Object.keys(socketIONamespaces).map(serverName=>{
@@ -1334,23 +1334,21 @@ export class K8sUtils{
 						})
 						purgeCmd.on('close',d=>{
 							Object.keys(socketIONamespaces).map(serverName=>{
-								socketIONamespaces[serverName].namespace.to('akt').emit(emitMessage,"Done purging manifests. Now Installing CRD\n");
+								socketIONamespaces[serverName].namespace.to('akt').emit(emitMessage,"Done purging orphaned manifests. Now Installing CRD\n");
 							})
 							//step3: install crd
 							const command = process.env.HOME+'/.HandyHost/aktData/bin/akash';
-							const args = ['provider', 'migrate', 'v0.14tov0.16', '--crd', process.env.HOME+'/.HandyHost/aktData/akashRepo/pkg/apis/akash.network/crd.yaml','--kubeconfig',process.env.HOME+'/.HandyHost/aktData/admin.conf'];
+							const args = ['provider', 'migrate', 'v0.14tov0.16', '--crd', process.env.HOME+'/.HandyHost/aktData/akashRepo/pkg/apis/akash.network/crd.yaml','--kubeconfig',process.env.HOME+'/.HandyHost/aktData/admin.conf','--k8s-crd-migrate-path','./crds_'+new Date().getTime()];
 							const migrate = spawn(command,args,{env:process.env,cwd:process.env.PWD});
 							migrate.stdout.on('data',d=>{
 								Object.keys(socketIONamespaces).map(serverName=>{
 									socketIONamespaces[serverName].namespace.to('akt').emit(emitMessage,d.toString());
 								})
-								//socketIONamespace.to('akt').emit(emitMessage,d.toString());
 							});
 							migrate.stderr.on('data',d=>{
 								Object.keys(socketIONamespaces).map(serverName=>{
 									socketIONamespaces[serverName].namespace.to('akt').emit(emitMessage,d.toString());
 								})
-								//socketIONamespace.to('akt').emit(emitMessage,d.toString());
 							});
 							migrate.on('close',()=>{
 								//ok finally do a postinstall to make sure ingress crd and kustomize routines get called........
