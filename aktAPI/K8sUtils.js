@@ -1301,52 +1301,69 @@ export class K8sUtils{
 				})
 				updater.on('close',()=>{
 					Object.keys(socketIONamespaces).map(serverName=>{
-						socketIONamespaces[serverName].namespace.to('akt').emit(emitMessage,"Akash Updated. Migrating Cluster.\n");
+						socketIONamespaces[serverName].namespace.to('akt').emit(emitMessage,"Akash Binaries Updated. Updating Akash Provider CRD.\n");
 					
 					})
-					
-					//step2: purge manifests
-					const purgeCmd = spawn('./manifest-purge.sh',[],{env:process.env,cwd:process.env.PWD+'/aktAPI'});
-					purgeCmd.stdout.on('data',d=>{
+					//step 1.5: download latest akash repo
+					const akashUpdate = spawn('bash',['./updateAkashRepo.sh'],{shell:true,env:process.env,cwd:process.env.PWD+'/aktAPI'});
+					akashUpdate.stdout.on('data',d=>{
 						Object.keys(socketIONamespaces).map(serverName=>{
 							socketIONamespaces[serverName].namespace.to('akt').emit(emitMessage,d.toString());
 						})
 					})
-					purgeCmd.stderr.on('data',d=>{
+					akashUpdate.stderr.on('data',d=>{
 						Object.keys(socketIONamespaces).map(serverName=>{
 							socketIONamespaces[serverName].namespace.to('akt').emit(emitMessage,d.toString());
 						})
 					})
-					purgeCmd.on('close',d=>{
+					akashUpdate.on('close',d=>{
 						Object.keys(socketIONamespaces).map(serverName=>{
-							socketIONamespaces[serverName].namespace.to('akt').emit(emitMessage,"Done purging manifests. Now Installing CRD\n");
+							socketIONamespaces[serverName].namespace.to('akt').emit(emitMessage,'Akash CRD Downloaded. Migrating Cluster.\n');
 						})
-						//step3: install crd
-						const command = process.env.HOME+'/.HandyHost/aktData/bin/akash';
-						const args = ['provider', 'migrate', 'v0.14tov0.16', '--crd', process.env.HOME+'/.HandyHost/aktData/akashRepo/pkg/apis/akash.network/crd.yaml'];
-						const migrate = spawn(command,args,{env:process.env,cwd:process.env.PWD});
-						migrate.stdout.on('data',d=>{
+						//step2: purge manifests
+						const purgeCmd = spawn('./manifest-purge.sh',[],{env:process.env,cwd:process.env.PWD+'/aktAPI'});
+						purgeCmd.stdout.on('data',d=>{
 							Object.keys(socketIONamespaces).map(serverName=>{
 								socketIONamespaces[serverName].namespace.to('akt').emit(emitMessage,d.toString());
 							})
-							//socketIONamespace.to('akt').emit(emitMessage,d.toString());
-						});
-						migrate.stderr.on('data',d=>{
+						})
+						purgeCmd.stderr.on('data',d=>{
 							Object.keys(socketIONamespaces).map(serverName=>{
 								socketIONamespaces[serverName].namespace.to('akt').emit(emitMessage,d.toString());
 							})
-							//socketIONamespace.to('akt').emit(emitMessage,d.toString());
-						});
-						migrate.on('close',()=>{
-							//TODO: copy kubernetes access keys locally, 
-							//install ansible locally,
-							//make stats do things
+						})
+						purgeCmd.on('close',d=>{
 							Object.keys(socketIONamespaces).map(serverName=>{
-								socketIONamespaces[serverName].namespace.to('akt').emit(emitMessage,"FINISHED! You may now restart your provider.\n");
+								socketIONamespaces[serverName].namespace.to('akt').emit(emitMessage,"Done purging manifests. Now Installing CRD\n");
 							})
-							resolve({success:true})
+							//step3: install crd
+							const command = process.env.HOME+'/.HandyHost/aktData/bin/akash';
+							const args = ['provider', 'migrate', 'v0.14tov0.16', '--crd', process.env.HOME+'/.HandyHost/aktData/akashRepo/pkg/apis/akash.network/crd.yaml','--kubeconfig',process.env.HOME+'/.HandyHost/aktData/admin.conf'];
+							const migrate = spawn(command,args,{env:process.env,cwd:process.env.PWD});
+							migrate.stdout.on('data',d=>{
+								Object.keys(socketIONamespaces).map(serverName=>{
+									socketIONamespaces[serverName].namespace.to('akt').emit(emitMessage,d.toString());
+								})
+								//socketIONamespace.to('akt').emit(emitMessage,d.toString());
+							});
+							migrate.stderr.on('data',d=>{
+								Object.keys(socketIONamespaces).map(serverName=>{
+									socketIONamespaces[serverName].namespace.to('akt').emit(emitMessage,d.toString());
+								})
+								//socketIONamespace.to('akt').emit(emitMessage,d.toString());
+							});
+							migrate.on('close',()=>{
+								//TODO: copy kubernetes access keys locally, 
+								//install ansible locally,
+								//make stats do things
+								Object.keys(socketIONamespaces).map(serverName=>{
+									socketIONamespaces[serverName].namespace.to('akt').emit(emitMessage,"FINISHED! You may now restart your provider.\n");
+								})
+								resolve({success:true})
+							})
 						})
 					})
+					
 				})
 				
 				
