@@ -1353,13 +1353,28 @@ export class K8sUtils{
 								//socketIONamespace.to('akt').emit(emitMessage,d.toString());
 							});
 							migrate.on('close',()=>{
-								//TODO: copy kubernetes access keys locally, 
-								//install ansible locally,
-								//make stats do things
+								//ok finally do a postinstall to make sure ingress crd and kustomize routines get called........
 								Object.keys(socketIONamespaces).map(serverName=>{
-									socketIONamespaces[serverName].namespace.to('akt').emit(emitMessage,"FINISHED! You may now restart your provider.\n");
+									socketIONamespaces[serverName].namespace.to('akt').emit(emitMessage,"v0.16.1 CRD was applied. Finally, we apply additional ingress CRDs and kustomize.\n");
 								})
-								resolve({success:true})
+								const postMigrate = spawn('bash',['./postMigrateCRD.sh'],{shell:true,env:process.env,cwd:process.env.PWD+'/aktAPI'});
+								postMigrate.stdout.on('data',d=>{
+									Object.keys(socketIONamespaces).map(serverName=>{
+										socketIONamespaces[serverName].namespace.to('akt').emit(emitMessage,d.toString());
+									})
+								})
+								postMigrate.stderr.on('data',d=>{
+									Object.keys(socketIONamespaces).map(serverName=>{
+										socketIONamespaces[serverName].namespace.to('akt').emit(emitMessage,d.toString());
+									})
+								})
+								postMigrate.on('close',()=>{
+									Object.keys(socketIONamespaces).map(serverName=>{
+										socketIONamespaces[serverName].namespace.to('akt').emit(emitMessage,"FINISHED! You may now restart your provider.\n");
+									})
+									resolve({success:true})
+								})
+								
 							})
 						})
 					})
