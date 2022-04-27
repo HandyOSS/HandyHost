@@ -1,5 +1,7 @@
 ## HandyHost
 
+**[HandyHost v0.5.5 Akash Major Release v0.16.x upgrade instructions](#announcement_v055)** 
+
 **HandyHost is currently in a Beta release state as of 10/05/2021, version 0.4.5**
 
 HandyHost is a modern cryptocurrency "mining" software which allows you to monetize off-the-shelf hardware for passive income all while providing real utility to users versus just minting monies. Currently there are 3 main distributed-web utility blockchains that we implement within HandyHost. 
@@ -167,9 +169,9 @@ Follow the steps above to find your authSettings.json file.
 In authSettings.json, set ```"hasInitialized":false,```. After restarting handyhost you can now set your new password.
 
 ### v0.5.5 Changelog
-
-Akash Major Release v0.16.1 support.
-After running the HandyHost update, you will see a button in the Akash configuration panel called "Migrate to Akash v0.16.x". Clicking it will migrate your provider (and any contracts) to the latest v0.16.x CRD. Note: Akash v0.16 is a major release and will not be backward compatible with v0.14.x RPC nodes.
+<a id="announcement_v055"></a>
+Akash Major Release v0.16.x support.
+After running the HandyHost v0.5.5 update, you will see a button in the Akash configuration panel titled "Migrate to Akash v0.16.x". Clicking it will migrate your provider (and any contracts) to the latest Akash v0.16.x CRD. Note: Akash v0.16 is a major release and will not be backward compatible with v0.14.x RPC nodes or providers so make sure to run the migration utility.
 
 ### v0.5.4 Changelog
 
