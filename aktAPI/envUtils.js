@@ -168,7 +168,7 @@ export class EnvUtils{
 				else{
 					// /console.log('nodelist',nodeList);
 					//get a random node
-					resolve(nodeList[Math.floor(Math.random() * (nodeList.length-1))]);
+					resolve(nodeList[Math.floor(Math.random() * (nodeList.length-0.01))]);
 				}
 				
 			}).catch(e=>{
