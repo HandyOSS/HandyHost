@@ -220,6 +220,9 @@ a.getGlobalIP{
 #initCluster{
 	width: 220px;
 }
+#migrateCluster{
+	width:  240px;
+}
 #logs{
 	float:left;
 	width: 100%;

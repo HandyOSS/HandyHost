@@ -2,49 +2,48 @@
 #params = ssh_user ssh_server ingress_node_name node_ip
 #./postInitK8sCluster.sh ansible akashnode1.local akashnode1 192.168.0.17
 #./postInitK8sCluster.sh ansible akash-disastrous-smooth-offer.local akash-disastrous-smooth-offer 192.168.0.220
-AKASH_VERSION=$(/bin/bash "$PWD/getAkashLatestVersion.sh")
+AKASH_VERSION=$1
 
-#first double check we have the ingress crd and other yaml resources from the akash repo
-echo "checkout akash repo"
-/bin/bash "$PWD/updateAkashRepo.sh"
-echo "done checking out akash repo"
-#done checking for yamls
+MASTERNODEUSER=$(cat "$HOME/.HandyHost/aktData/clusterConfig.json" | jq -r '.nodes[] | . as $parent | .kubernetes | select(.isMaster) | $parent.user')
+MASTERNODENAME=$(cat "$HOME/.HandyHost/aktData/clusterConfig.json" | jq -r '.nodes[] | . as $parent | .kubernetes | select(.isMaster) | $parent.hostname')
+MASTERNODEIP=$(cat "$HOME/.HandyHost/aktData/clusterConfig.json" | jq -r '.nodes[] | . as $parent | .kubernetes | select(.isMaster) | $parent.ip')
+INGRESSNAME=$(cat "$HOME/.HandyHost/aktData/clusterConfig.json" | jq -r '.nodes[] | . as $parent | .kubernetes | select(.ingress) | $parent.kubernetes.name')
 
-echo "INGRESS NODE NAME $3" && \
-echo "MASTER IP $4" && \
+echo "AKASH VERSION IN DOWNGRADE TO $AKASH_VERSION" && \
+echo "INGRESS NODE NAME $INGRESSNAME" && \
+echo "MASTER IP $MASTERNODEIP" && \
 cd "$HOME/.HandyHost/aktData"
 if [[ -s "$HOME/.ssh/known_hosts" ]] ; then
-	ssh-keygen -f "${HOME}/.ssh/known_hosts" -R "${4}"
-	ssh-keygen -f "${HOME}/.ssh/known_hosts" -R "${2}"
+	ssh-keygen -f "${HOME}/.ssh/known_hosts" -R "${MASTERNODEIP}"
+	ssh-keygen -f "${HOME}/.ssh/known_hosts" -R "${MASTERNODENAME}"
 fi
 
-ssh -i "$HOME/.ssh/handyhost" -o StrictHostKeyChecking=accept-new $1@$4 'bash --login echo "" | sudo chown ansible:ansible /etc/kubernetes/admin.conf && exit' && \
-scp -i "$HOME/.ssh/handyhost" $1@$4:/etc/kubernetes/admin.conf ./ && \
+ssh -i "$HOME/.ssh/handyhost" -o StrictHostKeyChecking=accept-new $MASTERNODEUSER@$MASTERNODEIP 'bash --login echo "" | sudo chown ansible:ansible /etc/kubernetes/admin.conf && exit' && \
+scp -i "$HOME/.ssh/handyhost" $MASTERNODEUSER@$MASTERNODEIP:/etc/kubernetes/admin.conf ./ && \
 if [[ "$OSTYPE" == "darwin"* ]]; then
 	#nice macOS sed slightly different vs linux
-	sed -i'.original' -e 's/127.0.0.1/'"$4"'/g' admin.conf && \
+	sed -i'.original' -e 's/127.0.0.1/'"$MASTERNODEIP"'/g' admin.conf && \
 	rm admin.conf.original
 else
-	sed -i 's/127.0.0.1/'"$4"'/g' admin.conf
+	sed -i 's/127.0.0.1/'"$MASTERNODEIP"'/g' admin.conf
 fi
 
 ##### OG v0.12.2 => v0.14.0
 ## first we apply the crd for all the things like manifests/etc
 export KUBECONFIG=$PWD/admin.conf
 mkdir -p ./akash_cluster_resources
-#cp "${HOME}/.HandyHost/aktData/akashRepo/pkg/apis/akash.network/crd_v1_v2beta1.yaml" ./akash_cluster_resources/crd.yaml && \
-cp "${HOME}/.HandyHost/aktData/akashRepo/pkg/apis/akash.network/crd.yaml" ./akash_cluster_resources/crd.yaml && \
+cp "${HOME}/.HandyHost/aktData/akashRepo/pkg/apis/akash.network/v1/crd.yaml" ./akash_cluster_resources/crd.yaml && \
 kubectl apply -f ./akash_cluster_resources/crd.yaml --overwrite
 
 ## new things: we aply the provider crd and new ingress
 cd "$HOME/.HandyHost/aktData/akashRepo/script"
-#kubectl apply -f ../pkg/apis/akash.network/v1/provider_hosts_crd.yaml
+kubectl apply -f ../pkg/apis/akash.network/v1/provider_hosts_crd.yaml
 kubectl apply -f ../_run/ingress-nginx.yaml
 kubectl apply -f ../_run/ingress-nginx-class.yaml
 
 ### akash-services name and component=akash-hostname-op might not be needed
 kubectl label nodes --all akash.network/role-
-kubectl label nodes $3 akash.network/role=ingress --overwrite
+kubectl label nodes $INGRESSNAME akash.network/role=ingress --overwrite
 
 #note: networking is required to set akash-services namespace if it didnt already exist..
 cd ../_docs

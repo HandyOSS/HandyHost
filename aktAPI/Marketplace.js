@@ -294,7 +294,7 @@ export class Marketplace{
 	tryAggregatesQuery(args,resolve,reject,attemptCount){
 		let output = '';
 		let errOut = '';
-		process.env.AKASH_NODE='http://rpc-1.handyhost.computer'; //aggs queries timeout a lot. We run our own node with high timeout times
+		process.env.AKASH_NODE='http://akash.c29r3.xyz:80/rpc'; //aggs queries timeout a lot. We run our own node with high timeout times
 		const s = spawn('./bin/akash',args,{shell:true,env:process.env,cwd:process.env.HOME+'/.HandyHost/aktData'});
 		s.stdout.on('data',d=>{
 			output += d.toString();
