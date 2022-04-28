@@ -168,6 +168,10 @@ The auth settings file will look like:
 Follow the steps above to find your authSettings.json file.
 In authSettings.json, set ```"hasInitialized":false,```. After restarting handyhost you can now set your new password.
 
+### v0.5.6 Changelog
+
+Akash has changed the default bid price to 50AKT for providers, we manually set the bid deposit back to 5AKT.
+
 ### v0.5.5 Changelog
 <a id="announcement_v055"></a>
 Akash Major Release v0.16.x support.
