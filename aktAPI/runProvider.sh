@@ -21,4 +21,5 @@ $HOME/.HandyHost/aktData/bin/akash provider run \
 --bid-timeout 8h0m0s \
 --minimum-balance 100000 \
 --balance-check-period 8h0m0s \
---withdrawal-period 8h0m0s
+--withdrawal-period 8h0m0s \
+--bid-deposit "5000000uakt"
