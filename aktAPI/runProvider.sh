@@ -7,7 +7,6 @@ $HOME/.HandyHost/aktData/bin/akash provider run \
 --node $AKASH_NODE \
 --keyring-backend file \
 --from "$1" \
---fees "${4}uakt" \
 --kubeconfig $HOME/.HandyHost/aktData/admin.conf \
 --cluster-k8s true \
 --deployment-ingress-domain $2 \
@@ -20,6 +19,8 @@ $HOME/.HandyHost/aktData/bin/akash provider run \
 --cluster-node-port-quantity 1000 \
 --bid-timeout 8h0m0s \
 --minimum-balance 100000 \
---balance-check-period 8h0m0s \
 --withdrawal-period 8h0m0s \
---bid-deposit "5000000uakt"
+--bid-deposit "5000000uakt" \
+--gas=auto \
+--gas-prices=0.025uakt \
+--gas-adjustment=1.5
